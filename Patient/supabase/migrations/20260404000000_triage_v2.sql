@@ -50,12 +50,26 @@ CREATE TABLE IF NOT EXISTS public.doctor_handoffs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     session_id UUID REFERENCES public.symptom_sessions(id) ON DELETE SET NULL,
-    summary TEXT,
-    urgency TEXT DEFAULT 'routine' CHECK (urgency IN ('routine', 'priority', 'urgent', 'emergency')),
-    recommended_tests JSONB DEFAULT '[]'::jsonb,
-    specialization TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Force add columns if table existed prior
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctor_handoffs' AND column_name='summary') THEN 
+        ALTER TABLE public.doctor_handoffs ADD COLUMN summary TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctor_handoffs' AND column_name='urgency') THEN 
+        ALTER TABLE public.doctor_handoffs ADD COLUMN urgency TEXT DEFAULT 'routine' CHECK (urgency IN ('routine', 'priority', 'urgent', 'emergency'));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctor_handoffs' AND column_name='recommended_tests') THEN 
+        ALTER TABLE public.doctor_handoffs ADD COLUMN recommended_tests JSONB DEFAULT '[]'::jsonb;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='doctor_handoffs' AND column_name='specialization') THEN 
+        ALTER TABLE public.doctor_handoffs ADD COLUMN specialization TEXT;
+    END IF;
+END $$;
+
 
 CREATE INDEX IF NOT EXISTS idx_handoffs_user ON public.doctor_handoffs(user_id);
 CREATE INDEX IF NOT EXISTS idx_handoffs_created ON public.doctor_handoffs(created_at DESC);

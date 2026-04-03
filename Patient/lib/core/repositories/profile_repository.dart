@@ -20,8 +20,8 @@ class ProfileRepository {
         .from('profiles')
         .select()
         .eq('id', userId)
-        .single();
-    return data;
+        .maybeSingle();
+    return data ?? {};
   }
 
   Future<void> updateProfile(Map<String, dynamic> updates) async {
