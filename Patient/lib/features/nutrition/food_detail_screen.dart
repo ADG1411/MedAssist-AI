@@ -1,13 +1,22 @@
-// Food Detail Screen  ported from OpenNutriTracker MealDetailScreen
-// Adapted for MedAssist: Riverpod, MedAssist theme, Supabase backend
+// Food Detail Screen — AI Food Intelligence Hub
+// Upgraded: SmartPortionSelector, AiFoodSafetyBanner, RecoveryImpactCard, MacroDonut
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:medassist_ai/core/theme/app_colors.dart';
 import 'package:medassist_ai/features/nutrition/models/intake_entry.dart';
 import 'package:medassist_ai/features/nutrition/models/meal_entity.dart';
 import 'package:medassist_ai/features/nutrition/providers/nutrition_providers.dart';
+import '../../../shared/widgets/app_background.dart';
+import '../../../shared/widgets/glass_card.dart';
+import 'widgets/ai_food_safety_banner.dart';
+import 'widgets/recovery_impact_card.dart';
+import 'widgets/smart_portion_selector.dart';
+import 'widgets/macro_donut_widget.dart';
+import 'widgets/meal_timeline_card.dart';
 
 class FoodDetailScreen extends ConsumerStatefulWidget {
   final MealEntity meal;

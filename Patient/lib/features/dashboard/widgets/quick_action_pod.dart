@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 
-class QuickActionPod extends StatelessWidget {
+class QuickActionPod extends StatefulWidget {
   final IconData icon;
   final String title;
   final String description;
@@ -22,16 +23,39 @@ class QuickActionPod extends StatelessWidget {
   });
 
   @override
+  State<QuickActionPod> createState() => _QuickActionPodState();
+}
+
+class _QuickActionPodState extends State<QuickActionPod> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary;
+    final icon = widget.icon;
+    final title = widget.title;
+    final description = widget.description;
+    final color = widget.color;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _pressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: null,
         borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -68,7 +92,7 @@ class QuickActionPod extends StatelessWidget {
                     ),
                     child: Icon(icon, color: color, size: 22),
                   ),
-                  if (showAiBadge) ...[
+                  if (widget.showAiBadge) ...[
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -79,7 +103,7 @@ class QuickActionPod extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        badgeLabel ?? 'AI',
+                        widget.badgeLabel ?? 'AI',
                         style: const TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
@@ -116,6 +140,8 @@ class QuickActionPod extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

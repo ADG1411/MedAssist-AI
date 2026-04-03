@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import '../../core/theme/app_colors.dart';
@@ -191,7 +192,10 @@ class _NavItem extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -256,7 +260,10 @@ class _SosFab extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () => context.push('/sos'),
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                context.push('/sos');
+              },
               onLongPress: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
