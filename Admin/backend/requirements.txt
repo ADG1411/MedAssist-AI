@@ -1,0 +1,8 @@
+fastapi[all]
+SQLAlchemy
+alembic
+psycopg2-binary
+passlib[bcrypt]
+python-jose[cryptography]
+redis
+websockets

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bot, Sparkles, RefreshCcw, Calendar, History, ClipboardList, Pill } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bot, Sparkles, RefreshCcw, Calendar, History, ClipboardList, Pill, Globe, Database } from 'lucide-react';
 import type { ChatMessage } from '../types/chat';
 import { sendChatMessage } from '../services/aiChatService';
 import { AiInput, type Message, type Suggestion } from '../components/ui/ai-input-001';
@@ -8,9 +8,26 @@ import { Cpu, Zap } from "lucide-react";
 
 import { MessageBubble } from '../components/ai/MessageBubble';
 
+const STORAGE_KEY = 'medassist_chat_history';
+
 const AIAssistant = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [searchMode, setSearchMode] = useState<'auto' | 'offline' | 'online'>('auto');
+
+  // Persist chat history to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-50))); // keep last 50
+    } catch { /* ignore quota errors */ }
+  }, [messages]);
 
   // Map our ChatMessage to AiInput's Message type
   const mappedMessages: Message[] = messages.map(m => ({
@@ -57,7 +74,7 @@ const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const resp = await sendChatMessage(text, messages, base64Images);
+      const resp = await sendChatMessage(text, messages, base64Images, searchMode);
       setMessages(prev => [...prev, resp]);
     } catch (e) {
       console.error(e);
@@ -99,41 +116,65 @@ const AIAssistant = () => {
     },
   ];
 
+  const modeConfig = {
+    auto: { label: 'Auto', icon: Sparkles, color: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
+    offline: { label: 'Local DB', icon: Database, color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+    online: { label: 'Online', icon: Globe, color: 'bg-blue-50 text-blue-600 border-blue-200' },
+  };
+
+  const cycleMode = () => {
+    const modes: Array<'auto' | 'offline' | 'online'> = ['auto', 'offline', 'online'];
+    const currentIdx = modes.indexOf(searchMode);
+    setSearchMode(modes[(currentIdx + 1) % modes.length]);
+  };
+
+  const CurrentModeIcon = modeConfig[searchMode].icon;
+
   return (
     <div className="flex flex-col h-full w-full bg-slate-50 relative overflow-hidden">
       {/* HEADER */}
-      <div className="flex items-center justify-between px-6 lg:px-8 py-5 bg-white border-b border-slate-200 z-10 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="bg-gradient-to-br from-indigo-500 to-cyan-400 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200 relative">
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 bg-white border-b border-slate-200 z-10 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="relative shrink-0">
+            <div className="bg-gradient-to-br from-indigo-500 to-cyan-400 p-2 sm:p-2.5 rounded-xl text-white shadow-md shadow-indigo-200 relative">
               <Bot className="w-5 h-5" />
             </div>
-            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+            <span className="absolute -bottom-1 -right-1 flex h-3 w-3 sm:h-3.5 sm:w-3.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 sm:h-3.5 sm:w-3.5 bg-emerald-500 border-2 border-white"></span>
             </span>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 tracking-tight">Dr. AI Co-Pilot</h2>
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight truncate">Dr. AI Co-Pilot</h2>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <p className="text-[12px] text-slate-500 font-medium">Powered by OpenMED-v4</p>
+              <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-amber-500 shrink-0" />
+              <p className="text-[11px] sm:text-[12px] text-slate-500 font-medium truncate">Powered by Step-3.5-Flash</p>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
-           <button 
-             onClick={() => setMessages([])}
-             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-           >
-             <RefreshCcw className="w-4 h-4" />
-             <span className="hidden sm:inline">New Chat</span>
-           </button>
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Mode Toggle */}
+          <button 
+            onClick={cycleMode}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-[12px] font-bold border rounded-xl transition-all ${modeConfig[searchMode].color}`}
+            title={`Mode: ${modeConfig[searchMode].label}. Click to switch.`}
+          >
+            <CurrentModeIcon className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline sm:inline">{modeConfig[searchMode].label}</span>
+          </button>
+
+          <button 
+            onClick={() => { setMessages([]); localStorage.removeItem(STORAGE_KEY); }}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+          >
+            <RefreshCcw className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+            <span className="hidden sm:inline">New Chat</span>
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <AiInput 
           messages={mappedMessages}
           renderMessage={(msg) => <MessageBubble message={msg.originalMessage} />}

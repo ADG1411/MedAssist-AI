@@ -3,6 +3,7 @@ import type {
   Booking, Ticket, Earning, EarningsSummary,
   CreateReferralPayload, CreateBookingPayload,
 } from '../types/referral';
+import { supabase } from './supabaseClient';
 
 const BASE = '/api/v1';
 
@@ -112,6 +113,22 @@ async function tryBackend<T>(fn: () => Promise<T>, fallback: () => T): Promise<T
 // ── Referral APIs ─────────────────────────────────────────────────────────────
 
 export async function createReferral(payload: CreateReferralPayload): Promise<Referral> {
+  const refId = `ref-${Date.now()}`;
+  const refObj: Referral = {
+    ...payload,
+    id: refId,
+    doctor_id: 'doc-1',
+    doctor_name: 'Dr. Anil Kumar',
+    doctor_specialization: 'General Physician',
+    created_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  };
+
+  try {
+    const { data, error } = await supabase.from('referrals').insert(refObj).select().single();
+    if (data && !error) return data;
+  } catch (err) { }
+
   await delay(700);
   return tryBackend(
     async () => {
@@ -151,6 +168,14 @@ export async function generateReferralQR(referralId: string): Promise<ReferralQR
 }
 
 export async function scanReferralQR(token: string): Promise<{ referral: Referral; ai_insight: AIInsight }> {
+  try {
+    const referralId = parseReferralToken(token);
+    const { data, error } = await supabase.from('referrals').select('*').eq('id', referralId).single();
+    if (data && !error) {
+      return { referral: data, ai_insight: buildAIInsight(data) };
+    }
+  } catch (err) { }
+
   await delay(800);
   return tryBackend(
     async () => {
@@ -168,6 +193,11 @@ export async function scanReferralQR(token: string): Promise<{ referral: Referra
 }
 
 export async function getReferrals(): Promise<Referral[]> {
+  try {
+    const { data, error } = await supabase.from('referrals').select('*').order('created_at', { ascending: false });
+    if (data && !error) return data;
+  } catch (err) { }
+
   await delay(400);
   return tryBackend(
     async () => {

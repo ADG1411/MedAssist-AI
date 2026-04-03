@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, GitBranch, Video } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, GitBranch, Video, Moon, Trash2, LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -46,6 +47,26 @@ const PAGE_TITLES: Record<string, string> = {
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const toggleDarkMode = () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    setIsDarkMode(isDark);
+  };
+
+  const handleClearCache = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    alert("System cache wiped successfully. Restoring session.");
+    window.location.reload();
+  };
+  
   const location = useLocation();
   const pageTitle = PAGE_TITLES[location.pathname] || location.pathname.split('/').pop() || 'Dashboard';
 
@@ -109,12 +130,7 @@ const DashboardLayout = () => {
             })}
           </nav>
 
-          <div className="px-5 mt-8">
-            <h3 className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-3 px-1">Quick Actions</h3>
-            <button className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-colors text-sm font-semibold">
-              + New Patient
-            </button>
-          </div>
+
         </div>
 
         {/* Doctor Identity */}
@@ -148,16 +164,110 @@ const DashboardLayout = () => {
               <h1 className="text-[16px] md:text-lg font-bold text-slate-800 capitalize">{pageTitle}</h1>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+            <div className="flex items-center gap-2 relative">
+              <button 
+                onClick={() => { setIsNotificationOpen(!isNotificationOpen); setIsSettingsOpen(false); }}
+                className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
+              >
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 border border-white rounded-full" />
               </button>
-              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors hidden sm:flex">
+
+              {/* Notification Dropdown */}
+              <AnimatePresence>
+                {isNotificationOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-12 mt-2 w-80 bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden"
+                    >
+                      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <h3 className="font-bold text-slate-800">Notifications</h3>
+                        <span className="text-xs font-semibold text-brand-blue bg-blue-100 px-2 py-1 rounded-full">3 New</span>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        <div className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors">
+                           <p className="text-sm font-semibold text-slate-800">Dr. Sarah requested a consult</p>
+                           <p className="text-xs text-slate-500 mt-1">Regarding patient #8472 in Cardiology.</p>
+                           <p className="text-[10px] text-slate-400 mt-2 font-medium">10 mins ago</p>
+                        </div>
+                        <div className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors">
+                           <p className="text-sm font-semibold text-slate-800">System Update Complete</p>
+                           <p className="text-xs text-slate-500 mt-1">Kimi-k2.5 multimodal features are now active.</p>
+                           <p className="text-[10px] text-slate-400 mt-2 font-medium">1 hour ago</p>
+                        </div>
+                        <div className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors opacity-60">
+                           <p className="text-sm font-semibold text-slate-800">Lab Results Ready</p>
+                           <p className="text-xs text-slate-500 mt-1">Metabolic panel for John Doe is ready for review.</p>
+                           <p className="text-[10px] text-slate-400 mt-2 font-medium">Yesterday</p>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-slate-50 border-t border-slate-100">
+                         <button className="w-full text-center text-sm font-bold text-slate-600 hover:text-brand-blue">View All</button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
+              <button 
+                onClick={() => { setIsSettingsOpen(!isSettingsOpen); setIsNotificationOpen(false); }}
+                className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors hidden sm:flex"
+              >
                 <Settings className="h-5 w-5" />
               </button>
+
+              {/* Settings Dropdown */}
+              <AnimatePresence>
+                {isSettingsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden"
+                    >
+                      <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col gap-1">
+                        <h3 className="font-bold text-slate-800 text-sm">Quick Settings</h3>
+                        <p className="text-xs text-slate-500">Manage your portal preferences</p>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        <button onClick={toggleDarkMode} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+                          <div className="flex items-center gap-3 text-sm font-medium text-slate-700">
+                            <Moon className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
+                            Night Mode
+                          </div>
+                          <div className={`w-8 h-4 rounded-full relative transition-colors ${isDarkMode ? 'bg-indigo-500' : 'bg-slate-200'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full shadow border border-slate-300 absolute top-0 transition-transform ${isDarkMode ? 'translate-x-4 border-indigo-500' : 'left-0'}`} />
+                          </div>
+                        </button>
+                        <button onClick={handleClearCache} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left text-sm font-medium text-slate-700 group">
+                          <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+                          Clear Cache
+                        </button>
+                        <Link to="/dashboard/profile" onClick={() => setIsSettingsOpen(false)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left text-sm font-medium text-slate-700 group">
+                          <User className="w-4 h-4 text-slate-400 group-hover:text-brand-blue" />
+                          Account Settings
+                        </Link>
+                        <div className="h-px bg-slate-100 my-1"></div>
+                        <Link to="/login" className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors text-left text-sm font-medium text-red-600 group">
+                          <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-600" />
+                          Logout
+                        </Link>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
               {/* Mobile avatar */}
-              <div className="md:hidden w-8 h-8 rounded-full overflow-hidden border-2 border-slate-200 shrink-0">
+              <div className="md:hidden w-8 h-8 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
                 <img src="https://ui-avatars.com/api/?name=Dr.+Smith&background=1A6BFF&color=fff" className="w-full h-full object-cover" alt="Dr Smith" />
               </div>
             </div>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   QrCode, Plus, ArrowLeft, CheckCircle2, ExternalLink,
-  FlaskConical, Stethoscope, User, Share2,
+  FlaskConical, Stethoscope, User, Share2, Clock
 } from 'lucide-react';
 import { cn } from '../layouts/DashboardLayout';
 import { PatientPreview }   from '../components/medcard/PatientPreview';
@@ -16,6 +16,8 @@ import { ReferralForm }    from '../components/referral/ReferralForm';
 import { BookingModal }    from '../components/referral/BookingModal';
 import { TicketView }      from '../components/referral/TicketView';
 import { QRScanner }       from '../components/medcard/QRScanner';
+import { ScanHistoryDrawer } from '../components/medcard/ScanHistoryDrawer';
+import { ErrorBoundary }     from '../components/ErrorBoundary';
 import { useNavigate }     from 'react-router-dom';
 import {
   createReferral, generateReferralQR, scanReferralQR,
@@ -35,6 +37,7 @@ type Tab = 'scan' | 'create';
 export default function ScanPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('scan');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Universal Scan Flow State
   const [activeFlow, setActiveFlow] = useState<'none' | 'medcard' | 'referral'>('none');
@@ -138,7 +141,11 @@ export default function ScanPage() {
     setScanError(null);
     setMedcardPreview(null);
     setMedcardRecord(null);
+    setMedcardRecord(null);
     setMedcardToken('');
+    // Adding active flow force override
+    setActiveFlow('none');
+    setScanPhase('scanner');
   };
 
   const handleCreate = async (payload: CreateReferralPayload) => {
@@ -156,20 +163,36 @@ export default function ScanPage() {
   ];
 
   return (
-    <div className="max-w-lg mx-auto pb-20 md:pb-8">
+    <div className="max-w-lg lg:max-w-4xl mx-auto pb-20 md:pb-8 px-2 lg:px-0">
 
-      {/* Tab Bar */}
-      <div className="flex bg-slate-100 rounded-2xl p-1 gap-1 mb-6">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={cn('flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold transition-all',
-              tab === t.id ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
-            <t.icon className="w-4 h-4" />
-            {t.label}
-          </button>
-        ))}
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-6 max-w-lg mx-auto lg:max-w-none">
+        {/* Tab Bar */}
+        <div className="flex bg-slate-100 rounded-2xl p-1 gap-1 flex-1 max-w-[300px]">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={cn('flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold transition-all',
+                tab === t.id ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
+              <t.icon className="w-4 h-4" />
+              {t.label}
+            </button>
+          ))}
+        </div>
+        
+        <button onClick={() => setIsHistoryOpen(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-[13px] shadow-sm transition-all ml-4">
+          <Clock className="w-4 h-4" />
+          <span className="hidden sm:inline">History</span>
+        </button>
       </div>
 
+      <ScanHistoryDrawer 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)} 
+        onSelectReferral={(token) => { setTab('scan'); handleScan(token); }}
+        onSelectMedcard={(token) => { setTab('scan'); handleScan(token); }}
+      />
+
+      <ErrorBoundary>
       <AnimatePresence mode="wait">
 
         {/* ── SCAN TAB ── */}
@@ -189,7 +212,7 @@ export default function ScanPage() {
 
             {/* MedCard Renderer */}
             {activeFlow === 'medcard' && scanPhase === 'details' && medcardPreview && (
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-lg mx-auto">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Back to Scanner
                 </button>
@@ -208,7 +231,7 @@ export default function ScanPage() {
 
             {/* MedCard Dashboard */}
             {activeFlow === 'medcard' && (scanPhase as any) === 'dashboard' && medcardRecord && (
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-lg lg:max-w-none mx-auto">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Scan Another Patient
                 </button>
@@ -233,7 +256,7 @@ export default function ScanPage() {
 
             {/* Referral Renderer */}
             {activeFlow === 'referral' && scanPhase === 'details' && referral && insight && (
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-lg mx-auto">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Back to Scanner
                 </button>
@@ -252,7 +275,7 @@ export default function ScanPage() {
             )}
 
             {scanPhase === 'ticket' && ticket && (
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-lg mx-auto">
                 <TicketView ticket={ticket} onNewScan={resetScan} />
               </div>
             )}
@@ -266,12 +289,23 @@ export default function ScanPage() {
                 onClose={() => setScanPhase('details')}
               />
             )}
+
+            {/* Failsafe to ensure scanner works if state corrupted */}
+            {(!['scanner', 'details', 'dashboard', 'ticket', 'booking'].includes(scanPhase as string) || (scanPhase === 'details' && !referral && !medcardPreview)) && (
+              <div className="space-y-4">
+                 <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <p className="text-amber-800 text-[13px] font-bold">Session Restored</p>
+                    <p className="text-amber-600 text-[11px] font-medium">Your scan state was disconnected. The scanner has been restarted.</p>
+                 </div>
+                 <QRScanner onScan={handleScan} scanning={scanning} error={scanError} modeContext="universal" />
+              </div>
+            )}
           </motion.div>
         )}
 
         {/* ── CREATE TAB ── */}
         {tab === 'create' && (
-          <motion.div key="create" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+          <motion.div key="create" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className={cn("mx-auto w-full", createdReferral ? "max-w-lg" : "max-w-lg lg:max-w-4xl")}>
             {!createdReferral ? (
               <div className="space-y-4">
                 <div>
@@ -368,6 +402,7 @@ export default function ScanPage() {
         )}
 
       </AnimatePresence>
+      </ErrorBoundary>
     </div>
   );
 }

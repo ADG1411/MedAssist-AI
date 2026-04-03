@@ -58,7 +58,8 @@ export function ReferralForm({ onSubmit, onCancel }: Props) {
   const labelCls = "block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide";
 
   return (
-    <div className="space-y-5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+      <div className="space-y-5">
       {/* Patient Info */}
       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Patient Info</p>
@@ -103,9 +104,13 @@ export function ReferralForm({ onSubmit, onCancel }: Props) {
       {/* Diagnosis */}
       <div>
         <label className={labelCls}>Diagnosis *</label>
-        <textarea value={form.diagnosis} onChange={e => set('diagnosis', e.target.value)} rows={2}
+        <textarea value={form.diagnosis} onChange={e => set('diagnosis', e.target.value)} rows={3}
           className={cn(inputCls, 'resize-none')} placeholder="Primary diagnosis..." />
       </div>
+      </div> {/* END LEFT COL */}
+
+      <div className="space-y-5 flex flex-col justify-between h-full">
+        <div className="space-y-5">
 
       {/* Doctor Notes */}
       <div>
@@ -149,24 +154,26 @@ export function ReferralForm({ onSubmit, onCancel }: Props) {
           {form.tests.map(t => (
             <span key={t} className="flex items-center gap-1 bg-teal-100 text-teal-700 text-[12px] font-semibold px-2.5 py-1 rounded-lg">
               {t}
-              <button onClick={() => removeItem('tests', t)}><X className="w-3 h-3" /></button>
+              <button type="button" onClick={() => removeItem('tests', t)}><X className="w-3 h-3" /></button>
             </span>
           ))}
         </div>
       </div>
+      </div> {/* CLOSES spacing div for right col */}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
-        <button onClick={onCancel}
+      <div className="flex gap-3 pt-2 mt-auto">
+        <button type="button" onClick={onCancel}
           className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold text-[14px] hover:bg-slate-50 transition-colors">
           Cancel
         </button>
-        <button onClick={handleSubmit} disabled={saving || !form.diagnosis.trim() || !form.reason.trim()}
+        <button type="button" onClick={handleSubmit} disabled={saving || !form.diagnosis.trim() || !form.reason.trim()}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-[14px] transition-all disabled:opacity-50 shadow-lg shadow-teal-500/25">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           {saving ? 'Creating…' : 'Create Referral'}
         </button>
       </div>
+      </div> {/* END RIGHT COL */}
     </div>
   );
 }
