@@ -14,7 +14,7 @@ from cryptography.fernet import Fernet, InvalidToken
 # ── Key management ────────────────────────────────────────────────────────────
 # In production: load from environment variable / secrets manager.
 # The key MUST be 32 url-safe base64-encoded bytes.
-_RAW_SECRET = b"medcard_qr_secret_key_32bytes!!"   # exactly 32 bytes
+_RAW_SECRET = b"medcard_qr_secret_key_32bytes!!!"   # exactly 32 bytes
 _FERNET_KEY = base64.urlsafe_b64encode(_RAW_SECRET)
 _fernet = Fernet(_FERNET_KEY)
 
