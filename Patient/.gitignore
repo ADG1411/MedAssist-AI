@@ -43,3 +43,35 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# GSD / Agents
+.agent/
+.agents/
+.gsd/
+
+# Environment & secrets
+.env
+.env.*
+
+# Node
+node_modules/
+package-lock.json
+package.json
+
+# Gemini / IDE
+.gemini/
+.vscode/
+
+# Temp files
+tmp/
+
+# Plan/doc files (not needed in repo)
+*.txt
+complete_plan.md
+implementation_plan_full
+implimentation_instruction.md
+implmentationofbackend.md
+codebase_index.md
+GSD-STYLE.md
+PROJECT_RULES.md
+model_capabilities.yaml

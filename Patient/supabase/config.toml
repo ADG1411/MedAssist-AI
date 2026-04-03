@@ -1,0 +1,33 @@
+
+[functions.symptom-triage]
+enabled = true
+verify_jwt = true
+import_map = "./functions/symptom-triage/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/symptom-triage/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/symptom-triage/*.html" ]
+
+[functions.nutrition-vision]
+enabled = true
+verify_jwt = true
+import_map = "./functions/nutrition-vision/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/nutrition-vision/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/nutrition-vision/*.html" ]
+
+[functions.recovery-predict]
+enabled = true
+verify_jwt = true
+import_map = "./functions/recovery-predict/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/recovery-predict/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/recovery-predict/*.html" ]
