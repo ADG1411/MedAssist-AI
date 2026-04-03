@@ -77,5 +77,10 @@
 		<!-- Permissions: Camera (Video Calls) -->
 		<key>NSCameraUsageDescription</key>
 		<string>MedAssist needs camera access for video consultations with your doctor.</string>
+		<!-- Permissions: HealthKit -->
+		<key>NSHealthShareUsageDescription</key>
+		<string>MedAssist reads your steps, heart rate, sleep, and calories to generate your personalised health score and insights.</string>
+		<key>NSHealthUpdateUsageDescription</key>
+		<string>MedAssist may write health records related to your care plan.</string>
 	</dict>
 </plist>

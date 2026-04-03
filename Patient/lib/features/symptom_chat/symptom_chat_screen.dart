@@ -8,6 +8,7 @@ import '../../shared/widgets/typing_indicator.dart';
 import '../../shared/widgets/ai_mode_badge.dart';
 import '../../shared/widgets/severity_slider.dart';
 import '../../shared/widgets/voice_input_sheet.dart';
+import '../../shared/widgets/gradient_search_bar.dart';
 import '../body_map/providers/symptom_check_provider.dart';
 import 'providers/chat_provider.dart';
 
@@ -308,60 +309,28 @@ class _SymptomChatScreenState extends ConsumerState<SymptomChatScreen> with Sing
 
           // Input bar
           Container(
-            padding: EdgeInsets.fromLTRB(12, 10, 12, MediaQuery.of(context).viewPadding.bottom + 12),
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom + 8, top: 6),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.3))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
+              color: Colors.transparent,
+              border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.15))),
             ),
-            child: Row(
-              children: [
-                // Mic button
-                _AnimatedMicButton(
-                  onTap: () {
-                    VoiceInputSheet.show(
-                      context,
-                      onResult: (text) {
-                        ref.read(chatProvider.notifier).sendMessage(text, _severity, _bodyPart);
-                        _scrollToBottom();
-                      },
-                    );
+            child: GradientSearchBar(
+              controller: _controller,
+              focusNode: _focusNode,
+              hintText: 'Describe your $bodyRegion symptoms...',
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              onMicPressed: () {
+                VoiceInputSheet.show(
+                  context,
+                  onResult: (text) {
+                    ref.read(chatProvider.notifier).sendMessage(text, _severity, _bodyPart);
+                    _scrollToBottom();
                   },
-                ),
-                const SizedBox(width: 8),
-                // Input field
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.border.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.2)),
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      onSubmitted: (_) => _sendMessage(),
-                      textInputAction: TextInputAction.send,
-                      style: const TextStyle(fontSize: 15),
-                      decoration: InputDecoration(
-                        hintText: 'Describe your $bodyRegion symptoms...',
-                        hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 14),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Send button
-                _AnimatedSendButton(onTap: _sendMessage),
-              ],
+                );
+              },
+              onSearchPressed: _sendMessage,
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
         ],
@@ -405,134 +374,4 @@ class _SymptomChatScreenState extends ConsumerState<SymptomChatScreen> with Sing
   }
 }
 
-/// Animated mic button with scale + glow on press
-class _AnimatedMicButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _AnimatedMicButton({required this.onTap});
-
-  @override
-  State<_AnimatedMicButton> createState() => _AnimatedMicButtonState();
-}
-
-class _AnimatedMicButtonState extends State<_AnimatedMicButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: AnimatedBuilder(
-        animation: _scaleAnim,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnim.value,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.12),
-                  AppColors.primary.withValues(alpha: 0.06),
-                ],
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-            ),
-            child: const Icon(Icons.mic, color: AppColors.primary, size: 22),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Animated send button with gradient + press scale
-class _AnimatedSendButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _AnimatedSendButton({required this.onTap});
-
-  @override
-  State<_AnimatedSendButton> createState() => _AnimatedSendButtonState();
-}
-
-class _AnimatedSendButtonState extends State<_AnimatedSendButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: AnimatedBuilder(
-        animation: _scaleAnim,
-        builder: (context, child) => Transform.scale(
-          scale: _scaleAnim.value,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
