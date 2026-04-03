@@ -15,17 +15,30 @@ client = AsyncOpenAI(
     api_key=NVIDIA_API_KEY
 )
 
-async def generate_text(prompt: str, system_prompt: str = "You are a helpful AI medical assistant.", temperature: float = 0.7) -> str:
+def _build_messages(prompt: str, system_prompt: str, images: list[str] = None):
+    messages = [
+        {"role": "system", "content": system_prompt}
+    ]
+    if images and len(images) > 0:
+        content_array = [{"type": "text", "text": prompt}]
+        for b64 in images:
+            content_array.append({
+                "type": "image_url",
+                "image_url": {"url": b64}
+            })
+        messages.append({"role": "user", "content": content_array})
+    else:
+        messages.append({"role": "user", "content": prompt})
+    return messages
+
+async def generate_text(prompt: str, system_prompt: str = "You are a helpful AI medical assistant.", temperature: float = 0.7, images: list[str] = None) -> str:
     """
     Generate text using NVIDIA Moonshot kimi-k2.5 model
     """
     try:
         response = await client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
+            messages=_build_messages(prompt, system_prompt, images),
             temperature=temperature,
             max_tokens=1024,
         )
@@ -34,7 +47,7 @@ async def generate_text(prompt: str, system_prompt: str = "You are a helpful AI 
         logger.error(f"Error calling NVIDIA API: {e}")
         return f"Error connecting to AI service: {str(e)}"
 
-async def generate_json(prompt: str, system_prompt: str = "You are a helpful AI assistant. Always return pure JSON.", temperature: float = 0.5) -> dict:
+async def generate_json(prompt: str, system_prompt: str = "You are a helpful AI assistant. Always return pure JSON.", temperature: float = 0.5, images: list[str] = None) -> dict:
     """
     Generate JSON response from NVIDIA model
     """
@@ -42,10 +55,7 @@ async def generate_json(prompt: str, system_prompt: str = "You are a helpful AI 
     try:
         response = await client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
+            messages=_build_messages(prompt, system_prompt, images),
             temperature=temperature,
             max_tokens=2048,
         )

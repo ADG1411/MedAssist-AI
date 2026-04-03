@@ -6,6 +6,8 @@ import { AiInput, type Message, type Suggestion } from '../components/ui/ai-inpu
 import { PiLightbulbFilament } from "react-icons/pi";
 import { Cpu, Zap } from "lucide-react";
 
+import { MessageBubble } from '../components/ai/MessageBubble';
+
 const AIAssistant = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,24 +16,48 @@ const AIAssistant = () => {
   const mappedMessages: Message[] = messages.map(m => ({
     id: m.id,
     text: m.content,
-    sender: m.role === 'user' ? 'user' : 'ai'
+    sender: m.role === 'user' ? 'user' : 'ai',
+    originalMessage: m 
   }));
 
-  const handleSend = async (text: string, modelId: string) => {
-    if (!text.trim() || isLoading) return;
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleSend = async (text: string, _modelId: string, attachments: File[] = []) => {
+    if ((!text.trim() && attachments.length === 0) || isLoading) return;
+
+    let base64Images: string[] = [];
+    if (attachments.length > 0) {
+      try {
+        base64Images = await Promise.all(
+          attachments
+            .filter(file => file.type.startsWith('image/'))
+            .map(file => fileToBase64(file))
+        );
+      } catch (err) {
+        console.error("Failed to convert images", err);
+      }
+    }
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      images: base64Images
     };
 
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      const resp = await sendChatMessage(text, messages);
+      const resp = await sendChatMessage(text, messages, base64Images);
       setMessages(prev => [...prev, resp]);
     } catch (e) {
       console.error(e);
@@ -110,23 +136,13 @@ const AIAssistant = () => {
       <div className="flex-1 relative">
         <AiInput 
           messages={mappedMessages}
+          renderMessage={(msg) => <MessageBubble message={msg.originalMessage} />}
           onSendMessage={handleSend}
           models={APP_MODELS}
           suggestions={CLINICAL_SUGGESTIONS}
-          backgroundText="MedAssist AI"
           placeholder="Ask for patient status, draft a prescription, or summarize a case..."
+          isLoading={isLoading}
         />
-        
-        {isLoading && (
-          <div className="absolute bottom-32 left-0 right-0 flex justify-center z-30 pointer-events-none">
-            <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200/50 shadow-sm flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
-               <span className="text-[11px] font-bold text-slate-500 ml-1 italic tracking-wide">AI is thinking...</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
