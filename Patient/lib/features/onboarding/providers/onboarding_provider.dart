@@ -130,7 +130,7 @@ class OnboardingState {
   /// Convert to a flat map for Supabase upsert
   Map<String, dynamic> toProfileMap() {
     return {
-      'full_name': fullName,
+      'name': fullName,
       'date_of_birth': dateOfBirth?.toIso8601String(),
       'gender': gender,
       'height_cm': double.tryParse(heightCm),
@@ -312,12 +312,12 @@ class OnboardingNotifier extends Notifier<OnboardingState> {
       }
 
       final profileData = state.toProfileMap();
-      profileData['user_id'] = userId;
+      profileData['id'] = userId;
 
       // Upsert to Supabase
       await SupabaseService.client
-          .from('patient_profiles')
-          .upsert(profileData, onConflict: 'user_id');
+          .from('profiles')
+          .upsert(profileData, onConflict: 'id');
 
       // Cache locally
       await ProfileCacheBox.save(profileData);

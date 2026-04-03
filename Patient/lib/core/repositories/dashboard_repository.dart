@@ -86,16 +86,27 @@ class DashboardRepository {
           .eq('user_id', userId)
           .order('created_at', ascending: false)
           .limit(1),
+      // 5: Profile Data
+      SupabaseService.client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .maybeSingle(),
     ]);
 
     final aiResults = List<Map<String, dynamic>>.from((results[0] as List?) ?? []);
     final monitoringLogs = List<Map<String, dynamic>>.from((results[1] as List?) ?? []);
     final nutritionSummary = results[2] as Map<String, dynamic>?;
     final recoveryPreds = List<Map<String, dynamic>>.from((results[3] as List?) ?? []);
+    final profileData = results[4] as Map<String, dynamic>?;
 
     // ── Compute Health Score ──
     // Weighted: Calorie Adherence (40%) + Macro Balance (30%) + Activity (15%) + Vitals (15%)
     int healthScore = _computeHealthScore(nutritionSummary, monitoringLogs);
+
+    final bool isProfileComplete = profileData?['onboarding_completed'] == true;
+    final List<dynamic>? emergencyContacts = profileData?['emergency_contacts'] as List<dynamic>?;
+    final bool isEmergencyActive = emergencyContacts != null && emergencyContacts.isNotEmpty;
 
     return {
       'health_score': healthScore,
@@ -121,9 +132,9 @@ class DashboardRepository {
       'medication_reminders': [], // Mock for now
       'recovery_velocity': [70, 72, 71, 75, 76], // Mock for now
       'wearable_sync': {'status': false, 'steps': 0, 'last_sync': 'Never synced'},
-      'profile_nudge': true,
+      'profile_nudge': !isProfileComplete,
       'recent_lab': 'No recent labs uploaded',
-      'emergency_preparedness': false,
+      'emergency_preparedness': isEmergencyActive,
     };
   }
 
