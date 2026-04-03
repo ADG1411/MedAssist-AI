@@ -101,8 +101,14 @@ class DashboardRepository {
     final profileData = results[4] as Map<String, dynamic>?;
 
     // ── Compute Health Score ──
-    // Weighted: Calorie Adherence (40%) + Macro Balance (30%) + Activity (15%) + Vitals (15%)
-    int healthScore = _computeHealthScore(nutritionSummary, monitoringLogs);
+    // A comprehensive formula blending Clinical Baseline, Symptoms, AI Risk, Recovery speed, and Daily habits.
+    int healthScore = _computeHealthScore(
+      nutritionSummary: nutritionSummary,
+      monitoringLog: monitoringLogs.isNotEmpty ? monitoringLogs.first : null,
+      latestAiResult: aiResults.isNotEmpty ? aiResults.first : null,
+      latestRecovery: recoveryPreds.isNotEmpty ? recoveryPreds.first : null,
+      profileData: profileData,
+    );
 
     final bool isProfileComplete = profileData?['onboarding_completed'] == true;
     final List<dynamic>? emergencyContacts = profileData?['emergency_contacts'] as List<dynamic>?;
@@ -138,75 +144,120 @@ class DashboardRepository {
     };
   }
 
-  /// Smart health score based on real nutrition + monitoring data
-  int _computeHealthScore(
-    Map<String, dynamic>? nutrition,
-    List<Map<String, dynamic>> monitoringLogs,
-  ) {
-    double score = 50; // baseline for no data
+  /// Comprehensive clinical health score calculation
+  int _computeHealthScore({
+    Map<String, dynamic>? nutritionSummary,
+    Map<String, dynamic>? monitoringLog,
+    Map<String, dynamic>? latestAiResult,
+    Map<String, dynamic>? latestRecovery,
+    Map<String, dynamic>? profileData,
+  }) {
+    double totalScore = 0.0;
+    double maxPossibleScore = 0.0;
 
-    if (nutrition != null) {
-      final calorieGoal = (nutrition['calorie_goal'] as num?)?.toDouble() ?? 2000;
-      final caloriesLogged = (nutrition['calories_logged'] as num?)?.toDouble() ?? 0;
-      final carbsGoal = (nutrition['carbs_goal'] as num?)?.toDouble() ?? 250;
-      final carbsLogged = (nutrition['carbs_logged'] as num?)?.toDouble() ?? 0;
-      final fatGoal = (nutrition['fat_goal'] as num?)?.toDouble() ?? 65;
-      final fatLogged = (nutrition['fat_logged'] as num?)?.toDouble() ?? 0;
-      final proteinGoal = (nutrition['protein_goal'] as num?)?.toDouble() ?? 50;
-      final proteinLogged = (nutrition['protein_logged'] as num?)?.toDouble() ?? 0;
-      final activityBurn = (nutrition['activity_burn_logged'] as num?)?.toDouble() ?? 0;
+    // ── 1. Clinical Baseline (Profile & AI Risk) [Max: 30 pts]
+    double clinicalScore = 30; // Start perfect
+    if (profileData != null) {
+      final chronicConditions = profileData['chronic_conditions'] as List<dynamic>? ?? [];
+      // Deduct 2 points per chronic condition (up to max -10)
+      clinicalScore -= (chronicConditions.length * 2).clamp(0, 10).toDouble();
+      
+      final dynamic bmiRaw = profileData['bmi'];
+      if (bmiRaw != null) {
+        final bmi = (bmiRaw as num).toDouble();
+        if (bmi < 18.5 || bmi > 30.0) clinicalScore -= 5;
+        else if (bmi > 25.0) clinicalScore -= 2;
+      }
+    }
+    
+    if (latestAiResult != null) {
+      final risk = (latestAiResult['risk_level']?.toString().toLowerCase()) ?? 'low';
+      if (risk == 'high') clinicalScore -= 12;
+      else if (risk == 'medium') clinicalScore -= 6;
+      // if safe, no deduction
+    }
+    totalScore += clinicalScore.clamp(0.0, 30.0);
+    maxPossibleScore += 30;
+
+    // ── 2. Recovery & Healing Momentum [Max: 20 pts]
+    if (latestRecovery != null) {
+      final recScore = (latestRecovery['current_score'] as num?)?.toDouble() ?? 70;
+      totalScore += (recScore / 100.0) * 20;
+    } else {
+      // Default baseline if no recovery active
+      totalScore += 16; // 80% of 20
+    }
+    maxPossibleScore += 20;
+
+    // ── 3. Vitals & Monitoring (Sleep, Hydration, Symptoms) [Max: 25 pts]
+    if (monitoringLog != null) {
+      final severity = (monitoringLog['symptom_severity'] as num?)?.toDouble() ?? 0;
+      final hydration = (monitoringLog['hydration_cups'] as num?)?.toDouble() ?? 4;
+      final sleep = (monitoringLog['sleep_hours'] as num?)?.toDouble() ?? 6;
+
+      double vitalScore = 0;
+      
+      // Pain/Severity inversely correlated (0 severity = 10 pts, 10 severity = 0 pts)
+      vitalScore += ((10 - severity) / 10.0).clamp(0.0, 1.0) * 10;
+      
+      // Hydration (8 cups = 7.5 pts max)
+      vitalScore += (hydration / 8.0).clamp(0.0, 1.0) * 7.5;
+      
+      // Sleep (7-9 hr = perfect, otherwise proportional)
+      if (sleep >= 7 && sleep <= 9) {
+        vitalScore += 7.5;
+      } else if (sleep >= 5 && sleep < 7) {
+        vitalScore += 4.0;
+      } else {
+        vitalScore += 1.0;
+      }
+      
+      totalScore += vitalScore;
+    } else {
+      // If hasn't logged today, give mild grace buffer (assume average)
+      totalScore += 15; 
+    }
+    maxPossibleScore += 25;
+
+    // ── 4. Daily Nutrition & Activity (Dynamic Weighting) [Max: 25 pts]
+    if (nutritionSummary != null && (nutritionSummary['calories_logged'] as num?)?.toDouble() != null && nutritionSummary['calories_logged'] > 0) {
+      final calorieGoal = (nutritionSummary['calorie_goal'] as num?)?.toDouble() ?? 2000;
+      final caloriesLogged = (nutritionSummary['calories_logged'] as num?)?.toDouble() ?? 0;
+      final activityBurn = (nutritionSummary['activity_burn_logged'] as num?)?.toDouble() ?? 0;
       final netCalories = caloriesLogged - activityBurn;
 
-      // 1. Calorie adherence (40 pts) - how close net calories are to goal
-      //    Perfect = within 10% of goal, linearly drops to 0 at 50%+ deviation
-      if (calorieGoal > 0 && caloriesLogged > 0) {
-        final ratio = netCalories / calorieGoal;
-        final deviation = (1.0 - ratio).abs();
-        final calorieScore = (1.0 - (deviation / 0.5)).clamp(0.0, 1.0) * 40;
-        score = calorieScore;
+      double nutritionScore = 0;
+      
+      // Calorie Adherence (15 pts) - ±20% deviation is perfect
+      final deviationRatio = (netCalories - calorieGoal).abs() / calorieGoal;
+      if (deviationRatio <= 0.20) {
+        nutritionScore += 15;
+      } else if (deviationRatio <= 0.40) {
+        nutritionScore += 10;
+      } else if (deviationRatio <= 0.80) {
+        nutritionScore += 5;
+      }
+
+      // Activity Bonus (10 pts)
+      if (activityBurn >= 300) {
+        nutritionScore += 10;
       } else {
-        score = 0; // no food logged = 0 calorie points
+        nutritionScore += (activityBurn / 300.0) * 10;
       }
 
-      // 2. Macro balance (30 pts) - average adherence across carbs, fat, protein
-      if (caloriesLogged > 0) {
-        double macroScore = 0;
-        if (carbsGoal > 0) {
-          macroScore += (1.0 - ((carbsLogged / carbsGoal) - 1.0).abs().clamp(0.0, 1.0)) * 10;
-        }
-        if (fatGoal > 0) {
-          macroScore += (1.0 - ((fatLogged / fatGoal) - 1.0).abs().clamp(0.0, 1.0)) * 10;
-        }
-        if (proteinGoal > 0) {
-          macroScore += (1.0 - ((proteinLogged / proteinGoal) - 1.0).abs().clamp(0.0, 1.0)) * 10;
-        }
-        score += macroScore;
-      }
-
-      // 3. Activity bonus (15 pts) - any logged activity is rewarded
-      if (activityBurn > 0) {
-        // 100 kcal burn = 5 pts, 300+ kcal = full 15 pts
-        score += (activityBurn / 300.0).clamp(0.0, 1.0) * 15;
-      }
+      totalScore += nutritionScore;
+      maxPossibleScore += 25;
+    } else {
+      // Early in the day, user hasn't logged food. 
+      // Do NOT penalize the denominator fully. We just scale the current total.
+      // We skip maxPossibleScore += 25 entirely so it doesn't drag the score down to 75%.
     }
 
-    // 4. Vitals/monitoring (15 pts) - from monitoring logs if available
-    if (monitoringLogs.isNotEmpty) {
-      final log = monitoringLogs.first;
-      final severity = (log['symptom_severity'] as num?)?.toDouble() ?? 5;
-      final hydration = (log['hydration_cups'] as num?)?.toDouble() ?? 4;
-      final sleep = (log['sleep_hours'] as num?)?.toDouble() ?? 7;
-
-      // Low severity = good (0-10 scale), good hydration (8 cups), good sleep (7-9h)
-      double vitalScore = 0;
-      vitalScore += ((10 - severity) / 10.0).clamp(0.0, 1.0) * 5; // pain: 5 pts
-      vitalScore += (hydration / 8.0).clamp(0.0, 1.0) * 5; // hydration: 5 pts
-      final sleepQuality = sleep >= 7 && sleep <= 9 ? 1.0 : (sleep >= 5 ? 0.5 : 0.2);
-      vitalScore += sleepQuality * 5; // sleep: 5 pts
-      score += vitalScore;
-    }
-
-    return score.round().clamp(0, 100);
+    // Scale final score to exactly 100 points
+    if (maxPossibleScore == 0) return 75; // Safety fallback
+    
+    final normalizedScore = (totalScore / maxPossibleScore) * 100;
+    return normalizedScore.round().clamp(0, 100);
   }
 }
 
