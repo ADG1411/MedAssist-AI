@@ -56,7 +56,9 @@ export interface AccessLog {
   timestamp: string;
 }
 
-// ── Mock database (no backend needed) ──────────────────────────────────────
+import { supabase } from './supabaseClient';
+
+// ── Mock database (Fallback) ────────────────────────────────────────────────
 
 const PATIENTS: Record<number, PatientFull> = {
   1: { id: 1, name: 'Rahul Sharma',  age: 34, gender: 'Male',   phone: '+91 98765 43210', blood_group: 'B+', allergies: 'Penicillin, Aspirin', email: 'rahul.sharma@email.com', address: '12 MG Road, Bengaluru, Karnataka', created_at: '2022-03-15T00:00:00Z' },
@@ -144,22 +146,63 @@ function aiSummary(patientId: number): string[] {
   return insights;
 }
 
-// ── Public API (mirrors backend endpoints, 100% local) ────────────────────
+// ── Public API ──────────────────────────────────────────────────────────────
 
 export async function scanQR(token: string): Promise<QRPreview> {
-  await new Promise(r => setTimeout(r, 600)); // simulate network
   const patientId = parseToken(token);
+  
+  try {
+    const { data: p, error } = await supabase.from('patients').select('*').eq('id', patientId).single();
+    if (p && !error) {
+      return { patient_id: p.id, name: p.name, age: p.age, phone_masked: maskPhone(p.phone), blood_group: p.blood_group || '' };
+    }
+  } catch (err) {
+    console.warn("Supabase scan fallback", err);
+  }
+
+  // Fallback
+  await new Promise(r => setTimeout(r, 600));
   const p = PATIENTS[patientId];
   if (!p) throw new Error(`No patient found for ID ${patientId}.`);
   return { patient_id: p.id, name: p.name, age: p.age, phone_masked: maskPhone(p.phone), blood_group: p.blood_group };
 }
 
 export async function accessFullRecord(token: string, emergency = false): Promise<FullRecord> {
-  await new Promise(r => setTimeout(r, 800));
   const patientId = parseToken(token);
+
+  // Log access
+  try {
+    await supabase.from('access_logs').insert({
+      doctor_id: 1,
+      doctor_name: 'Dr. Smith',
+      patient_id: patientId,
+      access_type: emergency ? 'emergency' : 'standard'
+    });
+  } catch (err) { }
+  
+  try {
+    const { data: patient } = await supabase.from('patients').select('*').eq('id', patientId).single();
+    const { data: records } = await supabase.from('medical_records').select('*').eq('patient_id', patientId);
+    const { data: family_members } = await supabase.from('family_members').select('*').eq('patient_id', patientId);
+    
+    if (patient) {
+      return {
+        patient,
+        records: records ?? [],
+        family_members: family_members ?? [],
+        ai_summary: aiSummary(patientId),
+        access_logged: true,
+      };
+    }
+  } catch (err) {
+    console.warn("Supabase record fetch fallback", err);
+  }
+
+  // Fallback
+  await new Promise(r => setTimeout(r, 800));
   const patient = PATIENTS[patientId];
   if (!patient) throw new Error(`Patient not found.`);
-
+  
   ACCESS_LOGS.push({
     id: ACCESS_LOGS.length + 1,
     doctor_id: 1,
@@ -183,6 +226,11 @@ export function getDemoToken(patientId: number): Promise<{ token: string; patien
 }
 
 export async function getAccessLogs(): Promise<AccessLog[]> {
+  try {
+    const { data } = await supabase.from('access_logs').select('*').order('timestamp', { ascending: false }).limit(20);
+    if (data && data.length > 0) return data;
+  } catch (err) { }
+
   await new Promise(r => setTimeout(r, 300));
   return [...ACCESS_LOGS].reverse();
 }

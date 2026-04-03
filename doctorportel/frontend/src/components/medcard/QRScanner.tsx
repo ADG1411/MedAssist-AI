@@ -160,15 +160,21 @@ export const QRScanner = ({ onScan, scanning, error, modeContext = 'medcard' }: 
   const handleDemoReferral = async (id: string, token: string) => {
     setDemo(id);
     try {
-      // If we have a hardcoded token, use it; otherwise get default
-      const finalToken = token || await getDemoReferralToken();
+      let finalToken = "";
+      if (id === 'r2') {
+         // mock an extended token for UI testing
+         finalToken = `REFQR::${token}::${Date.now() + 100000}`;
+      } else {
+         finalToken = await getDemoReferralToken();
+      }
       onScan(finalToken);
     }
     finally { setDemo(null); }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start w-full">
+      <div className="space-y-4 max-w-lg mx-auto w-full">
 
       {/* Mode toggle */}
       <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
@@ -310,6 +316,9 @@ export const QRScanner = ({ onScan, scanning, error, modeContext = 'medcard' }: 
           </div>
         </div>
       )}
+      </div> {/* END LEFT COLLUMN */}
+
+      <div className="space-y-4 max-w-lg mx-auto w-full">
 
       {/* Demo quick access */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
@@ -368,6 +377,7 @@ export const QRScanner = ({ onScan, scanning, error, modeContext = 'medcard' }: 
           )}
         </div>
       </div>
+      </div> {/* END RIGHT COLLUMN */}
 
       <style>{`
         @keyframes scanline {

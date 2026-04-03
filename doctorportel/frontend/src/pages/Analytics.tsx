@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Users, CheckCircle2, DollarSign, Clock, Star, AlertCircle,
   Calendar, Share2, Download, TrendingUp, TrendingDown,
-  Check, Sparkles, AlertTriangle, ChevronDown, X, Activity, Loader2,
+  Check, Sparkles, AlertTriangle, ChevronDown, X, Activity, Loader2, Bot, Play
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getEarnings } from '../services/referralService';
 import type { EarningsSummary, Earning } from '../types/referral';
 import {
@@ -11,92 +12,12 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { cn } from '../layouts/DashboardLayout';
-
-// ── Period-aware mock data ──────────────────────────────────────────────────
+import { getAnalyticsSummary, getPatientGrowth, getRevenueBreakdown, getAIInsights } from '../services/analyticsService';
+import type { AnalyticsSummary, VolumeData, RevenueData, AIInsight } from '../services/analyticsService';
 
 type Period = 'Today' | 'This Week' | 'This Month';
 
-const PERIOD_DATA: Record<Period, {
-  stats: { patients: S; appts: S; cases: S; earnings: S };
-  volumeData: { name: string; current: number; previous: number }[];
-  earningsData: { name: string; Online: number; Offline: number; Emergency: number }[];
-  growthBadge: string;
-}> = {
-  'Today': {
-    stats: {
-      patients: { value: '48',     trend: '6 new today',        positive: true  },
-      appts:    { value: '12',     trend: '3 walk-ins',         positive: true  },
-      cases:    { value: '9',      trend: '2 pending',          positive: false },
-      earnings: { value: '$3,200', trend: '8% vs yesterday',    positive: true  },
-    },
-    volumeData: [
-      { name: '8 am',  current: 4,  previous: 3  },
-      { name: '10 am', current: 8,  previous: 6  },
-      { name: '12 pm', current: 12, previous: 9  },
-      { name: '2 pm',  current: 14, previous: 11 },
-      { name: '4 pm',  current: 10, previous: 8  },
-      { name: '6 pm',  current: 6,  previous: 7  },
-    ],
-    earningsData: [
-      { name: '8–10am',  Online: 400, Offline: 800,  Emergency: 0   },
-      { name: '10–12pm', Online: 600, Offline: 1000, Emergency: 200 },
-      { name: '12–2pm',  Online: 500, Offline: 900,  Emergency: 0   },
-      { name: '2–4pm',   Online: 700, Offline: 800,  Emergency: 300 },
-      { name: '4–6pm',   Online: 300, Offline: 600,  Emergency: 0   },
-    ],
-    growthBadge: 'Growth +8%',
-  },
-  'This Week': {
-    stats: {
-      patients: { value: '312',     trend: '12% from last wk',  positive: true  },
-      appts:    { value: '48',      trend: '8 walk-ins',        positive: true  },
-      cases:    { value: '86',      trend: '3% drop',           positive: false },
-      earnings: { value: '$18,400', trend: '15% increase',      positive: true  },
-    },
-    volumeData: [
-      { name: 'Mon', current: 45, previous: 38 },
-      { name: 'Tue', current: 52, previous: 42 },
-      { name: 'Wed', current: 48, previous: 45 },
-      { name: 'Thu', current: 61, previous: 50 },
-      { name: 'Fri', current: 59, previous: 55 },
-      { name: 'Sat', current: 35, previous: 30 },
-      { name: 'Sun', current: 20, previous: 25 },
-    ],
-    earningsData: [
-      { name: 'Mon', Online: 2000, Offline: 3500, Emergency: 500 },
-      { name: 'Tue', Online: 2200, Offline: 3800, Emergency: 300 },
-      { name: 'Wed', Online: 1800, Offline: 3200, Emergency: 800 },
-      { name: 'Thu', Online: 2500, Offline: 4000, Emergency: 600 },
-      { name: 'Fri', Online: 2300, Offline: 3600, Emergency: 400 },
-      { name: 'Sat', Online: 1200, Offline: 2000, Emergency: 200 },
-      { name: 'Sun', Online: 600,  Offline: 1000, Emergency: 0   },
-    ],
-    growthBadge: 'Growth +15%',
-  },
-  'This Month': {
-    stats: {
-      patients: { value: '1,284',   trend: '12% from last wk',  positive: true  },
-      appts:    { value: '342',     trend: '28 walk-ins',       positive: true  },
-      cases:    { value: '342',     trend: '3% drop',           positive: false },
-      earnings: { value: '$42,500', trend: '18% increase',      positive: true  },
-    },
-    volumeData: [
-      { name: 'Week 1', current: 290, previous: 240 },
-      { name: 'Week 2', current: 320, previous: 280 },
-      { name: 'Week 3', current: 340, previous: 295 },
-      { name: 'Week 4', current: 334, previous: 305 },
-    ],
-    earningsData: [
-      { name: 'Week 1', Online: 8000,  Offline: 14000, Emergency: 2500 },
-      { name: 'Week 2', Online: 9000,  Offline: 15000, Emergency: 1800 },
-      { name: 'Week 3', Online: 10000, Offline: 16000, Emergency: 3200 },
-      { name: 'Week 4', Online: 9500,  Offline: 15500, Emergency: 2800 },
-    ],
-    growthBadge: 'Growth +12%',
-  },
-};
-
-interface S { value: string; trend: string; positive: boolean }
+interface S { value: string | number; trend: string; positive: boolean }
 
 const DISEASE_DISTRIBUTION = [
   { name: 'Diabetes',     value: 35 },
@@ -140,14 +61,87 @@ export default function Analytics() {
   const [exportMsg, setExportMsg] = useState('');
   const printRef = useRef<HTMLDivElement>(null);
 
-  const data = PERIOD_DATA[period];
+  // Backend Data States
+  const [summaryData, setSummaryData] = useState<AnalyticsSummary | null>(null);
+  const [volumeData, setVolumeData] = useState<VolumeData[]>([]);
+  const [growthBadge, setGrowthBadge] = useState('');
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [insightsData, setInsightsData] = useState<AIInsight[]>([]);
+  const [chartsLoading, setChartsLoading] = useState(true);
+  const [aiState, setAiState] = useState<'idle' | 'loading' | 'loaded'>('idle');
 
   const [earningsData, setEarningsData] = useState<EarningsSummary | null>(null);
   const [earningsLoading, setEarningsLoading] = useState(true);
 
+  // Initial data load
   useEffect(() => {
     getEarnings().then(setEarningsData).finally(() => setEarningsLoading(false));
+
+    // Load default period
+    Promise.all([
+      getAnalyticsSummary(period),
+      getPatientGrowth(period),
+      getRevenueBreakdown(period),
+    ])
+    .then(([sumStr, growthData, revData]) => {
+      setSummaryData(sumStr);
+      setVolumeData(growthData as any);
+      setGrowthBadge(period === 'Today' ? 'Growth +8%' : period === 'This Week' ? 'Growth +15%' : 'Growth +12%');
+      setRevenueData(revData as any);
+    })
+    .catch(err => {
+      console.error('Analytics fetch error:', err);
+      setSummaryData({
+        total_patients: { value: '0', trend: '0%', is_positive: true },
+        appointments_today: { value: '0', trend: '0%', is_positive: true },
+        completed_cases: { value: '0', trend: '0%', is_positive: true },
+        monthly_earnings: { value: '$0', trend: '0%', is_positive: true }
+      });
+    })
+    .finally(() => setChartsLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When period changes (after initial load), update data WITHOUT showing loading spinner
+  // This keeps charts mounted so Recharts animates the data transition smoothly
+  useEffect(() => {
+    if (chartsLoading) return; // Skip if still on initial load
+
+    Promise.all([
+      getAnalyticsSummary(period),
+      getPatientGrowth(period),
+      getRevenueBreakdown(period),
+    ])
+    .then(([sumStr, growthData, revData]) => {
+      setSummaryData(sumStr);
+      setVolumeData(growthData as any);
+      setGrowthBadge(period === 'Today' ? 'Growth +8%' : period === 'This Week' ? 'Growth +15%' : 'Growth +12%');
+      setRevenueData(revData as any);
+    })
+    .catch(err => console.error('Analytics period switch error:', err));
+
+    // Reset AI state when period changes
+    setAiState('idle');
+    setInsightsData([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
+
+  const handleGenerateAI = async () => {
+    setAiState('loading');
+    try {
+      const data = await getAIInsights(period);
+      setInsightsData(data);
+      setAiState('loaded');
+    } catch {
+      setInsightsData([{
+        type: 'error' as const,
+        title: 'Connection Issue',
+        description: 'Could not reach the AI service. Please ensure the backend is running and try again.',
+        action: null,
+      }]);
+      setAiState('loaded');
+    }
+  };
 
   const TYPE_COLOR: Record<string, string> = { lab: 'bg-teal-100 text-teal-700', hospital: 'bg-blue-100 text-blue-700', specialist: 'bg-violet-100 text-violet-700' };
 
@@ -257,126 +251,181 @@ export default function Analytics() {
       )}
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-5 mb-8">
-        <StatCard title="Total Patients"    stat={data.stats.patients} icon={Users}        color="text-blue-600"   bg="bg-blue-50"   />
-        <StatCard title="Appts Today"       stat={data.stats.appts}    icon={Clock}        color="text-purple-600" bg="bg-purple-50" />
-        <StatCard title="Completed Cases"   stat={data.stats.cases}    icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard title="Earnings (Month)"  stat={data.stats.earnings} icon={DollarSign}   color="text-amber-600"  bg="bg-amber-50"  />
-      </div>
+      {chartsLoading || !summaryData ? (
+        <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-blue" /></div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-5 mb-8">
+          <StatCard title="Total Patients"    stat={{ value: summaryData.total_patients.value, trend: summaryData.total_patients.trend, positive: summaryData.total_patients.is_positive }} icon={Users}        color="text-blue-600"   bg="bg-blue-50"   />
+          <StatCard title="Appts Today"       stat={{ value: summaryData.appointments_today.value, trend: summaryData.appointments_today.trend, positive: summaryData.appointments_today.is_positive }}    icon={Clock}        color="text-purple-600" bg="bg-purple-50" />
+          <StatCard title="Completed Cases"   stat={{ value: summaryData.completed_cases.value, trend: summaryData.completed_cases.trend, positive: summaryData.completed_cases.is_positive }}    icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+          <StatCard title="Earnings (Month)"  stat={{ value: typeof summaryData.monthly_earnings.value === 'number' ? `$${summaryData.monthly_earnings.value.toLocaleString()}` : summaryData.monthly_earnings.value, trend: summaryData.monthly_earnings.trend, positive: summaryData.monthly_earnings.is_positive }} icon={DollarSign}   color="text-amber-600"  bg="bg-amber-50"  />
+        </div>
+      )}
 
       {/* ── Main grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 mb-8 items-start">
 
         {/* Left: Charts */}
         <div className="lg:col-span-2 space-y-6">
 
           {/* Patient Volume Trends */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow min-h-[350px]">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="text-base font-black text-slate-800">Patient Volume Trends</h3>
                 <p className="text-[13px] text-slate-500 font-medium mt-0.5">Comparing current vs previous period</p>
               </div>
-              <span className="bg-blue-50 text-brand-blue border border-blue-100 text-[11px] font-bold px-2.5 py-1 rounded-lg">{data.growthBadge}</span>
+              {!chartsLoading && <span className="bg-blue-50 text-brand-blue border border-blue-100 text-[11px] font-bold px-2.5 py-1 rounded-lg">{growthBadge}</span>}
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={data.volumeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gCurrent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}    />
-                  </linearGradient>
-                  <linearGradient id="gPrev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#94a3b8" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}   />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.15)', fontSize: 13 }}
-                  labelStyle={{ fontWeight: 700, color: '#1e293b' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
-                <Area type="monotone" name="Current Period" dataKey="current"  stroke="#3b82f6" strokeWidth={2.5} fill="url(#gCurrent)" />
-                <Area type="monotone" name="Previous Period" dataKey="previous" stroke="#94a3b8" strokeWidth={2}   strokeDasharray="5 5" fill="url(#gPrev)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            
+            {chartsLoading ? (
+               <div className="flex justify-center items-center h-[300px]"><Loader2 className="w-8 h-8 animate-spin text-slate-300" /></div>
+            ) : (
+                  <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={volumeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="gCurrent" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}    />
+                        </linearGradient>
+                        <linearGradient id="gPrev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#94a3b8" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}   />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.15)', fontSize: 13 }}
+                        labelStyle={{ fontWeight: 700, color: '#1e293b' }}
+                      />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
+                      <Area type="natural" name="Current Period" dataKey="current"  stroke="#3b82f6" strokeWidth={3} fill="url(#gCurrent)" animationDuration={600} />
+                      <Area type="natural" name="Previous Period" dataKey="previous" stroke="#94a3b8" strokeWidth={2.5} strokeDasharray="5 5" fill="url(#gPrev)" animationDuration={600} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  </div>
+            )}
           </div>
 
           {/* Revenue Breakdown */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow min-h-[350px]">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="text-base font-black text-slate-800">Revenue Breakdown</h3>
                 <p className="text-[13px] text-slate-500 font-medium mt-0.5">Earnings across consultation types</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={270}>
-              <BarChart data={data.earningsData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
-                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.15)', fontSize: 13 }} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
-                <Bar dataKey="Offline"   stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="Online"    stackId="a" fill="#8b5cf6" />
-                <Bar dataKey="Emergency" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            
+            {chartsLoading ? (
+               <div className="flex justify-center items-center h-[270px]"><Loader2 className="w-8 h-8 animate-spin text-slate-300" /></div>
+            ) : (
+                  <div className="h-[270px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
+                      <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.15)', fontSize: 13 }} />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
+                      <Bar dataKey="Offline"   stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} animationDuration={600} />
+                      <Bar dataKey="Online"    stackId="a" fill="#8b5cf6" animationDuration={600} />
+                      <Bar dataKey="Emergency" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} animationDuration={600} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  </div>
+            )}
           </div>
 
         </div>
 
         {/* Right: AI + Extras */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-4">
 
           {/* AI Practice Insights */}
-          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700/50 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700/50 relative overflow-hidden min-h-[340px] flex flex-col">
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-brand-blue rounded-full blur-3xl opacity-20 pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-purple-600 rounded-full blur-3xl opacity-20 pointer-events-none" />
-            <div className="relative z-10">
+            <div className="relative z-10 flex flex-col h-full flex-1">
               <h3 className="flex items-center gap-2 text-base font-black text-white mb-5">
                 <Sparkles className="w-5 h-5 text-blue-400" /> AI Practice Insights
               </h3>
-              <div className="space-y-3">
-                {[
-                  {
-                    icon: TrendingUp, color: 'bg-blue-500/20', iconColor: 'text-blue-300',
-                    title: 'Patient Load Increased',
-                    body: <>Your patient load increased by <strong className="text-white">20%</strong> this week. Most cases are related to Diabetes & Hypertension.</>,
-                  },
-                  {
-                    icon: Clock, color: 'bg-purple-500/20', iconColor: 'text-purple-300',
-                    title: 'Schedule Optimization',
-                    body: <>Spending <strong className="text-white">15% more time</strong> per patient. Add more buffer slots on Mondays to prevent delays.</>,
-                    action: { label: 'Adjust Monday Slots', onClick: () => {} },
-                  },
-                  {
-                    icon: AlertTriangle, color: 'bg-amber-500/20', iconColor: 'text-amber-300',
-                    title: 'Predictive Alert',
-                    body: <>High chance of emergency cases tomorrow due to weather drop. Ensure ER availability.</>,
-                  },
-                ].map(({ icon: Icon, color, iconColor, title, body, action }: any) => (
-                  <div key={title} className="bg-white/8 hover:bg-white/[0.12] backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-colors">
-                    <div className="flex gap-3">
-                      <div className={cn('p-2 rounded-xl h-fit shrink-0', color)}>
-                        <Icon className={cn('w-4 h-4', iconColor)} />
-                      </div>
-                      <div>
-                        <h4 className="text-[13px] font-bold text-slate-100 mb-1">{title}</h4>
-                        <p className="text-[12px] text-slate-400 font-medium leading-relaxed">{body}</p>
-                        {action && (
-                          <button onClick={action.onClick} className="mt-2.5 bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">
-                            {action.label}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              
+              {aiState === 'idle' ? (
+                <div className="flex flex-col items-center justify-center py-4 flex-1 text-center">
+                   <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-4 border border-blue-400/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                     <Bot className="w-7 h-7 text-blue-400" />
+                   </div>
+                   <h4 className="text-[15px] font-bold text-white mb-2">Ready to Analyze</h4>
+                   <p className="text-[12px] text-slate-300 font-medium px-4 mb-6 leading-relaxed">
+                     Generate dynamic AI insights or a 5-day flow report based on your {period.toLowerCase()} records.
+                   </p>
+                   
+                   <div className="w-full space-y-2">
+                     <button onClick={handleGenerateAI} className="w-full relative group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[13px] font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2 overflow-hidden">
+                       <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                       <Sparkles className="w-4 h-4" /> Generate {period} Report
+                     </button>
+                     <button onClick={handleGenerateAI} className="w-full bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-[12px] font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2">
+                       <Play className="w-3.5 h-3.5 text-slate-400" /> Analyze Patient Demographics
+                     </button>
+                   </div>
+                </div>
+              ) : aiState === 'loading' ? (
+                <div className="flex flex-col items-center justify-center py-6 flex-1 min-h-[200px]">
+                   <Loader2 className="w-8 h-8 animate-spin text-blue-400 mb-3" />
+                   <p className="text-[13px] text-slate-300 font-medium text-center">AI is analyzing your {period.toLowerCase()} layout...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {insightsData.map((item, idx) => {
+                    const iconMap: Record<string, any> = { 'trend': TrendingUp, 'schedule': Clock, 'alert': AlertTriangle, 'error': AlertCircle };
+                    const colorMap: Record<string, any> = { 'trend': 'bg-blue-500/20', 'schedule': 'bg-purple-500/20', 'alert': 'bg-amber-500/20', 'error': 'bg-red-500/20' };
+                    const iconColorMap: Record<string, any> = { 'trend': 'text-blue-300', 'schedule': 'text-purple-300', 'alert': 'text-amber-300', 'error': 'text-red-300' };
+
+                    const Icon = iconMap[item.type] || Sparkles;
+                    const color = colorMap[item.type] || 'bg-slate-500/20';
+                    const iconColor = iconColorMap[item.type] || 'text-slate-300';
+
+                    return (
+                      <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
+                        className="bg-white/8 hover:bg-white/[0.12] backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-colors"
+                      >
+                        <div className="flex gap-3">
+                          <div className={cn('p-2 rounded-xl h-fit shrink-0', color)}>
+                            <Icon className={cn('w-4 h-4', iconColor)} />
+                          </div>
+                          <div>
+                            <h4 className="text-[13px] font-bold text-slate-100 mb-1">{item.title}</h4>
+                            <p className="text-[12px] text-slate-400 font-medium leading-relaxed">{item.description}</p>
+                            {item.action && (
+                              <button 
+                                onClick={(e) => {
+                                  e.currentTarget.innerText = "Task Queued!";
+                                  e.currentTarget.classList.add("bg-emerald-500/80", "text-white");
+                                  setTimeout(() => {
+                                    if(e.currentTarget) {
+                                      e.currentTarget.innerText = item.action as string;
+                                      e.currentTarget.classList.remove("bg-emerald-500/80");
+                                    }
+                                  }, 2000);
+                                }}
+                                className="mt-2.5 bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                {item.action}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
