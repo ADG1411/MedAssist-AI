@@ -15,6 +15,7 @@ import PatientCaseFlow from './pages/PatientCaseFlow';
 import QRAccess from './pages/QRAccess';
 import PatientRecordPage from './pages/PatientRecordPage';
 import ReferralPage from './pages/ReferralPage';
+import { ConsultationRoom } from './pages/ConsultationRoom';
 
 function App() {
   return (
@@ -42,6 +43,9 @@ function App() {
         
         {/* Fullscreen Case View - Outside Dashboard Layout so it occupies the full screen */}
         <Route path="/case/:id" element={<TicketCaseView />} />
+        
+        {/* Fullscreen Consultation Room */}
+        <Route path="/consultation/:patientId" element={<ConsultationRoom />} />
       </Routes>
     </BrowserRouter>
   );

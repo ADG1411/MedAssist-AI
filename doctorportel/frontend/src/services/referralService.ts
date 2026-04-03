@@ -137,8 +137,17 @@ export async function createReferral(payload: CreateReferralPayload): Promise<Re
 
 export async function generateReferralQR(referralId: string): Promise<ReferralQRToken> {
   await delay(400);
-  const token = generateReferralToken(referralId);
-  return { id: `qr-${Date.now()}`, referral_id: referralId, token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() };
+  return tryBackend(
+    async () => {
+      const r = await fetch(`${BASE}/referral/generate-qr`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referral_id: referralId }) });
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
+    () => {
+      const token = generateReferralToken(referralId);
+      return { id: `qr-${Date.now()}`, referral_id: referralId, token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() };
+    }
+  );
 }
 
 export async function scanReferralQR(token: string): Promise<{ referral: Referral; ai_insight: AIInsight }> {
@@ -160,14 +169,32 @@ export async function scanReferralQR(token: string): Promise<{ referral: Referra
 
 export async function getReferrals(): Promise<Referral[]> {
   await delay(400);
-  return MOCK_REFERRALS;
+  return tryBackend(
+    async () => {
+      const r = await fetch(`${BASE}/referral/list`);
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
+    () => {
+      return MOCK_REFERRALS;
+    }
+  );
 }
 
 // ── Provider APIs ─────────────────────────────────────────────────────────────
 
 export async function getProviders(type: 'lab' | 'hospital' | 'specialist'): Promise<Provider[]> {
   await delay(500);
-  return MOCK_PROVIDERS.filter(p => p.type === type);
+  return tryBackend(
+    async () => {
+      const r = await fetch(`${BASE}/referral/providers?type=${type}`);
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
+    () => {
+      return MOCK_PROVIDERS.filter(p => p.type === type);
+    }
+  );
 }
 
 // ── Booking APIs ──────────────────────────────────────────────────────────────
@@ -176,7 +203,7 @@ export async function createBooking(payload: CreateBookingPayload): Promise<{ bo
   await delay(900);
   return tryBackend(
     async () => {
-      const r = await fetch(`${BASE}/booking/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const r = await fetch(`${BASE}/referral/booking/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!r.ok) throw new Error();
       return r.json();
     },
@@ -240,20 +267,37 @@ export async function createBooking(payload: CreateBookingPayload): Promise<{ bo
 
 export async function scanTicketQR(token: string): Promise<Ticket> {
   await delay(600);
-  const bookingId = parseBookingToken(token);
-  const ticket = MOCK_TICKETS.find(t => t.booking_id === bookingId);
-  if (!ticket) throw new Error('Ticket not found or already used.');
-  return ticket;
+  return tryBackend(
+    async () => {
+      const r = await fetch(`${BASE}/referral/ticket/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+      if (!r.ok) throw new Error();
+      return r.json();
+    },
+    () => {
+      const bookingId = parseBookingToken(token);
+      const ticket = MOCK_TICKETS.find(t => t.booking_id === bookingId);
+      if (!ticket) throw new Error('Ticket not found or already used.');
+      return ticket;
+    }
+  );
 }
 
 export async function completeBooking(bookingId: string): Promise<void> {
   await delay(500);
-  const booking = MOCK_BOOKINGS.find(b => b.id === bookingId);
-  if (booking) booking.status = 'completed';
-  const ticket = MOCK_TICKETS.find(t => t.booking_id === bookingId);
-  if (ticket) ticket.status = 'used';
-  const earning = MOCK_EARNINGS.find(e => e.booking_id === bookingId);
-  if (earning) earning.status = 'paid';
+  return tryBackend(
+    async () => {
+      const r = await fetch(`${BASE}/referral/booking/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ booking_id: bookingId }) });
+      if (!r.ok) throw new Error();
+    },
+    () => {
+      const booking = MOCK_BOOKINGS.find(b => b.id === bookingId);
+      if (booking) booking.status = 'completed';
+      const ticket = MOCK_TICKETS.find(t => t.booking_id === bookingId);
+      if (ticket) ticket.status = 'used';
+      const earning = MOCK_EARNINGS.find(e => e.booking_id === bookingId);
+      if (earning) earning.status = 'paid';
+    }
+  );
 }
 
 // ── Earnings APIs ─────────────────────────────────────────────────────────────
@@ -262,7 +306,7 @@ export async function getEarnings(): Promise<EarningsSummary> {
   await delay(500);
   return tryBackend(
     async () => {
-      const r = await fetch(`${BASE}/earnings`);
+      const r = await fetch(`${BASE}/referral/earnings`);
       if (!r.ok) throw new Error();
       return r.json();
     },

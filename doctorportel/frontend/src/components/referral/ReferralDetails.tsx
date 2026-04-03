@@ -1,4 +1,4 @@
-import { User, Stethoscope, Pill, FlaskConical, FileText, Calendar, TestTube, ArrowRight } from 'lucide-react';
+import { User, Stethoscope, FlaskConical, FileText, Calendar, TestTube, ArrowRight } from 'lucide-react';
 import type { Referral } from '../../types/referral';
 import { cn } from '../../layouts/DashboardLayout';
 
@@ -67,23 +67,6 @@ export function ReferralDetails({ referral, onBookLab, onBookHospital, onBookSpe
         </div>
       </div>
 
-      {/* Medicines */}
-      {referral.medicines.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Pill className="w-4 h-4 text-indigo-400" />
-            <p className="text-[12px] font-black text-slate-500 uppercase tracking-wide">Prescribed Medicines</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {referral.medicines.map((med, i) => (
-              <div key={i} className="flex items-center gap-2.5 bg-indigo-50 rounded-xl px-3 py-2.5">
-                <div className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
-                <span className="text-[13px] font-semibold text-indigo-700">{med}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Tests */}
       {referral.tests.length > 0 && (
