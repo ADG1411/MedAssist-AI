@@ -12,9 +12,8 @@ import AIAssistant from './pages/AIAssistant';
 import Analytics from './pages/Analytics';
 import PrescriptionWriter from './pages/PrescriptionWriter';
 import PatientCaseFlow from './pages/PatientCaseFlow';
-import QRAccess from './pages/QRAccess';
 import PatientRecordPage from './pages/PatientRecordPage';
-import ReferralPage from './pages/ReferralPage';
+import ScanPage from './pages/ScanPage';
 import { ConsultationRoom } from './pages/ConsultationRoom';
 
 function App() {
@@ -36,9 +35,8 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="ai" element={<AIAssistant />} />
           <Route path="case" element={<PatientCaseFlow />} />
-          <Route path="medcard" element={<QRAccess />} />
+          <Route path="scan" element={<ScanPage />} />
           <Route path="medcard/record/:patientId" element={<PatientRecordPage />} />
-          <Route path="referral" element={<ReferralPage />} />
         </Route>
         
         {/* Fullscreen Case View - Outside Dashboard Layout so it occupies the full screen */}

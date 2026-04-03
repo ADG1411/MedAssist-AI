@@ -1,9 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Users, CheckCircle2, DollarSign, Clock, Star, AlertCircle,
   Calendar, Share2, Download, TrendingUp, TrendingDown,
-  Check, Sparkles, AlertTriangle, ChevronDown, X,
+  Check, Sparkles, AlertTriangle, ChevronDown, X, Activity, Loader2,
 } from 'lucide-react';
+import { getEarnings } from '../services/referralService';
+import type { EarningsSummary, Earning } from '../types/referral';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
@@ -139,6 +141,15 @@ export default function Analytics() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const data = PERIOD_DATA[period];
+
+  const [earningsData, setEarningsData] = useState<EarningsSummary | null>(null);
+  const [earningsLoading, setEarningsLoading] = useState(true);
+
+  useEffect(() => {
+    getEarnings().then(setEarningsData).finally(() => setEarningsLoading(false));
+  }, []);
+
+  const TYPE_COLOR: Record<string, string> = { lab: 'bg-teal-100 text-teal-700', hospital: 'bg-blue-100 text-blue-700', specialist: 'bg-violet-100 text-violet-700' };
 
   const handleShare = async () => {
     try {
@@ -433,6 +444,72 @@ export default function Analytics() {
 
         </div>
       </div>
+
+      {/* ── REFERRAL EARNINGS ── */}
+      <div className="mt-8">
+        <h2 className="text-xl font-black text-slate-800 mb-6">Referral Earnings</h2>
+        
+        {earningsLoading ? (
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+        ) : !earningsData ? null : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
+            <div className="lg:col-span-2 grid grid-cols-2 gap-4 xl:gap-5 h-fit">
+              {[
+                { label: 'Total Bookings',     value: earningsData.total_bookings.toString(),         icon: Activity,    color: 'text-blue-600',   bg: 'bg-blue-50' },
+                { label: 'Total Revenue',      value: `₹${earningsData.total_revenue.toLocaleString('en-IN')}`, icon: DollarSign,  color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                { label: 'Total Commission',   value: `₹${earningsData.total_commission.toLocaleString('en-IN')}`, icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                { label: 'Pending Payout',     value: `₹${earningsData.pending_commission.toLocaleString('en-IN')}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
+              ].map((s, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-all group">
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-sm', s.bg)}>
+                    <s.icon className={cn('w-5 h-5', s.color)} />
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 tracking-tight">{s.value}</p>
+                  <p className="text-[12px] uppercase tracking-widest text-slate-400 font-bold mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden h-full flex flex-col">
+                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                  <p className="text-[14px] font-black text-slate-800">Recent Transactions</p>
+                </div>
+                {earningsData.recent.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-3">
+                      <DollarSign className="w-6 h-6 opacity-40" />
+                    </div>
+                    <p className="font-bold text-[13px] text-slate-500">No earnings yet</p>
+                    <p className="text-[11px] mt-0.5">Create referrals to start earning</p>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto max-h-[300px] custom-scrollbar">
+                    {earningsData.recent.map((e: Earning) => (
+                      <div key={e.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                        <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-[11px] font-black', TYPE_COLOR[e.booking_type] ?? 'bg-slate-100 text-slate-600')}>
+                          {e.booking_type[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-black text-slate-800 truncate">{e.patient_name}</p>
+                          <p className="text-[11px] font-semibold text-slate-400 truncate">{e.provider_name}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[14px] font-black text-emerald-600">+₹{e.commission_amount.toFixed(0)}</p>
+                          <span className={cn('inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider mt-0.5', e.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600')}>
+                            {e.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
