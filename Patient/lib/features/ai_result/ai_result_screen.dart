@@ -9,6 +9,7 @@ import '../../shared/widgets/section_header.dart';
 import '../../shared/widgets/app_section_card.dart';
 import '../../shared/widgets/ai_mode_badge.dart';
 import '../symptom_chat/providers/chat_provider.dart';
+import '../doctors/providers/doctor_provider.dart';
 
 class AiResultScreen extends ConsumerWidget {
   const AiResultScreen({super.key});
@@ -420,7 +421,21 @@ class AiResultScreen extends ConsumerWidget {
               AppButton(
                 text: 'Find $specialization',
                 icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: () => context.push('/doctors?specialization=$specialization'),
+                onPressed: () {
+                  // Normalize specialty slightly if needed
+                  String filterSpec = specialization;
+                  if (filterSpec.toLowerCase().contains('orthopedic') || filterSpec.toLowerCase().contains('orthopaedic')) {
+                    filterSpec = 'Orthopedic';
+                  } else if (filterSpec.toLowerCase().contains('general')) {
+                    filterSpec = 'General Practice';
+                  }
+
+                  // 1. Set the filter locally so the doctors screen shows it
+                  ref.read(doctorFilterProvider.notifier).setFilter(filterSpec);
+                  
+                  // 2. Properly navigate to the bottom Nav tab using .go() to avoid key conflicts
+                  context.go('/doctors');
+                },
               ),
               const SizedBox(height: 16),
             ],

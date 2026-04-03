@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/repositories/rag_repository.dart';
 import '../symptom_chat/providers/chat_provider.dart';
+import '../doctors/providers/doctor_provider.dart';
 import '../../shared/widgets/base_screen.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/ai_mode_badge.dart';
@@ -302,7 +303,16 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
           const SizedBox(height: 48),
           AppButton(
              text: 'Connect with $specialization',
-             onPressed: () => context.push('/doctors?specialization=$specialization'),
+             onPressed: () {
+                String filterSpec = specialization;
+                if (filterSpec.toLowerCase().contains('orthopedic') || filterSpec.toLowerCase().contains('orthopaedic')) {
+                  filterSpec = 'Orthopedic';
+                } else if (filterSpec.toLowerCase().contains('general')) {
+                  filterSpec = 'General Practice';
+                }
+                ref.read(doctorFilterProvider.notifier).setFilter(filterSpec);
+                context.go('/doctors');
+             },
           ),
           const SizedBox(height: 16),
           AppButton(

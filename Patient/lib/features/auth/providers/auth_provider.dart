@@ -29,11 +29,6 @@ class AuthNotifier extends Notifier<Map<String, dynamic>?> {
           'id': user.id,
           'email': user.email,
           'name': user.userMetadata?['full_name'] ?? 'User',
-          'age': user.userMetadata?['age'],
-          'gender': user.userMetadata?['gender'],
-          'bloodGroup': user.userMetadata?['blood_group'],
-          'allergies': user.userMetadata?['allergies'] ?? [],
-          'chronicConditions': user.userMetadata?['chronic_conditions'] ?? [],
         };
       } else {
         state = null;
@@ -60,11 +55,6 @@ class AuthNotifier extends Notifier<Map<String, dynamic>?> {
         'id': 'mocked_uuid',
         'email': email,
         'name': metadata['full_name'],
-        'age': metadata['age'],
-        'gender': metadata['gender'],
-        'bloodGroup': metadata['blood_group'],
-        'allergies': metadata['allergies'],
-        'chronicConditions': metadata['chronic_conditions'],
       };
     }
     return success;

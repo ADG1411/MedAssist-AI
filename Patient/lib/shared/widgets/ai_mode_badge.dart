@@ -31,7 +31,7 @@ class AiModeBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isFast ? 'FAST AI' : 'DEEP CHECK',
+            isFast ? 'MED AI' : 'DEEP CHECK',
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,

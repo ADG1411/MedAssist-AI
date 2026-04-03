@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS public.bookings CASCADE;
 DROP TABLE IF EXISTS public.doctors CASCADE;
 
 CREATE TABLE public.doctors (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id), -- If a doctor eventually logs in
     name TEXT NOT NULL,
     specialty TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE public.doctors (
 
 -- 2. Create Bookings Table
 CREATE TABLE IF NOT EXISTS public.bookings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id UUID REFERENCES auth.users(id) NOT NULL,
     doctor_id UUID REFERENCES public.doctors(id) NOT NULL,
     slot_time TEXT NOT NULL,
@@ -62,7 +62,7 @@ VALUES
 DROP TABLE IF EXISTS public.hospitals CASCADE;
 
 CREATE TABLE public.hospitals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     distance TEXT,
@@ -92,7 +92,7 @@ VALUES
 DROP TABLE IF EXISTS public.care_plans CASCADE;
 
 CREATE TABLE public.care_plans (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     booking_id UUID REFERENCES public.bookings(id),
     patient_id UUID REFERENCES auth.users(id) NOT NULL,
     doctor_id UUID REFERENCES public.doctors(id),
