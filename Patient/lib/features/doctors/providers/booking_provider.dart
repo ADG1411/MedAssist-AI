@@ -134,7 +134,7 @@ class BookingNotifier extends Notifier<BookingState> {
         body: jsonEncode({
           'amount': amount * 100, // paise
           'currency': 'INR',
-          'receipt': 'booking_$bookingId',
+          'receipt': 'bk_${bookingId.substring(0, 8)}',
           'notes': {
             'booking_id': bookingId,
             'doctor_id': doctorId,
