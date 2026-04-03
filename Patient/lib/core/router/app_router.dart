@@ -24,6 +24,7 @@ import '../../features/nutrition/barcode_scanner_screen.dart';
 import '../../features/nutrition/nutrition_history_screen.dart';
 import '../../features/nutrition/nutrition_ai_screen.dart';
 import '../../features/nutrition/activity_search_screen.dart';
+import '../../features/nutrition/food_image_recognition_screen.dart';
 import '../../features/monitoring/monitoring_screen.dart';
 import '../../features/monitoring/recovery_report_screen.dart';
 import '../../features/monitoring/daily_followup_screen.dart';
@@ -139,6 +140,13 @@ class AppRouter {
       GoRoute(
         path: '/nutrition/activity-search',
         pageBuilder: (context, state) => _slideBTT(const ActivitySearchScreen(), state.pageKey),
+      ),
+      GoRoute(
+        path: '/nutrition/image-scan',
+        pageBuilder: (context, state) => _slideBTT(
+          FoodImageRecognitionScreen(initialMealType: state.extra as dynamic),
+          state.pageKey,
+        ),
       ),
       GoRoute(
         path: '/nutrition/food-detail',

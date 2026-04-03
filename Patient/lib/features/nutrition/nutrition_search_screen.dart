@@ -117,6 +117,20 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
+                // Image scan button
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.camera_alt, color: Colors.white),
+                    tooltip: 'Scan Food Photo',
+                    onPressed: () => context.push('/nutrition/image-scan',
+                        extra: widget.initialMealType),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // Barcode button
                 Container(
                   decoration: BoxDecoration(

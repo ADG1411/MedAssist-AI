@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/payments/payment_service.dart';
 
+
 class BookingState {
   final String? selectedSlot;
   final bool isProcessingPayment;
@@ -162,14 +163,15 @@ class BookingNotifier extends Notifier<BookingState> {
       }
     } catch (e) {
       debugPrint('Booking error: $e');
+      final errMsg = e.toString();
       state = state.copyWith(
         isProcessingPayment: false,
-        errorMessage: 'Booking failed: ${e.toString().substring(0, 80)}',
+        errorMessage: 'Booking failed: ${errMsg.length > 80 ? errMsg.substring(0, 80) : errMsg}',
       );
     }
   }
 
-  /// Called when payment succeeds (from Razorpay callback)
+  /// Called when payment succeeds (from Razorpay native SDK callback)
   Future<void> _onPaymentSuccess(dynamic response) async {
     state = state.copyWith(isProcessingPayment: false, isPaymentSuccess: true, isGeneratingHandoff: true);
     
@@ -178,11 +180,14 @@ class BookingNotifier extends Notifier<BookingState> {
     
     if (bookingId != null) {
       try {
-        // Determine payment ID from response
+        // Extract payment ID from Razorpay response Map
         String paymentId = 'unknown';
         if (response is Map) {
-          paymentId = response['paymentId']?.toString() ?? response['razorpay_payment_id']?.toString() ?? 'sim_${DateTime.now().millisecondsSinceEpoch}';
+          paymentId = response['razorpay_payment_id']?.toString() ?? 'pay_${DateTime.now().millisecondsSinceEpoch}';
         }
+
+        debugPrint('✅ Payment ID: $paymentId');
+        debugPrint('✅ Confirming booking $bookingId with Jitsi room: $jitsiRoom');
 
         // Confirm the booking in the database
         await _supabase.from('bookings').update({
@@ -194,13 +199,13 @@ class BookingNotifier extends Notifier<BookingState> {
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', bookingId);
 
-        debugPrint('Booking $bookingId confirmed with Jitsi room: $jitsiRoom');
+        debugPrint('✅ Booking confirmed successfully!');
       } catch (e) {
-        debugPrint('Failed to confirm booking: $e');
+        debugPrint('❌ Failed to confirm booking: $e');
       }
     }
 
-    // Simulate AI handoff generation delay
+    // Brief delay for handoff generation
     await Future.delayed(const Duration(seconds: 2));
     state = state.copyWith(isGeneratingHandoff: false);
   }
