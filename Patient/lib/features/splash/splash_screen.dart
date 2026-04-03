@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,38 +11,72 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _pathAnim;
-  late Animation<double> _fadeAnim;
-  late Animation<double> _scaleAnim;
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _mainController;
+  late AnimationController _pulseController;
+  late Animation<double> _logoScale;
+  late Animation<double> _logoFade;
+  late Animation<double> _ecgPath;
+  late Animation<double> _textFade;
+  late Animation<double> _bottomFade;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    // Immersive status bar
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ));
+
+    _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2200),
     );
 
-    _pathAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+
+    _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack)),
     );
 
-    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0)),
-    );
-    
-    _scaleAnim = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.0, 0.35, curve: Curves.easeOut)),
     );
 
-    _controller.forward();
+    _ecgPath = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.25, 0.75, curve: Curves.easeInOut)),
+    );
 
-    // Navigate after 2500ms
-    Future.delayed(const Duration(milliseconds: AppConstants.longMockDelayMs), () {
+    _textFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.4, 0.7, curve: Curves.easeOut)),
+    );
+
+    _bottomFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _mainController,
+          curve: const Interval(0.6, 1.0, curve: Curves.easeOut)),
+    );
+
+    _mainController.forward();
+
+    // Navigate after delay (preserved)
+    Future.delayed(
+        const Duration(milliseconds: AppConstants.longMockDelayMs), () {
       if (mounted) {
-        // We'll mock that it's the first launch
         context.go('/onboarding');
       }
     });
@@ -50,62 +84,232 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _controller.dispose();
+    _mainController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Changed to white to fit most multi-colored brand SVGs
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0F172A),
+              Color(0xFF1E293B),
+              Color(0xFF0F172A),
+            ],
+          ),
+        ),
+        child: Stack(
           children: [
-            // Animated Real Logo
-            ScaleTransition(
-              scale: _scaleAnim,
-              child: SvgPicture.asset(
-                'assets/images/logo.svg',
-                width: 140,
-                height: 140,
+            // Subtle radial glow behind logo
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, _) {
+                  return Center(
+                    child: Container(
+                      width: 280 + (_pulseController.value * 40),
+                      height: 280 + (_pulseController.value * 40),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF3B82F6)
+                                .withValues(alpha: 0.06 + _pulseController.value * 0.04),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              AppConstants.appName,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 48),
-            // Animated ECG Line
-            AnimatedBuilder(
-              animation: _pathAnim,
-              builder: (context, _) {
-                return SizedBox(
-                  width: 200,
-                  height: 60,
-                  child: CustomPaint(
-                    painter: _EcgPainter(_pathAnim.value),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 32),
-            // Fading Text
-            AnimatedBuilder(
-              animation: _fadeAnim,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _fadeAnim.value,
-                  child: child,
-                );
-              },
-              child: const Text(
-                'Loading your health data...',
-                style: TextStyle(color: AppColors.textSecondary),
+
+            // Main content
+            SafeArea(
+              child: AnimatedBuilder(
+                animation: _mainController,
+                builder: (context, _) {
+                  return Column(
+                    children: [
+                      const Spacer(flex: 3),
+
+                      // Logo with scale + fade + glow
+                      Opacity(
+                        opacity: _logoFade.value,
+                        child: Transform.scale(
+                          scale: _logoScale.value,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF3B82F6)
+                                      .withValues(alpha: 0.20),
+                                  blurRadius: 32,
+                                  spreadRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: SvgPicture.asset(
+                                'assets/images/logo.svg',
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // App name
+                      Opacity(
+                        opacity: _textFade.value,
+                        child: Text(
+                          AppConstants.appName,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // Tagline
+                      Opacity(
+                        opacity: _textFade.value,
+                        child: Text(
+                          'Your AI-Powered Health Companion',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.45),
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // ECG heartbeat line
+                      SizedBox(
+                        width: 220,
+                        height: 50,
+                        child: CustomPaint(
+                          painter: _EcgPainter(_ecgPath.value),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Loading text
+                      Opacity(
+                        opacity: _bottomFade.value,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color:
+                                    Colors.white.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Initializing health engine…',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color:
+                                    Colors.white.withValues(alpha: 0.35),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const Spacer(flex: 3),
+
+                      // Bottom version + AI badge
+                      Opacity(
+                        opacity: _bottomFade.value,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF6366F1)
+                                        .withValues(alpha: 0.20),
+                                    const Color(0xFF3B82F6)
+                                        .withValues(alpha: 0.20),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: const Color(0xFF6366F1)
+                                        .withValues(alpha: 0.20),
+                                    width: 0.6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome,
+                                      size: 11,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.60)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Powered by Clinical AI',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.50),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'v2.0.0',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color:
+                                    Colors.white.withValues(alpha: 0.18),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -115,6 +319,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 }
 
+// ── ECG Heartbeat Painter ─────────────────────────────────────────────────
+
 class _EcgPainter extends CustomPainter {
   final double progress;
 
@@ -122,36 +328,48 @@ class _EcgPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.6)
-      ..strokeWidth = 3.0
+    final h = size.height;
+    final w = size.width;
+
+    // Glow line
+    final glowPaint = Paint()
+      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.15)
+      ..strokeWidth = 6.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    var path = Path();
-    double h = size.height;
-    double w = size.width;
+    // Main line
+    final mainPaint = Paint()
+      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.70)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    path.moveTo(0, h / 2);
-    path.lineTo(w * 0.2, h / 2);
-    path.lineTo(w * 0.3, h * 0.2);
-    path.lineTo(w * 0.4, h * 0.8);
-    path.lineTo(w * 0.5, h / 2);
-    path.lineTo(w * 0.6, h / 2);
-    path.lineTo(w * 0.7, h * 0.4);
-    path.lineTo(w * 0.8, h / 2);
-    path.lineTo(w, h / 2);
+    final path = Path()
+      ..moveTo(0, h * 0.5)
+      ..lineTo(w * 0.15, h * 0.5)
+      ..lineTo(w * 0.22, h * 0.5)
+      ..lineTo(w * 0.28, h * 0.15)
+      ..lineTo(w * 0.35, h * 0.85)
+      ..lineTo(w * 0.42, h * 0.30)
+      ..lineTo(w * 0.48, h * 0.5)
+      ..lineTo(w * 0.58, h * 0.5)
+      ..lineTo(w * 0.63, h * 0.38)
+      ..lineTo(w * 0.68, h * 0.62)
+      ..lineTo(w * 0.73, h * 0.5)
+      ..lineTo(w * 0.85, h * 0.5)
+      ..lineTo(w, h * 0.5);
 
-    // Render path up to progress length using path metrics
     for (var metric in path.computeMetrics()) {
-      var extractPath = metric.extractPath(0.0, metric.length * progress);
-      canvas.drawPath(extractPath, paint);
+      final extractPath =
+          metric.extractPath(0.0, metric.length * progress);
+      canvas.drawPath(extractPath, glowPaint);
+      canvas.drawPath(extractPath, mainPaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _EcgPainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
+  bool shouldRepaint(covariant _EcgPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
