@@ -173,8 +173,15 @@ class AppRouter {
       GoRoute(
         path: '/consultation',
         pageBuilder: (context, state) {
-          final bookingId = state.extra as String? ?? 'democall_000';
-          return _slideBTT(ConsultationScreen(bookingId: bookingId), state.pageKey);
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return _slideBTT(
+            ConsultationScreen(
+              bookingId: extras['bookingId'] as String? ?? 'democall_000',
+              doctorName: extras['doctorName'] as String? ?? 'Doctor',
+              jitsiRoom: extras['jitsiRoom'] as String? ?? 'medassist_default',
+            ),
+            state.pageKey,
+          );
         },
       ),
       GoRoute(

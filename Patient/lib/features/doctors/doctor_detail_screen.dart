@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/base_screen.dart';
+import '../../shared/widgets/app_button.dart';
 import 'providers/booking_provider.dart';
 
 class DoctorDetailScreen extends ConsumerWidget {
@@ -27,7 +28,16 @@ class DoctorDetailScreen extends ConsumerWidget {
             // Doctor Header
             Container(
               padding: const EdgeInsets.all(24),
-              color: AppColors.softBlue.withValues(alpha: 0.3),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.08),
+                    AppColors.softBlue.withValues(alpha: 0.3),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -81,7 +91,7 @@ class DoctorDetailScreen extends ConsumerWidget {
                         return ChoiceChip(
                           label: Text(slot),
                           selected: isSelected,
-                          onSelected: (selected) {
+                          onSelected: bookingState.isPaymentSuccess ? null : (selected) {
                             if (selected) notifier.selectSlot(slot);
                           },
                           selectedColor: AppColors.primary,
@@ -89,6 +99,51 @@ class DoctorDetailScreen extends ConsumerWidget {
                         );
                       }).toList(),
                     ),
+
+                  // Error message
+                  if (bookingState.errorMessage != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(bookingState.errorMessage!, style: const TextStyle(color: AppColors.danger, fontSize: 13))),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Payment success confirmation
+                  if (bookingState.isPaymentSuccess) ...[
+                    const SizedBox(height: 32),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+                          const SizedBox(height: 12),
+                          const Text('Payment Successful!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.success)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Your consultation with ${doctor['name']} is confirmed.\nRoom: ${bookingState.jitsiRoomId ?? "generating..."}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -105,29 +160,35 @@ class DoctorDetailScreen extends ConsumerWidget {
         ),
         child: SafeArea(
           child: bookingState.isPaymentSuccess
-              ? ElevatedButton.icon(
-                  onPressed: bookingState.isGeneratingHandoff 
-                     ? null 
-                     : () => context.go('/dashboard'), // Assuming navigation back to main flow
-                  icon: const Icon(Icons.check_circle),
-                  label: Text(bookingState.isGeneratingHandoff ? 'Generating AI Brief...' : 'Booking Confirmed!'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                  ),
+              ? AppButton(
+                  text: bookingState.isGeneratingHandoff
+                      ? 'Preparing Consultation...'
+                      : '🎥  Join Video Consultation',
+                  onPressed: bookingState.isGeneratingHandoff
+                      ? null
+                      : () => context.push('/consultation', extra: {
+                            'bookingId': bookingState.bookingId ?? 'unknown',
+                            'doctorName': doctor['name'] ?? 'Doctor',
+                            'jitsiRoom': bookingState.jitsiRoomId ?? 'medassist_fallback',
+                          }),
                 )
-              : ElevatedButton.icon(
+              : AppButton(
+                  text: bookingState.isProcessingPayment
+                      ? 'Processing Payment...'
+                      : 'Pay ₹${doctor['consultation_fee']} & Book',
+                  icon: bookingState.isProcessingPayment
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.lock_outline, color: Colors.white),
                   onPressed: bookingState.selectedSlot == null || bookingState.isProcessingPayment
                       ? null
-                      : () => notifier.initiatePayment(doctor['id'], doctor['consultation_fee']),
-                  icon: bookingState.isProcessingPayment ? const SizedBox.shrink() : const Icon(Icons.lock_outline),
-                  label: bookingState.isProcessingPayment
-                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('Pay ₹${doctor['consultation_fee']} & Book'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 56),
-                  ),
+                      : () => notifier.initiatePayment(
+                            doctor['id'],
+                            doctor['consultation_fee'] is int
+                                ? doctor['consultation_fee']
+                                : (doctor['consultation_fee'] as num).toInt(),
+                            doctorName: doctor['name'],
+                            doctorSpecialty: doctor['specialty'],
+                          ),
                 ),
         ),
       ),

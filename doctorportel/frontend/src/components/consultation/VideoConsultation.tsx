@@ -4,25 +4,30 @@ import { cn } from '../../layouts/DashboardLayout';
 
 interface Props {
   patientName: string;
+  jitsiRoom?: string | null;
+  onCallEnd?: () => void;
 }
 
-export function VideoConsultation({ patientName }: Props) {
+export function VideoConsultation({ patientName, jitsiRoom, onCallEnd }: Props) {
   const [callState, setCallState] = useState<'waiting' | 'joining' | 'connected' | 'ended'>('joining');
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [duration, setDuration] = useState(0);
 
-  // Mock progression
+  const hasJitsiRoom = jitsiRoom && jitsiRoom.length > 0;
+
   useEffect(() => {
     if (callState === 'joining') {
-      const t = setTimeout(() => setCallState('connected'), 3000);
+      // If we have a real Jitsi room, connect immediately
+      const delay = hasJitsiRoom ? 1000 : 3000;
+      const t = setTimeout(() => setCallState('connected'), delay);
       return () => clearTimeout(t);
     }
     if (callState === 'connected') {
       const interval = setInterval(() => setDuration(d => d + 1), 1000);
       return () => clearInterval(interval);
     }
-  }, [callState]);
+  }, [callState, hasJitsiRoom]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
@@ -30,7 +35,10 @@ export function VideoConsultation({ patientName }: Props) {
     return `${m}:${s}`;
   };
 
-  const endCall = () => setCallState('ended');
+  const endCall = () => {
+    setCallState('ended');
+    onCallEnd?.();
+  };
 
   return (
     <div className="h-full flex flex-col bg-slate-900 relative overflow-hidden">
@@ -42,6 +50,11 @@ export function VideoConsultation({ patientName }: Props) {
           <span className="text-[12px] font-bold tracking-widest uppercase">
             {callState === 'connected' ? formatTime(duration) : callState === 'joining' ? 'Connecting...' : 'Call Ended'}
           </span>
+          {hasJitsiRoom && callState === 'connected' && (
+            <span className="ml-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-lg">
+              JITSI LIVE
+            </span>
+          )}
         </div>
         <button className="bg-white/10 hover:bg-white/20 text-white rounded-xl p-2 transition-colors border border-white/10">
           <Focus className="w-4 h-4" />
@@ -53,34 +66,47 @@ export function VideoConsultation({ patientName }: Props) {
         {callState === 'joining' && (
           <div className="flex flex-col items-center gap-4 text-white/50">
             <div className="w-16 h-16 rounded-full border-2 border-slate-700 border-t-indigo-500 animate-spin" />
-            <p className="text-sm font-bold tracking-widest uppercase animate-pulse">Waiting for {patientName}</p>
+            <p className="text-sm font-bold tracking-widest uppercase animate-pulse">
+              {hasJitsiRoom ? `Connecting to ${jitsiRoom}...` : `Waiting for ${patientName}`}
+            </p>
           </div>
         )}
 
         {callState === 'connected' && (
           <>
-            {/* Mock Patient Video stream */}
+            {/* Real Jitsi iframe or mock video */}
             <div className="absolute inset-0 bg-slate-800">
-              <img 
-                src="https://images.unsplash.com/photo-1544723795-3cg2aa19747?auto=format&fit=crop&q=80&w=800" 
-                alt="Patient Video"
-                className="w-full h-full object-cover opacity-80"
-              />
-            </div>
-            
-            {/* My Video PiP */}
-            <div className="absolute bottom-6 right-6 w-32 md:w-48 aspect-[3/4] bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden shadow-2xl z-10 transition-all hover:scale-105 cursor-pointer">
-               <img 
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300"
-                alt="My Video"
-                className={cn("w-full h-full object-cover", !camOn && "hidden")}
-              />
-              {!camOn && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white/30">
-                  <VideoOff className="w-8 h-8" />
-                </div>
+              {hasJitsiRoom ? (
+                <iframe
+                  src={`https://meet.jit.si/${jitsiRoom}#config.startWithAudioMuted=${!micOn}&config.startWithVideoMuted=${!camOn}&userInfo.displayName=Doctor%20(MedAssist)`}
+                  allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  title="Video Consultation"
+                />
+              ) : (
+                <img 
+                  src="https://images.unsplash.com/photo-1544723795-3cg2aa19747?auto=format&fit=crop&q=80&w=800" 
+                  alt="Patient Video"
+                  className="w-full h-full object-cover opacity-80"
+                />
               )}
             </div>
+            
+            {/* My Video PiP (only show when no Jitsi — Jitsi handles its own PiP) */}
+            {!hasJitsiRoom && (
+              <div className="absolute bottom-6 right-6 w-32 md:w-48 aspect-[3/4] bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden shadow-2xl z-10 transition-all hover:scale-105 cursor-pointer">
+                <img 
+                  src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300"
+                  alt="My Video"
+                  className={cn("w-full h-full object-cover", !camOn && "hidden")}
+                />
+                {!camOn && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white/30">
+                    <VideoOff className="w-8 h-8" />
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -89,6 +115,9 @@ export function VideoConsultation({ patientName }: Props) {
             <PhoneOff className="w-12 h-12 mb-2" />
             <p className="text-xl font-bold tracking-widest uppercase">Consultation Ended</p>
             <p className="text-sm">Duration: {formatTime(duration)}</p>
+            {hasJitsiRoom && (
+              <p className="text-xs text-slate-500 mt-2">Room: {jitsiRoom}</p>
+            )}
           </div>
         )}
       </div>

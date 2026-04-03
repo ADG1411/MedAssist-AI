@@ -24,6 +24,7 @@ class _PostConsultScreenState extends ConsumerState<PostConsultScreen> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
+        // Save care plan
         await Supabase.instance.client.from('care_plans').insert({
           'patient_id': userId,
           'rating': _rating,
@@ -34,6 +35,14 @@ class _PostConsultScreenState extends ConsumerState<PostConsultScreen> {
           'follow_up_date': DateTime.now().add(const Duration(days: 7)).toIso8601String().split('T')[0],
           'notes': 'Auto-generated after consultation ${widget.bookingId}',
         });
+
+        // Mark booking as completed
+        if (widget.bookingId != 'democall_000') {
+          await Supabase.instance.client.from('bookings').update({
+            'status': 'completed',
+            'updated_at': DateTime.now().toIso8601String(),
+          }).eq('id', widget.bookingId);
+        }
       }
     } catch (e) {
       debugPrint('Failed to save care plan: $e');
