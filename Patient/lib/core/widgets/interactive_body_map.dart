@@ -147,33 +147,32 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Dot indicator
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: isSelected ? 18 : (isHovered ? 14 : 8),
-                                height: isSelected ? 18 : (isHovered ? 14 : 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? widget.highlightColor
-                                      : (isHovered
-                                          ? widget.highlightColor.withOpacity(0.7)
-                                          : widget.highlightColor.withOpacity(0.25)),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected ? Colors.white : Colors.transparent,
-                                    width: isSelected ? 2.5 : 0,
+                              // Dot indicator — only visible when selected or hovered
+                              if (isSelected || isHovered)
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: isSelected ? 18 : 14,
+                                  height: isSelected ? 18 : 14,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? widget.highlightColor
+                                        : widget.highlightColor.withOpacity(0.7),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected ? Colors.white : Colors.transparent,
+                                      width: isSelected ? 2.5 : 0,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: widget.highlightColor.withOpacity(0.5),
+                                              blurRadius: 10,
+                                              spreadRadius: 3,
+                                            )
+                                          ]
+                                        : null,
                                   ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: widget.highlightColor.withOpacity(0.5),
-                                            blurRadius: 10,
-                                            spreadRadius: 3,
-                                          )
-                                        ]
-                                      : null,
                                 ),
-                              ),
                               // Label (only shown on select / hover)
                               if (isSelected || isHovered)
                                 Padding(
