@@ -3,36 +3,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../models/intake_entry.dart';
 
-/// Meal identity colors and metadata.
-extension MealTypeTheme on MealType {
-  Color get color {
-    switch (this) {
-      case MealType.breakfast: return const Color(0xFFF97316);
-      case MealType.lunch:     return const Color(0xFF0EA5E9);
-      case MealType.dinner:    return const Color(0xFF8B5CF6);
-      case MealType.snack:     return const Color(0xFF10B981);
-    }
-  }
-
-  String get emoji {
-    switch (this) {
-      case MealType.breakfast: return '🌅';
-      case MealType.lunch:     return '☀️';
-      case MealType.dinner:    return '🌙';
-      case MealType.snack:     return '🍎';
-    }
-  }
-
-  String get timeRange {
-    switch (this) {
-      case MealType.breakfast: return '7:00 – 9:00 AM';
-      case MealType.lunch:     return '12:00 – 2:00 PM';
-      case MealType.dinner:    return '7:00 – 9:00 PM';
-      case MealType.snack:     return 'Anytime';
-    }
-  }
-}
-
 class MealTimelineCard extends StatelessWidget {
   final MealType mealType;
   final List<IntakeEntry> entries;

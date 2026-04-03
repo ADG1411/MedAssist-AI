@@ -26,6 +26,33 @@ extension MealTypeExt on MealType {
 
   String get dbValue => name; // 'breakfast', 'lunch', 'dinner', 'snack'
 
+  Color get color {
+    switch (this) {
+      case MealType.breakfast: return const Color(0xFFF97316);
+      case MealType.lunch:     return const Color(0xFF0EA5E9);
+      case MealType.dinner:    return const Color(0xFF8B5CF6);
+      case MealType.snack:     return const Color(0xFF10B981);
+    }
+  }
+
+  String get emoji {
+    switch (this) {
+      case MealType.breakfast: return '🌅';
+      case MealType.lunch:     return '☀️';
+      case MealType.dinner:    return '🌙';
+      case MealType.snack:     return '🍎';
+    }
+  }
+
+  String get timeRange {
+    switch (this) {
+      case MealType.breakfast: return '7:00 – 9:00 AM';
+      case MealType.lunch:     return '12:00 – 2:00 PM';
+      case MealType.dinner:    return '7:00 – 9:00 PM';
+      case MealType.snack:     return 'Anytime';
+    }
+  }
+
   static MealType fromString(String? s) {
     switch (s?.toLowerCase()) {
       case 'breakfast': return MealType.breakfast;

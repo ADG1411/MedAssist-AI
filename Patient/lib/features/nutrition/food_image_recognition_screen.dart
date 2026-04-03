@@ -1,10 +1,11 @@
 /// Food Image Recognition Screen — FatSecret AI
 /// Pick from camera or gallery → animated scan → results with nutrition
+import 'dart:ui';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_colors.dart';
 import 'models/intake_entry.dart';
 import 'services/fatsecret_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -134,34 +135,113 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1117),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.restaurant_menu, size: 20, color: Color(0xFF58D68D)),
-            SizedBox(width: 8),
-            Text('Food Scanner', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-          ],
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      body: Stack(
         children: [
-          // Image preview area
-          Expanded(
-            flex: _result != null ? 2 : 3,
-            child: _buildImageArea(),
+          // Dark immersive background for scanner feel
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0D1117), Color(0xFF161B22)],
+              ),
+            ),
           ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // ── Glass header ────────────────────────────────────────
+                ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => context.pop(),
+                            child: Container(
+                              width: 36, height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.10),
+                                border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    width: 0.8),
+                              ),
+                              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                                  size: 14, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('AI Food Scanner',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                        letterSpacing: -0.3)),
+                                Text(
+                                  widget.initialMealType != null
+                                      ? 'Adding to ${widget.initialMealType!.label}'
+                                      : 'Photo → instant nutrition',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white.withValues(alpha: 0.50)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.auto_awesome,
+                                    size: 10, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text('AI Powered',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
 
-          // Results area
-          if (_result != null) Expanded(flex: 3, child: _buildResults()),
+                // ── Image preview ────────────────────────────────────────
+                Expanded(
+                  flex: _result != null ? 2 : 3,
+                  child: _buildImageArea(),
+                ),
 
-          // Bottom action buttons (when no result)
-          if (_result == null && !_isScanning) _buildBottomActions(),
+                // ── Results ──────────────────────────────────────────────
+                if (_result != null) Expanded(flex: 3, child: _buildResults()),
+
+                // ── Bottom actions ────────────────────────────────────────
+                if (_result == null && !_isScanning) _buildBottomActions(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -291,41 +371,81 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Widget _buildPlaceholder() {
     return Container(
-      color: const Color(0xFF161B22),
+      color: Colors.transparent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 90,
-            height: 90,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF58D68D).withValues(alpha: 0.2),
-                  const Color(0xFF3498DB).withValues(alpha: 0.2),
+                  Color(0xFF58D68D),
+                  Color(0xFF3498DB),
                 ],
               ),
-              border: Border.all(color: const Color(0xFF58D68D).withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF58D68D).withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
-            child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF58D68D), size: 40),
+            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 44),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           const Text(
-            'Take a photo of your food',
-            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+            'Point camera at your food',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3),
           ),
           const SizedBox(height: 8),
           Text(
-            'Our AI will identify foods and calculate nutrition',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+            'AI detects food and calculates full nutrition instantly',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.50), fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+          // Feature pills
+          Wrap(
+            spacing: 8, runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _FeaturePill('🍚 Indian foods'),
+              _FeaturePill('📦 Packaged items'),
+              _FeaturePill('🥗 Mixed dishes'),
+              _FeaturePill('🏪 Restaurant food'),
+            ],
           ),
         ],
       ),
     );
   }
+
+  Widget _FeaturePill(String text) => Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12), width: 0.7),
+        ),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.70),
+                fontWeight: FontWeight.w500)),
+      );
 
   Widget _buildScanOverlay() {
     return AnimatedBuilder(
@@ -342,63 +462,68 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
   }
 
   Widget _buildBottomActions() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              20, 16, 20, 20 + MediaQuery.paddingOf(context).bottom),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.40),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08), width: 0.7),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Gallery
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.photo_library_outlined,
-                  label: 'Gallery',
-                  color: const Color(0xFF3498DB),
-                  onTap: () => _pickImage(fromCamera: false),
+              Container(
+                width: 38, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 16),
-              // Camera
-              Expanded(
-                child: _ActionButton(
-                  icon: Icons.camera_alt_outlined,
-                  label: 'Camera',
-                  color: const Color(0xFF58D68D),
-                  onTap: () => _pickImage(fromCamera: true),
-                ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      color: const Color(0xFF3498DB),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _pickImage(fromCamera: false);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      color: const Color(0xFF58D68D),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _pickImage(fromCamera: true);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Supports JPG, PNG, WebP  •  AI identifies multiple foods at once',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.30),
+                    fontSize: 10),
               ),
             ],
           ),
-
-          const SizedBox(height: 16),
-          Text(
-            'Supports JPG, PNG, WebP • Max 1MB',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 11),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -410,108 +535,167 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
       position: Tween<Offset>(
         begin: const Offset(0, 1),
         end: Offset.zero,
-      ).animate(CurvedAnimation(parent: _resultSlideController, curve: Curves.easeOutCubic)),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF161B22),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // Handle + title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      ).animate(CurvedAnimation(
+          parent: _resultSlideController, curve: Curves.easeOutCubic)),
+      child: ClipRRect(
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.08), width: 0.7),
+            ),
+            child: Column(
+              children: [
+                // Handle + header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Column(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Container(
+                        width: 38, height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
                         children: [
-                          const Text(
-                            'Foods Detected',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF58D68D)
+                                  .withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFF58D68D)
+                                      .withValues(alpha: 0.30),
+                                  width: 0.7),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.check_circle_rounded,
+                                    size: 12,
+                                    color: Color(0xFF58D68D)),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '${result.foods.length} Foods Detected',
+                                  style: const TextStyle(
+                                      color: Color(0xFF58D68D),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
                             ),
                           ),
+                          const Spacer(),
                           Text(
-                            '${result.foods.length} items • ${result.totalCalories} kcal total',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+                            '${result.totalCalories} kcal total',
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.55),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _pickImage(fromCamera: false);
+                            },
+                            child: Container(
+                              width: 32, height: 32,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.10),
+                              ),
+                              child: const Icon(Icons.refresh_rounded,
+                                  size: 16,
+                                  color: Color(0xFF58D68D)),
+                            ),
                           ),
                         ],
                       ),
-                      // Re-scan button
-                      IconButton(
-                        onPressed: () => _pickImage(fromCamera: false),
-                        icon: const Icon(Icons.refresh, color: Color(0xFF58D68D)),
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFF58D68D).withValues(alpha: 0.1),
-                        ),
-                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            // Macro summary bar
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF58D68D).withValues(alpha: 0.15),
-                    const Color(0xFF3498DB).withValues(alpha: 0.1),
-                  ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF58D68D).withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _MacroChip(label: 'Calories', value: '${result.totalCalories}', unit: 'kcal', color: const Color(0xFFF39C12)),
-                  _MacroChip(label: 'Protein', value: result.totalProtein.toStringAsFixed(1), unit: 'g', color: const Color(0xFF58D68D)),
-                  _MacroChip(label: 'Carbs', value: result.totalCarbs.toStringAsFixed(1), unit: 'g', color: const Color(0xFF3498DB)),
-                  _MacroChip(label: 'Fat', value: result.totalFat.toStringAsFixed(1), unit: 'g', color: const Color(0xFFE74C3C)),
-                ],
-              ),
-            ),
 
-            // Food items list
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                itemCount: result.foods.length,
-                itemBuilder: (context, index) {
-                  final food = result.foods[index];
-                  return _FoodResultCard(
-                    food: food,
-                    onTap: () {
-                      // Navigate to food detail with MealEntity
-                      context.push('/nutrition/food-detail', extra: {
-                        'meal': food.toMealEntity(),
-                        'mealType': widget.initialMealType ?? MealType.snack,
-                      });
+                // Macro strip
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF58D68D).withValues(alpha: 0.12),
+                        const Color(0xFF3498DB).withValues(alpha: 0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: const Color(0xFF58D68D).withValues(alpha: 0.18),
+                        width: 0.7),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _MacroChip(
+                          label: 'Calories',
+                          value: '${result.totalCalories}',
+                          unit: 'kcal',
+                          color: const Color(0xFFF39C12)),
+                      _MacroChip(
+                          label: 'Protein',
+                          value: result.totalProtein.toStringAsFixed(1),
+                          unit: 'g',
+                          color: const Color(0xFF58D68D)),
+                      _MacroChip(
+                          label: 'Carbs',
+                          value: result.totalCarbs.toStringAsFixed(1),
+                          unit: 'g',
+                          color: const Color(0xFF3498DB)),
+                      _MacroChip(
+                          label: 'Fat',
+                          value: result.totalFat.toStringAsFixed(1),
+                          unit: 'g',
+                          color: const Color(0xFFE74C3C)),
+                    ],
+                  ),
+                ),
+
+                // Food cards list
+                Expanded(
+                  child: ListView.builder(
+                    padding:
+                        const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                    itemCount: result.foods.length,
+                    itemBuilder: (context, i) {
+                      final food = result.foods[i];
+                      return _FoodResultCard(
+                        food: food,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          context.push('/nutrition/food-detail', extra: {
+                            'meal': food.toMealEntity(),
+                            'mealType':
+                                widget.initialMealType ?? MealType.snack,
+                          });
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -534,26 +718,37 @@ class _ActionButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
+  Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color.withValues(alpha: 0.20), color.withValues(alpha: 0.10)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border:
+                Border.all(color: color.withValues(alpha: 0.28), width: 0.8),
+            boxShadow: [
+              BoxShadow(
+                  color: color.withValues(alpha: 0.15),
+                  blurRadius: 12),
+            ],
+          ),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 32),
-              const SizedBox(height: 8),
-              Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+              Icon(icon, color: color, size: 30),
+              const SizedBox(height: 7),
+              Text(label,
+                  style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13)),
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _MacroChip extends StatelessWidget {
@@ -591,56 +786,107 @@ class _FoodResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF58D68D).withValues(alpha: 0.2),
-                const Color(0xFF3498DB).withValues(alpha: 0.15),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.restaurant, color: Color(0xFF58D68D), size: 22),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10),
+              width: 0.7),
         ),
-        title: Text(
-          food.name,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-        ),
-        subtitle: Text(
-          '${food.servingDescription} • ${food.totalMetricAmount.toStringAsFixed(0)}${food.metricUnit}',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Row(
           children: [
-            Text(
-              '${food.calories.toInt()} kcal',
-              style: const TextStyle(color: Color(0xFFF39C12), fontWeight: FontWeight.w700, fontSize: 14),
+            Container(
+              width: 46, height: 46,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF58D68D), Color(0xFF3498DB)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.restaurant_rounded,
+                  color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 2),
-            Text(
-              'P:${food.protein.toStringAsFixed(0)} C:${food.carbs.toStringAsFixed(0)} F:${food.fat.toStringAsFixed(0)}',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    food.name,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${food.servingDescription}  •  ${food.totalMetricAmount.toStringAsFixed(0)}${food.metricUnit}',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.45),
+                        fontSize: 11),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _MiniBadge('P ${food.protein.toStringAsFixed(0)}g',
+                          const Color(0xFF58D68D)),
+                      const SizedBox(width: 4),
+                      _MiniBadge('C ${food.carbs.toStringAsFixed(0)}g',
+                          const Color(0xFF3498DB)),
+                      const SizedBox(width: 4),
+                      _MiniBadge('F ${food.fat.toStringAsFixed(0)}g',
+                          const Color(0xFFE74C3C)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${food.calories.toInt()}',
+                  style: const TextStyle(
+                      color: Color(0xFFF39C12),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18),
+                ),
+                Text('kcal',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.40),
+                        fontSize: 10)),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _MiniBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _MiniBadge(this.text, this.color);
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 9, color: color, fontWeight: FontWeight.w700)),
+      );
 }
 
 // ── Scan line painter ────────────────────────────────────────────────────────

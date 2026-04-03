@@ -55,7 +55,6 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
     final progress = s.calorieProgress.clamp(0.0, 1.0);
     final overGoal = s.caloriesLogged > s.calorieGoal;
 
-    final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSub =
         isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
 

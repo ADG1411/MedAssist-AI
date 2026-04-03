@@ -96,7 +96,7 @@ class RecoveryImpactCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.recovery_convert_rounded,
+              const Icon(Icons.fitness_center_rounded,
                   size: 16, color: Color(0xFF10B981)),
               const SizedBox(width: 7),
               Text('Recovery Impact',

@@ -10,7 +10,6 @@ import 'package:medassist_ai/features/nutrition/models/intake_entry.dart';
 import 'package:medassist_ai/features/nutrition/models/meal_entity.dart';
 import 'package:medassist_ai/features/nutrition/providers/nutrition_providers.dart';
 import '../../../shared/widgets/app_background.dart';
-import '../../../shared/widgets/glass_card.dart';
 
 // ── AI quick-search suggestions ───────────────────────────────────────────────
 const _aiSuggestions = [
