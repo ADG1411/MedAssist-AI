@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, GitBranch } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, GitBranch, Video } from 'lucide-react';
 
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -18,12 +18,14 @@ const SIDEBAR_ITEMS = [
   { name: 'Profile',      path: '/dashboard/profile',    icon: User            },
   { name: 'AI Assistant', path: '/dashboard/ai',         icon: Bot             },
   { name: 'Case Workflow', path: '/dashboard/case',        icon: Clipboard       },
+  { name: 'Live Bookings', path: '/dashboard/live-bookings', icon: Video          },
   { name: 'Scan QR',      path: '/dashboard/scan',        icon: QrCode          },
 ];
 
 const BOTTOM_NAV = [
   { name: 'Home',     path: '/dashboard',           icon: LayoutDashboard },
   { name: 'Patients', path: '/dashboard/patients',  icon: Users           },
+  { name: 'Bookings', path: '/dashboard/live-bookings', icon: Video        },
   { name: 'AI',       path: '/dashboard/ai',        icon: Bot             },
   { name: 'Profile',  path: '/dashboard/profile',   icon: User            },
 ];
@@ -38,6 +40,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/sos':        'Emergency',
   '/dashboard/prescription': 'Prescription',
   '/dashboard/case':         'Case Workflow',
+  '/dashboard/live-bookings': 'Live Bookings',
   '/dashboard/scan':         'Universal Scanner',
 };
 
