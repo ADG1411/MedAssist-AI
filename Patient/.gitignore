@@ -65,3 +65,12 @@ implementation_plan_full
 
 # IDE settings
 .vscode/
+
+# Flutter Generated Plugins and Registrants
+.flutter-plugins
+.flutter-plugins-dependencies
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
+**/GeneratedPluginRegistrant.swift
+**/GeneratedPluginRegistrant.h
+**/GeneratedPluginRegistrant.m

@@ -75,23 +75,29 @@ class _VoiceInputSheetState extends State<VoiceInputSheet> with TickerProviderSt
       _isAvailable = await _speech.initialize(
         onStatus: _onStatus,
         onError: (error) {
+          debugPrint('Speech error: ${error.errorMsg}');
           setState(() {
-            _statusText = 'Error: ${error.errorMsg}';
+            if (error.errorMsg == 'error_permission' || error.errorMsg == 'error_audio_error') {
+              _statusText = 'Microphone permission denied.\nPlease enable it in Settings.';
+            } else {
+              _statusText = 'Error: ${error.errorMsg}';
+            }
             _isListening = false;
           });
           _stopAnimations();
         },
       );
       setState(() {
-        _statusText = _isAvailable ? 'Tap mic to speak' : 'Speech not available';
+        _statusText = _isAvailable ? 'Tap mic to speak' : 'Microphone permission required.\nPlease grant access and try again.';
       });
       // Auto-start listening
       if (_isAvailable) {
         _startListening();
       }
     } catch (e) {
+      debugPrint('Speech init error: $e');
       setState(() {
-        _statusText = 'Speech not available on this device';
+        _statusText = 'Microphone not available.\nCheck permissions in Settings.';
         _isAvailable = false;
       });
     }
