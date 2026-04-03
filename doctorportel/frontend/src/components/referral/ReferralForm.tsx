@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, Loader2, Send, FlaskConical, Pill } from 'lucide-react';
+import { Plus, X, Loader2, Send, FlaskConical } from 'lucide-react';
 import type { CreateReferralPayload, ReferralType } from '../../types/referral';
 import { cn } from '../../layouts/DashboardLayout';
 
@@ -16,7 +16,6 @@ const REFERRAL_TYPES: { value: ReferralType; label: string; color: string }[] = 
 ];
 
 const COMMON_TESTS = ['CBC', 'Blood Sugar', 'Lipid Profile', 'Liver Function Test', 'Thyroid Panel', 'Urine Routine', 'ECG', 'X-Ray Chest', 'HbA1c', 'Kidney Function Test'];
-const COMMON_MEDS  = ['Paracetamol 500mg', 'Amoxicillin 500mg', 'Omeprazole 20mg', 'Atorvastatin 10mg', 'Metformin 500mg', 'Amlodipine 5mg', 'Cetirizine 10mg'];
 
 export function ReferralForm({ onSubmit, onCancel }: Props) {
   const [saving, setSaving] = useState(false);
@@ -33,7 +32,6 @@ export function ReferralForm({ onSubmit, onCancel }: Props) {
     reason: '',
     type: 'lab',
   });
-  const [medInput,  setMedInput]  = useState('');
   const [testInput, setTestInput] = useState('');
 
   const set = (k: keyof CreateReferralPayload, v: unknown) =>
@@ -122,39 +120,6 @@ export function ReferralForm({ onSubmit, onCancel }: Props) {
         <input value={form.reason} onChange={e => set('reason', e.target.value)} className={inputCls} placeholder="Why is this referral needed?" />
       </div>
 
-      {/* Medicines */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Pill className="w-3.5 h-3.5 text-indigo-400" />
-          <label className={cn(labelCls, 'mb-0')}>Medicines</label>
-        </div>
-        <div className="flex gap-2 mb-2">
-          <input value={medInput} onChange={e => setMedInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addItem('medicines', medInput, setMedInput)}
-            className={cn(inputCls, 'flex-1 text-xs')} placeholder="Type medicine name and press Enter..." />
-          <button onClick={() => addItem('medicines', medInput, setMedInput)}
-            className="p-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors shrink-0">
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {COMMON_MEDS.map(m => (
-            <button key={m} type="button" onClick={() => addItem('medicines', m, () => {})}
-              className={cn('text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors',
-                form.medicines.includes(m) ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-indigo-300')}>
-              {m}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {form.medicines.map(m => (
-            <span key={m} className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-[12px] font-semibold px-2.5 py-1 rounded-lg">
-              {m}
-              <button onClick={() => removeItem('medicines', m)}><X className="w-3 h-3" /></button>
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* Tests */}
       <div>
