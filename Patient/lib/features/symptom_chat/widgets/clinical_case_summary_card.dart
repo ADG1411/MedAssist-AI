@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
@@ -61,7 +60,6 @@ class ClinicalCaseSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSub = isDark
         ? Colors.white.withValues(alpha: 0.50)
         : AppColors.textSecondary;
