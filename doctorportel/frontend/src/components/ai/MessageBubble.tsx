@@ -32,6 +32,14 @@ export const MessageBubble = ({ message }: Props) => {
             ? "bg-white text-slate-700 border border-slate-200/60 rounded-2xl rounded-tl-sm prose prose-slate max-w-none" 
             : "bg-slate-900 text-white rounded-2xl rounded-tr-sm"
         )}>
+          {!isBot && message.images && message.images.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {message.images.map((imgStr, i) => (
+                <img key={i} src={imgStr} alt="attachment" className="h-20 w-20 object-cover rounded-lg border border-slate-700 shadow-sm" />
+              ))}
+            </div>
+          )}
+
           {isBot ? (
             <div className="w-full">
               <ReactMarkdown>

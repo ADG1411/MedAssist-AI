@@ -7,6 +7,7 @@ router = APIRouter()
 class ChatMessage(BaseModel):
     message: str
     context: Optional[Dict[str, Any]] = None
+    images: Optional[List[str]] = None
 
 class ChatResponse(BaseModel):
     text: str
@@ -41,7 +42,7 @@ async def process_chat_message(chat: ChatMessage):
     
     prompt = f"Message: {chat.message}\nContext: {json.dumps(chat.context) if chat.context else '{}'}"
     
-    aiResponse = await generate_json(prompt, system_prompt_intent)
+    aiResponse = await generate_json(prompt, system_prompt_intent, images=chat.images)
     
     if "error" in aiResponse:
          return ChatResponse(
@@ -65,7 +66,7 @@ async def process_chat_message(chat: ChatMessage):
             "Write a helpful, structured response directly addressing the user's question based on this data. "
             "Cite sources appropriately and keep it professional. Do not use JSON."
         )
-        final_answer = await generate_text(synthesis_prompt)
+        final_answer = await generate_text(synthesis_prompt, images=chat.images)
         text = final_answer
         action = "none" # We just return the text, no frontend UI component needed for web search
     

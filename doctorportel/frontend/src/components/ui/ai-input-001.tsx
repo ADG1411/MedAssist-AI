@@ -47,7 +47,7 @@ export interface Suggestion {
 interface AIInputProps {
   messages?: Message[];
   renderMessage?: (msg: Message) => React.ReactNode;
-  onSendMessage?: (text: string, modelId: string) => void;
+  onSendMessage?: (text: string, modelId: string, attachments?: File[]) => void;
   models?: Model[];
   suggestions?: Suggestion[];
   placeholder?: string;
@@ -178,7 +178,7 @@ const ChatInput = ({
   suggestions: Suggestion[];
   hasMessages: boolean;
   placeholder: string;
-  onSend: (text: string, modelId: string) => void;
+  onSend: (text: string, modelId: string, attachments: File[]) => void;
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [selectedModel, setSelectedModel] = useState(models[0]);
@@ -209,7 +209,7 @@ const ChatInput = ({
 
   const handleSend = () => {
     if (!inputValue.trim() && attachments.length === 0) return;
-    onSend(inputValue || "Sending attachments...", selectedModel.id);
+    onSend(inputValue || "Sending attachments...", selectedModel.id, attachments);
     setInputValue("");
     setAttachments([]);
   };
@@ -230,7 +230,7 @@ const ChatInput = ({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 + 0.1 }}
-              onClick={() => onSend(s.label, models[0].id)}
+              onClick={() => onSend(s.label, models[0].id, [])}
               className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-md border border-white hover:border-indigo-200 hover:bg-white hover:shadow-lg hover:shadow-indigo-500/5 transition-all rounded-[28px] text-left group"
             >
               <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">

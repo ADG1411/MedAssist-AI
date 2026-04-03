@@ -6,4 +6,5 @@ export interface ChatMessage {
   action?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data_payload?: any;
+  images?: string[];
 }

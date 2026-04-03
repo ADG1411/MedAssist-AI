@@ -20,21 +20,44 @@ const AIAssistant = () => {
     originalMessage: m 
   }));
 
-  const handleSend = async (text: string, modelId: string) => {
-    if (!text.trim() || isLoading) return;
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleSend = async (text: string, _modelId: string, attachments: File[] = []) => {
+    if ((!text.trim() && attachments.length === 0) || isLoading) return;
+
+    let base64Images: string[] = [];
+    if (attachments.length > 0) {
+      try {
+        base64Images = await Promise.all(
+          attachments
+            .filter(file => file.type.startsWith('image/'))
+            .map(file => fileToBase64(file))
+        );
+      } catch (err) {
+        console.error("Failed to convert images", err);
+      }
+    }
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      images: base64Images
     };
 
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      const resp = await sendChatMessage(text, messages);
+      const resp = await sendChatMessage(text, messages, base64Images);
       setMessages(prev => [...prev, resp]);
     } catch (e) {
       console.error(e);

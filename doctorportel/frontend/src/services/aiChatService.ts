@@ -4,7 +4,8 @@ const BACKEND_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:
 
 export const sendChatMessage = async (
   message: string, 
-  history: ChatMessage[] = []
+  history: ChatMessage[] = [],
+  images?: string[]
 ): Promise<ChatMessage> => {
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/chat/`, {
@@ -12,7 +13,8 @@ export const sendChatMessage = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
-        context: { history }
+        context: { history },
+        images: images || []
       })
     });
 
