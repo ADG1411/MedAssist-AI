@@ -1,59 +1,21 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fetchMedicalMemory, buildCompressedMemoryPrompt } from "./helpers/memory.ts";
+import { runEmergencyRuleEngine, applyEmergencyOverrides } from "./helpers/safety.ts";
+import { parseAiJson, normalizeTriageResponse } from "./helpers/normalize.ts";
+import { persistTriageSession } from "./helpers/persistence.ts";
+import { buildSystemPrompt, getTokenBudget, buildPatientContextPrompt } from "./helpers/prompt_builder.ts";
 
 const NIM_API_KEY = Deno.env.get("NIM_API_KEY")!;
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const NIM_MODEL = "meta/llama-3.3-70b-instruct";
-
-const SYSTEM_PROMPT = `You are Dr. MedAssist, a board-certified internal medicine physician conducting a telemedicine triage consultation. Your role is to diagnose efficiently like a real doctor — not to keep asking endless questions.
-
-## CONSULTATION PROTOCOL
-
-**Golden Rule:** If the patient provides highly detailed information in their FIRST or SECOND message (e.g., exact symptoms, duration, triggers), DO NOT ask unnecessary follow-up questions. IMMEDIATELY deliver your final clinical assessment, provide conditions, and set next_question to null.
-
-**Phase 1 — Initial Assessment (Turn 1):**
-When the patient first describes their symptoms:
-- If the description is vague (e.g., "I have a headache"), acknowledge the symptom and ask exactly ONE focused clinical question (duration, triggers, severity, etc.).
-- If the description is detailed (e.g., "I have a throbbing headache behind my left eye since yesterday, feel nauseous, and light hurts my eyes"), SKIP to Phase 3 immediately and give your assessment.
-
-**Phase 2 — Targeted Follow-up (Turn 2):**
-Based on their answer, assess if you have enough to form a clinical picture:
-- IF YES: Skip to Phase 3 immediately.
-- IF NO: Ask ONE more specific question to narrow the diagnosis (e.g., red flags, medications tried).
-
-**Phase 3 — Conclusion (Final Assessment):**
-Deliver a clear, confident medical assessment. You MUST provide conditions with confidence scores.
-NEVER say "I need more details" after turn 3. Give your best clinical judgment.
-
-## RESPONSE FORMAT
-
-ALWAYS respond in this exact JSON (no markdown, no code blocks):
-{
-  "reply": "Your doctor-like response. Be specific, empathetic, and professional. Use medical terminology but explain it in simple terms. Example: 'Based on your symptoms — stomach pain after eating spicy food with burning sensation — this is most consistent with acute gastritis (stomach lining inflammation).'",
-  "conditions": [
-    {"name": "Most Likely Condition", "confidence": 75, "risk": "Low|Medium|High|Critical"},
-    {"name": "Alternative Condition", "confidence": 45, "risk": "Low|Medium|High|Critical"}
-  ],
-  "specialization": "Gastroenterologist|Cardiologist|Neurologist|Pulmonologist|Orthopedic|Dermatologist|ENT|Psychiatrist|General Physician|Emergency Medicine",
-  "next_question": "Your ONE specific follow-up question, or null if giving final assessment",
-  "emergency": false,
-  "action": "monitor|consult_doctor|emergency_room",
-  "prescription_hints": ["OTC suggestion 1", "Lifestyle change 1"]
-}
-
-## IMPORTANT RULES:
-1. If conditions array is empty, you MUST include a next_question
-2. After 3+ patient messages, you MUST fill conditions array — give your best clinical judgment
-3. Never be vague. "I need more information" is FORBIDDEN after 2 exchanges
-4. Include real medical condition names (Gastritis, Tension Headache, GERD, Migraine, etc.)
-5. Add prescription_hints with safe OTC medications and lifestyle advice
-6. If ANY red flag symptoms (chest pain, difficulty breathing, severe bleeding, loss of consciousness, stroke symptoms) → immediately set emergency=true and action="emergency_room"
-7. Be warm and reassuring but medically precise — like a good doctor, not like a chatbot
-8. Consider the patient's chronic conditions and allergies when suggesting medications`;
+const PRIMARY_MODEL = "meta/llama-3.3-70b-instruct";
+const FALLBACK_MODEL = "meta/llama-3.1-8b-instruct";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
@@ -62,168 +24,153 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── 1. AUTH: Extract user from JWT ──
+    const authHeader = req.headers.get("Authorization");
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    
+    let userId: string | null = null;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+      userId = user?.id ?? null;
+    }
+
+    // ── 2. PARSE REQUEST ──
     const body = await req.json();
-    const messages = body.messages || [];
-    const patient_context = body.patient_context || {};
+    const messages: Array<{ role: string; content: string }> = body.messages || [];
+    const patientContext: Record<string, any> = body.patient_context || {};
+    const aiMode: string = patientContext.ai_mode || "default";
+    const sessionId: string | null = body.session_id || null;
 
-    // Count user messages to determine conversation phase
-    const userMessageCount = messages.filter((m: any) => m.role === "user").length;
+    const userMessageCount = messages.filter((m) => m.role === "user").length;
+    console.log(`[Triage v2] User: ${userId?.substring(0, 8) || "anon"} | Messages: ${userMessageCount} | Mode: ${aiMode}`);
 
-    console.log("User messages so far:", userMessageCount);
-    console.log("Body region:", patient_context.body_region);
-    console.log("Severity:", patient_context.severity);
-
-    // Build patient context
-    let patientInfo = "";
-    if (patient_context) {
-      patientInfo = `\n\nPATIENT PROFILE:
-- Body Region: ${patient_context.body_region || "not specified"}
-- Pain Severity: ${patient_context.severity || "not specified"}/10
-- Chronic Conditions: ${JSON.stringify(patient_context.chronic_conditions || [])}
-- Known Allergies: ${JSON.stringify(patient_context.allergies || [])}`;
+    // ── 3. MEMORY RETRIEVAL ──
+    let memoryPrompt = "";
+    if (userId) {
+      try {
+        const memory = await fetchMedicalMemory(supabaseAdmin, userId);
+        memoryPrompt = buildCompressedMemoryPrompt(memory);
+        if (memoryPrompt) {
+          console.log(`[Triage v2] Memory loaded: ${memoryPrompt.split("\n").length} lines`);
+        }
+      } catch (e) {
+        console.error("[Triage v2] Memory fetch failed (non-blocking):", (e as Error).message);
+      }
     }
 
-    // Add phase directive based on conversation progress
-    let phaseDirective = "";
-    if (userMessageCount >= 3) {
-      phaseDirective = `\n\n⚠️ CRITICAL: The patient has provided ${userMessageCount} messages. You MUST now deliver your final clinical assessment. Fill the conditions array with your diagnoses. Do NOT ask another question. Set next_question to null. Provide prescription_hints.`;
-    } else if (userMessageCount === 2) {
-      phaseDirective = `\n\nYou are in Phase 2. Ask ONE final targeted follow-up question, OR if you have enough information, give your assessment now. Lean toward giving the assessment.`;
-    }
+    // ── 4. BUILD PROMPT ──
+    const systemPrompt = buildSystemPrompt(memoryPrompt, userMessageCount, aiMode);
+    const patientContextPrompt = buildPatientContextPrompt(patientContext);
+    const tokenBudget = getTokenBudget(aiMode);
 
     const nimMessages = [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT + patientInfo + phaseDirective,
-      },
-      ...messages.map((m: any) => ({
+      { role: "system", content: systemPrompt + patientContextPrompt },
+      ...messages.map((m) => ({
         role: m.role === "ai" ? "assistant" : (m.role || "user"),
-        content: m.content || m.text || "",
+        content: m.content || "",
       })),
     ];
 
-    let nimResponse = await fetch(`${NIM_BASE_URL}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${NIM_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: NIM_MODEL,
-        messages: nimMessages,
-        temperature: 0.25,
-        max_tokens: 1200,
-        top_p: 0.85,
-      }),
-    });
+    // ── 5. NIM API CALL (Primary → Fallback) ──
+    let nimResponseText = "";
+    let modelUsed = PRIMARY_MODEL;
 
-    let nimResponseText = await nimResponse.text();
-    console.log("Primary NIM Status:", nimResponse.status);
+    for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
+      try {
+        const nimResponse = await fetch(`${NIM_BASE_URL}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${NIM_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: nimMessages,
+            temperature: 0.2,
+            max_tokens: tokenBudget,
+            top_p: 0.85,
+          }),
+        });
 
-    // If rate limited (429), immediately fallback to Llama 3
-    if (nimResponse.status === 429) {
-      console.log("Rate limited! Falling back to meta/llama-3.1-8b-instruct");
-      nimResponse = await fetch(`${NIM_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${NIM_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "meta/llama-3.1-8b-instruct",
-          messages: nimMessages,
-          temperature: 0.25,
-          max_tokens: 1200,
-          top_p: 0.85,
-        }),
-      });
-      nimResponseText = await nimResponse.text();
-      console.log("Fallback NIM Status:", nimResponse.status);
-    }
+        if (nimResponse.ok) {
+          nimResponseText = await nimResponse.text();
+          modelUsed = model;
+          console.log(`[Triage v2] NIM OK with ${model}`);
+          break;
+        }
 
-    if (!nimResponse.ok) {
-      console.error("NIM Error:", nimResponseText);
-      return new Response(
-        JSON.stringify({
-          reply: `I'm analyzing your ${patient_context.body_region || ""} symptoms. The AI service returned status ${nimResponse.status} despite retries. In the meantime, if your pain is severe or worsening, please seek immediate medical attention.`,
-          conditions: [],
-          specialization: "General Physician",
-          next_question: "Can you describe exactly what you're feeling right now?",
-          emergency: false,
-          action: "monitor",
-          prescription_hints: [],
-          _debug_nim_status: nimResponse.status,
-          _debug_nim_error: nimResponseText.substring(0, 200),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const nimData = JSON.parse(nimResponseText);
-    const rawContent = nimData.choices?.[0]?.message?.content || "";
-
-    let parsedResponse;
-    try {
-      // Clean leading/trailing text and markdown safely
-      let cleaned = rawContent;
-      const firstBrace = cleaned.indexOf('{');
-      const lastBrace = cleaned.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-      }
+        console.warn(`[Triage v2] ${model} returned ${nimResponse.status}, trying fallback...`);
         
-      parsedResponse = JSON.parse(cleaned);
-
-      // Force conditions on turn 3+
-      if (userMessageCount >= 3 && (!parsedResponse.conditions || parsedResponse.conditions.length === 0)) {
-        parsedResponse.conditions = [
-          { name: "Unspecified symptoms requiring evaluation", confidence: 60, risk: "Medium" }
-        ];
-        parsedResponse.next_question = null;
-        parsedResponse.action = "consult_doctor";
+        if (model === FALLBACK_MODEL) {
+          nimResponseText = await nimResponse.text();
+        }
+      } catch (e) {
+        console.error(`[Triage v2] ${model} network error:`, (e as Error).message);
       }
-
-      // Ensure prescription_hints exists
-      if (!parsedResponse.prescription_hints) {
-        parsedResponse.prescription_hints = [];
-      }
-
-    } catch (parseErr) {
-      console.error("JSON parse error:", parseErr);
-      
-      // Attempt to salvage the "reply" or "next_question" text via Regex if JSON is truncated
-      let salvagedReply = "I'm processing your symptoms but encountered a format issue. Could you tell me more?";
-      const replyMatch = rawContent.match(/"reply"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/);
-      if (replyMatch && replyMatch[1]) {
-        salvagedReply = replyMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
-      }
-
-      parsedResponse = {
-        reply: salvagedReply,
-        conditions: [],
-        specialization: "General Physician",
-        next_question: null,
-        emergency: false,
-        action: "monitor",
-        prescription_hints: [],
-      };
     }
 
-    return new Response(JSON.stringify(parsedResponse), {
+    // ── 6. PARSE + NORMALIZE ──
+    let rawContent = "";
+    try {
+      const nimData = JSON.parse(nimResponseText);
+      rawContent = nimData.choices?.[0]?.message?.content || "";
+    } catch {
+      rawContent = nimResponseText;
+    }
+
+    const parsedJson = parseAiJson(rawContent);
+    let response = normalizeTriageResponse(parsedJson, rawContent, userMessageCount);
+
+    // ── 7. SAFETY RULE ENGINE ──
+    const emergencyOverride = runEmergencyRuleEngine(
+      messages.map((m) => ({ role: m.role, content: m.content || "" })),
+      response,
+      patientContext
+    );
+    applyEmergencyOverrides(response, emergencyOverride);
+
+    // Store matched keywords for persistence (then strip from client response)
+    if (emergencyOverride.isEmergency) {
+      response._emergency_keywords = emergencyOverride.matchedKeywords;
+    }
+
+    // ── 8. DATABASE WRITEBACK ──
+    if (userId) {
+      // Fire-and-forget: don't block the response
+      persistTriageSession(supabaseAdmin, userId, sessionId, response).catch((e) => {
+        console.error("[Triage v2] Persistence error:", (e as Error).message);
+      });
+    }
+
+    // ── 9. CLEAN + RETURN ──
+    // Remove internal fields before sending to client
+    delete response._emergency_keywords;
+
+    // Add debug metadata
+    response._model = modelUsed;
+    response._memory_lines = memoryPrompt ? memoryPrompt.split("\n").length : 0;
+
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
-    console.error("Edge Function Error:", error.message);
+    console.error("[Triage v2] Fatal error:", (error as Error).message);
     return new Response(
       JSON.stringify({
-        reply: "I'm temporarily unable to process your request. Please try again.",
+        reply: "I'm temporarily unable to process your request. If you're experiencing a medical emergency, please call emergency services immediately.",
         conditions: [],
         specialization: "General Physician",
         next_question: null,
         emergency: false,
         action: "monitor",
         prescription_hints: [],
-        error: error.message,
+        monitoring_plan: { track_for_days: 3, focus_metrics: ["pain_score"], red_flags: [] },
+        doctor_handoff: { summary: "", urgency: "routine", recommended_tests: [] },
+        risk_score: 0,
+        confidence_reasoning: ["System error - fallback response"],
+        error: (error as Error).message,
       }),
       {
         status: 200,
