@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/utils/mock_delay.dart';
 import '../../core/repositories/rag_repository.dart';
 import '../symptom_chat/providers/chat_provider.dart';
 import '../../shared/widgets/base_screen.dart';
@@ -40,8 +39,8 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
     final repo = ref.read(ragRepositoryProvider);
     _memoryChunks = await repo.retrieveContext(topCondition);
 
-    // Padding for simulated heavy calculation UX
-    await MockDelay.simulateDelay(2000);
+    // Brief loading UX
+    await Future.delayed(const Duration(milliseconds: 500));
     
     if (mounted) {
       setState(() => _isLoading = false);
@@ -95,7 +94,12 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
     final conditionsList = chatState.lastResult?['conditions'] as List?;
     final topCondition = (conditionsList != null && conditionsList.isNotEmpty) ? conditionsList[0]['name'] : 'Unknown Condition';
     final riskLvl = (conditionsList != null && conditionsList.isNotEmpty) ? conditionsList[0]['risk'] : 'Low';
-    
+    final int riskScore = chatState.lastResult?['risk_score'] ?? 0;
+    final List<dynamic> confidenceReasoning = chatState.lastResult?['confidence_reasoning'] ?? [];
+    final Map<String, dynamic> monitoringPlan = Map<String, dynamic>.from(chatState.lastResult?['monitoring_plan'] ?? {});
+    final Map<String, dynamic> doctorHandoff = Map<String, dynamic>.from(chatState.lastResult?['doctor_handoff'] ?? {});
+    final String specialization = chatState.lastResult?['specialization'] ?? 'General Physician';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
@@ -121,6 +125,69 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
               ],
             ),
           ),
+
+          // Risk Score
+          if (riskScore > 0) ...[
+            const SizedBox(height: 24),
+            AppSectionCard(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Clinical Risk Score', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(
+                        riskScore >= 70 ? 'Elevated — specialist review recommended' : 'Within acceptable range',
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: (riskScore >= 70 ? AppColors.danger : AppColors.success).withValues(alpha: 0.1),
+                      border: Border.all(
+                        color: riskScore >= 70 ? AppColors.danger : AppColors.success,
+                        width: 3,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$riskScore',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: riskScore >= 70 ? AppColors.danger : AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Confidence Reasoning
+          if (confidenceReasoning.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const Text('Diagnostic Reasoning', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 12),
+            ...confidenceReasoning.map((reason) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.psychology, size: 18, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(reason.toString(), style: const TextStyle(fontSize: 14, height: 1.4))),
+                ],
+              ),
+            )),
+          ],
           
           const SizedBox(height: 32),
           const Text('Primary Diagnosis Evidence', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -148,6 +215,74 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
             ),
           ),
 
+          // Monitoring Plan
+          if (monitoringPlan.isNotEmpty && (monitoringPlan['track_for_days'] ?? 0) > 0) ...[
+            const SizedBox(height: 32),
+            const Text('AI Monitoring Plan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 16),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Track for ${monitoringPlan['track_for_days']} days', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  if (monitoringPlan['focus_metrics'] != null)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: (monitoringPlan['focus_metrics'] as List).map((m) =>
+                        Chip(
+                          label: Text(m.toString().replaceAll('_', ' '), style: const TextStyle(fontSize: 12)),
+                          backgroundColor: const Color(0xFF06B6D4).withValues(alpha: 0.1),
+                          side: BorderSide.none,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ).toList(),
+                    ),
+                  if ((monitoringPlan['red_flags'] as List?)?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 12),
+                    const Text('🚩 Red Flags:', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.danger, fontSize: 13)),
+                    ...(monitoringPlan['red_flags'] as List).map((f) => Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text('• $f', style: const TextStyle(fontSize: 13)),
+                    )),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // Doctor Handoff
+          if (doctorHandoff['summary'] != null && (doctorHandoff['summary'] as String).isNotEmpty) ...[
+            const SizedBox(height: 32),
+            const Text('Specialist Handoff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 16),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(doctorHandoff['summary'], style: const TextStyle(fontSize: 14, height: 1.5)),
+                  if ((doctorHandoff['recommended_tests'] as List?)?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: (doctorHandoff['recommended_tests'] as List).map((test) =>
+                        Chip(
+                          avatar: const Icon(Icons.science, size: 14),
+                          label: Text(test.toString(), style: const TextStyle(fontSize: 12)),
+                          backgroundColor: AppColors.warning.withValues(alpha: 0.1),
+                          side: BorderSide.none,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 32),
           const Text('Clinical Guidelines Consulted', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 16),
@@ -166,8 +301,8 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
 
           const SizedBox(height: 48),
           AppButton(
-             text: 'Connect with Neurologist',
-             onPressed: () {},
+             text: 'Connect with $specialization',
+             onPressed: () => context.push('/doctors?specialization=$specialization'),
           ),
           const SizedBox(height: 16),
           AppButton(
@@ -217,4 +352,3 @@ class _DeepCheckScreenState extends ConsumerState<DeepCheckScreen> {
     );
   }
 }
-

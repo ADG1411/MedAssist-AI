@@ -11,25 +11,39 @@ class ChatState {
   final List<Map<String, dynamic>> messages;
   final bool isTyping;
   final Map<String, dynamic>? lastResult;
+  final bool isEmergency;
 
   const ChatState({
     this.sessionId = '',
     this.messages = const [],
     this.isTyping = false,
     this.lastResult,
+    this.isEmergency = false,
   });
+
+  /// v2 field accessors
+  int get riskScore => lastResult?['risk_score'] ?? 0;
+  String get specialization => lastResult?['specialization'] ?? 'General Physician';
+  List<dynamic> get confidenceReasoning => lastResult?['confidence_reasoning'] ?? [];
+  Map<String, dynamic> get monitoringPlan => Map<String, dynamic>.from(lastResult?['monitoring_plan'] ?? {});
+  Map<String, dynamic> get doctorHandoff => Map<String, dynamic>.from(lastResult?['doctor_handoff'] ?? {});
+  List<dynamic> get prescriptionHints => lastResult?['prescription_hints'] ?? [];
+  List<dynamic> get conditions => lastResult?['conditions'] ?? [];
+  String get action => lastResult?['action'] ?? 'monitor';
 
   ChatState copyWith({
     String? sessionId,
     List<Map<String, dynamic>>? messages,
     bool? isTyping,
     Map<String, dynamic>? lastResult,
+    bool? isEmergency,
   }) {
     return ChatState(
       sessionId: sessionId ?? this.sessionId,
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
       lastResult: lastResult ?? this.lastResult,
+      isEmergency: isEmergency ?? this.isEmergency,
     );
   }
 }
@@ -55,7 +69,7 @@ class ChatNotifier extends Notifier<ChatState> {
     );
   }
 
-  Future<void> sendMessage(String text, double severity, String bodyPart) async {
+  Future<void> sendMessage(String text, double severity, String bodyPart, {String aiMode = 'default'}) async {
     final userMsg = {
       'id': 'u_${DateTime.now().millisecondsSinceEpoch}',
       'role': 'user',
@@ -89,7 +103,7 @@ class ChatNotifier extends Notifier<ChatState> {
       final user = ref.read(authProvider);
       
       // Inject Nutrition Activity if known today
-      final nutritionState = ref.read(medassist_ai_nutrition.nutritionDiaryProvider); // Using alias to avoid conflict
+      final nutritionState = ref.read(medassist_ai_nutrition.nutritionDiaryProvider);
       final todaySummary = nutritionState.summary;
 
       final patientContext = <String, dynamic>{
@@ -108,31 +122,26 @@ class ChatNotifier extends Notifier<ChatState> {
         message: text,
         chatHistory: contextPayload,
         patientContext: patientContext,
+        aiMode: aiMode,
+        sessionId: state.sessionId,
       );
       
       final aiReplyText = response['reply'] ?? response['next_question'] ?? 'Please provide more details.';
-      
+      final isEmergency = response['emergency'] == true;
+
       final aiMsg = {
         'id': 'ai_${DateTime.now().millisecondsSinceEpoch}',
         'role': 'ai',
         'text': aiReplyText,
         'timestamp': 'Just now',
+        if (isEmergency) 'emergency': true,
       };
-
-      // Save the AI result if conditions are present
-      if (response['conditions'] != null && (response['conditions'] as List).isNotEmpty) {
-        await _chatRepo.saveAiResult(
-          sessionId: state.sessionId,
-          conditions: List<Map<String, dynamic>>.from(response['conditions']),
-          riskLevel: response['risk'] ?? response['conditions']?[0]?['risk'] ?? 'Low',
-          recommendedAction: response['action'],
-        );
-      }
 
       state = state.copyWith(
         messages: [...state.messages, aiMsg],
         isTyping: false,
         lastResult: response,
+        isEmergency: isEmergency,
       );
       
     } catch (e) {
@@ -150,4 +159,3 @@ class ChatNotifier extends Notifier<ChatState> {
     }
   }
 }
-
