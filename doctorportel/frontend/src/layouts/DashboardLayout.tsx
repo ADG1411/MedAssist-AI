@@ -18,8 +18,7 @@ const SIDEBAR_ITEMS = [
   { name: 'Profile',      path: '/dashboard/profile',    icon: User            },
   { name: 'AI Assistant', path: '/dashboard/ai',         icon: Bot             },
   { name: 'Case Workflow', path: '/dashboard/case',        icon: Clipboard       },
-  { name: 'MedCard Scan',  path: '/dashboard/medcard',     icon: QrCode          },
-  { name: 'Referral QR',  path: '/dashboard/referral',    icon: GitBranch       },
+  { name: 'Scan QR',      path: '/dashboard/scan',        icon: QrCode          },
 ];
 
 const BOTTOM_NAV = [
@@ -39,8 +38,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/sos':        'Emergency',
   '/dashboard/prescription': 'Prescription',
   '/dashboard/case':         'Case Workflow',
-  '/dashboard/medcard':      'MedCard Scanner',
-  '/dashboard/referral':     'Referral System',
+  '/dashboard/scan':         'Universal Scanner',
 };
 
 const DashboardLayout = () => {

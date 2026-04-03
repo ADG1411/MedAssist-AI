@@ -4,10 +4,13 @@ import { QrCode, RotateCcw, CheckCircle2, CameraOff, SwitchCamera, ImagePlus } f
 import { cn } from '../../layouts/DashboardLayout';
 import { getDemoToken } from '../../services/medcardService';
 
+import { getDemoReferralToken } from '../../services/referralService';
+
 interface Props {
   onScan: (token: string) => void;
   scanning: boolean;
   error: string | null;
+  modeContext?: 'medcard' | 'referral' | 'universal';
 }
 
 const DEMO_PATIENTS = [
@@ -16,12 +19,18 @@ const DEMO_PATIENTS = [
   { id: 3, label: 'Arjun Mehta',  sub: 'O+ · 52 yrs · Male'   },
 ];
 
+const DEMO_REFERRALS = [
+  { id: 'r1', token: 'ref-001', label: 'Lab Referral Test', sub: 'Rahul Sharma · CBC Panel' },
+  { id: 'r2', token: 'ref-demo', label: 'Hospital Consult', sub: 'Routine Cardiology · City Gen.' },
+];
+
 type CameraState = 'idle' | 'requesting' | 'active' | 'denied';
 
-export const QRScanner = ({ onScan, scanning, error }: Props) => {
+export const QRScanner = ({ onScan, scanning, error, modeContext = 'medcard' }: Props) => {
   const [mode, setMode]         = useState<'camera' | 'manual'>('camera');
   const [manualInput, setInput] = useState('');
-  const [demoLoading, setDemo]  = useState<number | null>(null);
+  const [demoLoading, setDemo]  = useState<string | number | null>(null);
+  const [demoTab, setDemoTab]   = useState<'medcard' | 'referral'>(modeContext === 'referral' ? 'referral' : 'medcard');
   const [camState, setCamState] = useState<CameraState>('idle');
   const [camError, setCamError] = useState<string | null>(null);
   const [facingMode, setFacing] = useState<'environment' | 'user'>('environment');
@@ -139,9 +148,22 @@ export const QRScanner = ({ onScan, scanning, error }: Props) => {
 
   const handleManual = () => { const t = manualInput.trim(); if (t) onScan(t); };
 
-  const handleDemo = async (patientId: number) => {
+  const handleDemoPatient = async (patientId: number) => {
     setDemo(patientId);
-    try { const { token } = await getDemoToken(patientId); onScan(token); }
+    try { 
+      const { token } = await getDemoToken(patientId); 
+      onScan(token);
+    }
+    finally { setDemo(null); }
+  };
+
+  const handleDemoReferral = async (id: string, token: string) => {
+    setDemo(id);
+    try {
+      // If we have a hardcoded token, use it; otherwise get default
+      const finalToken = token || await getDemoReferralToken();
+      onScan(finalToken);
+    }
     finally { setDemo(null); }
   };
 
@@ -257,12 +279,14 @@ export const QRScanner = ({ onScan, scanning, error }: Props) => {
       {/* ── MANUAL MODE ── */}
       {mode === 'manual' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <p className="text-[13px] font-black text-slate-700 mb-1">Paste MedCard Token</p>
-          <p className="text-[11px] text-slate-400 font-medium mb-3">Format: <code className="bg-slate-100 px-1 py-0.5 rounded text-teal-600">MEDCARD::&lt;id&gt;::&lt;timestamp&gt;</code></p>
+          <p className="text-[13px] font-black text-slate-700 mb-1">
+            Paste {modeContext === 'referral' ? 'Referral' : 'MedCard'} Token
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium mb-3">Format: <code className="bg-slate-100 px-1 py-0.5 rounded text-teal-600">{modeContext === 'referral' ? 'ref-...' : 'MEDCARD::<id>::<timestamp>'}</code></p>
           <textarea
             value={manualInput}
             onChange={e => setInput(e.target.value)}
-            placeholder="MEDCARD::1::1743680000000"
+            placeholder={modeContext === 'referral' ? "ref-12345" : "MEDCARD::1::1743680000000"}
             rows={3}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[12px] font-mono text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 resize-none placeholder:text-slate-400 transition-colors"
           />
@@ -294,26 +318,54 @@ export const QRScanner = ({ onScan, scanning, error }: Props) => {
           <p className="text-[13px] font-black text-slate-700">Quick Demo Access</p>
           <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg">NO CAMERA NEEDED</span>
         </div>
+        
+        {modeContext === 'universal' && (
+          <div className="flex gap-1 bg-slate-100 rounded-xl p-0.5 mb-3">
+            <button onClick={() => setDemoTab('medcard')} className={cn('flex-1 py-1 rounded-lg text-[10px] font-bold transition-all', demoTab === 'medcard' ? 'bg-white text-slate-800' : 'text-slate-500')}>MedCards</button>
+            <button onClick={() => setDemoTab('referral')} className={cn('flex-1 py-1 rounded-lg text-[10px] font-bold transition-all', demoTab === 'referral' ? 'bg-white text-slate-800' : 'text-slate-500')}>Referrals</button>
+          </div>
+        )}
+
         <p className="text-[11px] text-slate-400 font-medium mb-3">
-          Tap to instantly simulate a QR scan for any demo patient.
+          Tap to instantly simulate a QR scan for any demo {demoTab === 'referral' ? 'referral' : 'patient'}.
         </p>
+
         <div className="space-y-2">
-          {DEMO_PATIENTS.map(p => (
-            <button key={p.id} onClick={() => handleDemo(p.id)}
-              disabled={scanning || demoLoading !== null}
-              className="w-full flex items-center gap-3 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 rounded-xl px-4 py-3 text-left transition-all group disabled:opacity-60">
-              <div className="w-8 h-8 bg-teal-100 rounded-xl flex items-center justify-center shrink-0">
-                {demoLoading === p.id
-                  ? <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                  : <QrCode className="w-4 h-4 text-teal-600" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-black text-slate-800 group-hover:text-teal-700">{p.label}</p>
-                <p className="text-[10px] font-medium text-slate-400">{p.sub} · Patient #{p.id}</p>
-              </div>
-              <RotateCcw className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-500 shrink-0" />
-            </button>
-          ))}
+          {demoTab === 'medcard' ? (
+            DEMO_PATIENTS.map(p => (
+              <button key={p.id} onClick={() => handleDemoPatient(p.id)}
+                disabled={scanning || demoLoading !== null}
+                className="w-full flex items-center gap-3 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 rounded-xl px-4 py-3 text-left transition-all group disabled:opacity-60">
+                <div className="w-8 h-8 bg-teal-100 rounded-xl flex items-center justify-center shrink-0 text-teal-600">
+                  {demoLoading === p.id
+                    ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    : <QrCode className="w-4 h-4" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-black text-slate-800 group-hover:text-teal-700">{p.label}</p>
+                  <p className="text-[10px] font-medium text-slate-400">{p.sub} · Patient #{p.id}</p>
+                </div>
+                <RotateCcw className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-500 shrink-0" />
+              </button>
+            ))
+          ) : (
+            DEMO_REFERRALS.map(r => (
+              <button key={r.id} onClick={() => handleDemoReferral(r.id, r.token)}
+                disabled={scanning || demoLoading !== null}
+                className="w-full flex items-center gap-3 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-xl px-4 py-3 text-left transition-all group disabled:opacity-60">
+                <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0 text-indigo-600">
+                  {demoLoading === r.id
+                    ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    : <QrCode className="w-4 h-4" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-black text-slate-800 group-hover:text-indigo-700">{r.label}</p>
+                  <p className="text-[10px] font-medium text-slate-400">{r.sub}</p>
+                </div>
+                <RotateCcw className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 shrink-0" />
+              </button>
+            ))
+          )}
         </div>
       </div>
 

@@ -15,9 +15,10 @@ const medId = (id: number) =>
 
 export const PatientPreview = ({ preview, onAccess, onEmergency, loading }: Props) => {
   const [hidden, setHidden] = useState(true);
+  const [qrTimestamp, setQrTimestamp] = useState(() => Date.now());
 
   const hid    = medId(preview.patient_id);
-  const qrData = `MEDCARD::${preview.patient_id}::${Date.now() + 30 * 60 * 1000}`;
+  const qrData = `MEDCARD::${preview.patient_id}::${qrTimestamp + 30 * 60 * 1000}`;
   const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=112x112&bgcolor=ffffff&color=1a2535&margin=5`;
 
   const maskedPhone = preview.phone_masked;
@@ -108,19 +109,19 @@ export const PatientPreview = ({ preview, onAccess, onEmergency, loading }: Prop
           </div>
 
           {/* Right: QR code */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
+          <button onClick={() => setQrTimestamp(Date.now())} className="flex flex-col items-center gap-1.5 shrink-0 group hover:opacity-90 active:scale-95 transition-all outline-none">
             <div className="bg-white rounded-2xl p-2 shadow-lg">
               <img
                 src={qrUrl}
                 alt="Scan QR"
                 width={96}
                 height={96}
-                className="block rounded-lg"
+                className="block rounded-lg pointer-events-none"
                 onError={e => { (e.target as HTMLImageElement).style.opacity = '0'; }}
               />
             </div>
-            <p className="text-slate-500 text-[9px] font-bold tracking-wider text-center">Scan at hospital</p>
-          </div>
+            <p className="text-teal-400 opacity-90 text-[9px] font-bold tracking-wider text-center">Tap for new QR</p>
+          </button>
         </div>
 
         {/* ── Bottom action bar ── */}
