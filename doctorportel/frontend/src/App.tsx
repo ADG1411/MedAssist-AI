@@ -15,6 +15,7 @@ import PatientCaseFlow from './pages/PatientCaseFlow';
 import PatientRecordPage from './pages/PatientRecordPage';
 import ScanPage from './pages/ScanPage';
 import { ConsultationRoom } from './pages/ConsultationRoom';
+import LiveBookings from './pages/LiveBookings';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="ai" element={<AIAssistant />} />
           <Route path="case" element={<PatientCaseFlow />} />
           <Route path="scan" element={<ScanPage />} />
+          <Route path="live-bookings" element={<LiveBookings />} />
           <Route path="medcard/record/:patientId" element={<PatientRecordPage />} />
         </Route>
         
