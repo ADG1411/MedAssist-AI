@@ -68,5 +68,14 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Permissions: Microphone (Speech-to-Text + Video Calls) -->
+		<key>NSMicrophoneUsageDescription</key>
+		<string>MedAssist needs microphone access for voice input and video consultations with your doctor.</string>
+		<!-- Permissions: Speech Recognition -->
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>MedAssist uses speech recognition to convert your voice input into text for symptom analysis.</string>
+		<!-- Permissions: Camera (Video Calls) -->
+		<key>NSCameraUsageDescription</key>
+		<string>MedAssist needs camera access for video consultations with your doctor.</string>
 	</dict>
 </plist>

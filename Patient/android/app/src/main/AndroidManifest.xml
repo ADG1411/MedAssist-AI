@@ -1,5 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Microphone: Required for Speech-to-Text and Jitsi video calls -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Camera: Required for Jitsi video calls -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Internet: Required for all API calls -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Bluetooth: For headset/earbuds during calls -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <application
         tools:replace="android:label"
         android:label="medassist_ai"
