@@ -6,7 +6,7 @@ class AppConstants {
   static const String fontName = 'Inter';
 
   // Asset Paths
-  static const String logoAsset = 'assets/images/logo.png';
+  static const String logoAsset = 'assets/images/logo.svg';
   static const String bodyMapSvg = 'assets/svgs/body_map.svg';
 
   // Mock settings
