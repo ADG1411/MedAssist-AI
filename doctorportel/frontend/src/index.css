@@ -1,0 +1,54 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  body {
+    @apply antialiased text-slate-800 bg-slate-50;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@layer components {
+  /* Auth Input Style */
+  .auth-input {
+    @apply w-full border font-medium border-slate-200 bg-white/60 focus:bg-white text-slate-800 rounded-full px-5 py-[14px] outline-none transition-all placeholder:text-slate-400 placeholder:font-normal focus:ring-1 focus:border-brand-blue focus:ring-brand-blue shadow-inner-soft;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep scrollable */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Custom thin scrollbar for panels */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  /* Safe area padding for notched phones */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
