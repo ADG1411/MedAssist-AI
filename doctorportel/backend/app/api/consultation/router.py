@@ -54,25 +54,39 @@ def get_full_summary(patient_id: str) -> Dict[str, Any]:
     # In a real scenario, this would aggregate data from MedCard, history, etc.
     return _get_mock_patient_summary(patient_id)
 
+from app.services.ai_service import generate_json
+import json
+
 @router.post("/ai/consultation-summary")
-def generate_ai_summary(req: AIInsightRequest = Body(...)) -> Dict[str, Any]:
-    # Analyzes patient info + live symptoms
+async def generate_ai_summary(req: AIInsightRequest = Body(...)) -> Dict[str, Any]:
+    # In a real scenario, this fetches the patient summary
+    patient_data = _get_mock_patient_summary(req.patient_id)
     symptoms = req.current_symptoms or "none reported"
-    risk_level = "medium"
-    if "chest pain" in symptoms.lower() or "shortness of breath" in symptoms.lower():
-        risk_level = "high"
-    elif not req.current_symptoms:
-        risk_level = "low"
     
-    return {
-        "summary": f"Live Analysis: Patient is experiencing {symptoms}. Previous history indicates hypertension.",
-        "risk_level": risk_level,
-        "suggestions": [
-            "Order ECG immediately" if risk_level == "high" else "Continue current medication",
-            "Check fasting blood sugar tomorrow"
-        ],
-        "alerts": ["Drug Interaction Alert: Do NOT prescribe Beta Blockers without checking asthma history."]
-    }
+    system_prompt = (
+        "You are an expert medical AI assistant. Analyze the provided patient data and current symptoms. "
+        "Return a JSON object containing: "
+        "'summary' (a concise clinical overview), "
+        "'risk_level' (either 'low', 'medium', or 'high'), "
+        "'suggestions' (an array of actionable recommendations for the doctor), "
+        "'alerts' (an array of critical alerts, e.g. drug interactions or immediate risks). "
+        "Only respond with valid JSON."
+    )
+    
+    prompt = f"Patient Data:\n{json.dumps(patient_data, default=str)}\n\nCurrent Symptoms: {symptoms}"
+    
+    ai_response = await generate_json(prompt, system_prompt)
+    
+    # Fallback in case of error
+    if "error" in ai_response:
+        ai_response = {
+            "summary": f"Live Analysis: Patient is experiencing {symptoms}. Error fetching AI insights.",
+            "risk_level": "medium",
+            "suggestions": ["Assess patient manually"],
+            "alerts": ["AI service unavailable"]
+        }
+        
+    return ai_response
 
 @router.get("/patient/{patient_id}/vitals")
 def get_patient_vitals(patient_id: str) -> List[Dict[str, Any]]:

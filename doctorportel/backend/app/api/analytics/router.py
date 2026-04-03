@@ -65,30 +65,47 @@ async def get_revenue_breakdown():
         ]
     }
 
+from app.services.ai_service import generate_json
+import datetime
+
 @router.get("/ai-insights", response_model=Dict[str, Any])
 async def get_ai_insights():
     """
     Returns AI-generated insights for the doctor to optimize their practice.
     """
-    return {
-        "insights": [
-            {
-                "type": "trend",
-                "title": "Patient Load Increased",
-                "description": "Your patient load increased by 20% this week. Most cases are related to Diabetes & Hypertension.",
-                "action": None
-            },
-            {
-                "type": "schedule",
-                "title": "Schedule Optimization",
-                "description": "You are spending 15% more time per patient. Suggestion: Add more buffer slots on Mondays to prevent delays.",
-                "action": "Adjust Monday Slots"
-            },
-            {
-                "type": "alert",
-                "title": "Predictive Alert",
-                "description": "High chance of emergency cases tomorrow due to sudden weather drop. Ensure ER availability.",
-                "action": None
-            }
-        ]
+    
+    # In a real scenario, this would gather recent practice data
+    mock_practice_data = {
+        "recent_patient_volume": "+12%",
+        "top_diagnoses": ["Diabetes", "Hypertension", "Viral Fever"],
+        "avg_consult_time": "18 mins (up by 15%)",
+        "current_date": datetime.datetime.now().strftime("%Y-%m-%d")
     }
+    
+    system_prompt = (
+        "You are an expert clinical operations AI. Analyze the doctor's practice data "
+        "and generate exactly 3 insights to optimize their practice operations and patient care.\n"
+        "Return a JSON object with a single key 'insights' containing an array of 3 objects.\n"
+        "Each object must have:\n"
+        "- 'type' (string: 'trend', 'schedule', or 'alert')\n"
+        "- 'title' (short string)\n"
+        "- 'description' (string explaining the insight)\n"
+        "- 'action' (string with a specific action to take, or null)"
+    )
+    
+    prompt = f"Practice Data: {mock_practice_data}"
+    
+    ai_response = await generate_json(prompt, system_prompt)
+    if "error" in ai_response:
+        return {
+            "insights": [
+                {
+                    "type": "error",
+                    "title": "AI Offline",
+                    "description": "Unable to generate insights right now.",
+                    "action": None
+                }
+            ]
+        }
+        
+    return ai_response
