@@ -87,42 +87,32 @@ MOCK_LOGS: List[dict] = []
 
 # ── AI Summary Logic ───────────────────────────────────────────────────────────
 
-def _generate_ai_summary(patient_id: int) -> tuple[list[str], str]:
+from app.services.ai_service import generate_json
+import json
+
+async def _generate_ai_summary(patient_id: int) -> tuple[list[str], str]:
     records = MOCK_RECORDS.get(patient_id, [])
-    diagnoses = [r["diagnosis"].lower() for r in records]
-
-    insights: list[str] = []
-    risk = "low"
-
-    # Repeated gastric issues
-    gastric = sum(1 for d in diagnoses if any(k in d for k in ["gastritis", "gerd", "gastro", "stomach"]))
-    if gastric >= 2:
-        insights.append(f"Frequent stomach/GI issues detected across {gastric} visits — consider GI specialist referral.")
-
-    # BP / hypertension trend
-    bp_count = sum(1 for d in diagnoses if "hypertension" in d or "bp" in d)
-    if bp_count >= 2:
-        insights.append("BP is a recurring concern — escalating medication doses noted.")
-        risk = "moderate"
-
-    # Cardiac risk
-    if any("coronary" in d or "cardiac" in d for d in diagnoses):
-        insights.append("Cardiac condition on record — high priority monitoring required.")
-        risk = "high"
-
-    # Diabetes
-    if any("diabetes" in d for d in diagnoses):
-        insights.append("Diabetic patient — monitor blood sugar, HbA1c, and kidney function regularly.")
-        if risk != "high":
-            risk = "moderate"
-
-    # Allergies warning
     patient = MOCK_PATIENTS.get(patient_id, {})
-    if patient.get("allergies"):
-        insights.append(f"Known allergies: {patient['allergies']} — verify before prescribing.")
-
-    if not insights:
-        insights.append("No significant recurring conditions detected in recent records.")
+    
+    system_prompt = (
+        "You are a medical AI assistant. Analyze the patient's medical records, "
+        "diagnoses, prescriptions, and allergies to uncover significant recurring "
+        "conditions or medical concerns.\n"
+        "Return a JSON object with two keys: 'insights' (a list of strings detailing observations) "
+        "and 'risk' (a string: 'low', 'moderate', or 'high').\n"
+        "Respond ONLY with valid JSON."
+    )
+    
+    prompt = f"Patient Info: {json.dumps(patient, default=str)}\nRecords: {json.dumps(records, default=str)}"
+    
+    ai_response = await generate_json(prompt, system_prompt)
+    if "error" in ai_response:
+        return ["Error generating AI insights"], "medium"
+        
+    insights = ai_response.get("insights", ["No significant recurring conditions detected."])
+    risk = ai_response.get("risk", "low").lower()
+    if risk not in ["low", "moderate", "high"]:
+        risk = "medium"
 
     return insights, risk
 
@@ -169,7 +159,7 @@ def scan_qr(req: QRScanRequest):
 
 
 @router.post("/qr/access", response_model=FullPatientRecord, tags=["medcard"])
-def access_full_record(
+async def access_full_record(
     req: QRAccessRequest,
     authorization: Optional[str] = Header(default=None),
 ):
@@ -211,7 +201,7 @@ def access_full_record(
     # ── Build response ──
     raw_records  = MOCK_RECORDS.get(patient_id, [])
     raw_family   = MOCK_FAMILY.get(patient_id, [])
-    ai_insights, _ = _generate_ai_summary(patient_id)
+    ai_insights, _ = await _generate_ai_summary(patient_id)
 
     return FullPatientRecord(
         patient=PatientOut(**patient),
@@ -238,7 +228,7 @@ def get_patient_records(
 
 
 @router.post("/ai/summary", response_model=AISummaryResponse, tags=["medcard"])
-def get_ai_summary(
+async def get_ai_summary(
     req: AISummaryRequest,
     authorization: Optional[str] = Header(default=None),
 ):
@@ -249,7 +239,7 @@ def get_ai_summary(
     if req.patient_id not in MOCK_PATIENTS:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    insights, risk = _generate_ai_summary(req.patient_id)
+    insights, risk = await _generate_ai_summary(req.patient_id)
     return AISummaryResponse(
         patient_id=req.patient_id,
         insights=insights,
