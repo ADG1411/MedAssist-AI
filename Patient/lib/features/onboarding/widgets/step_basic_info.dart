@@ -1,6 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
 import '../providers/onboarding_provider.dart';
 
 class StepBasicInfo extends ConsumerStatefulWidget {
@@ -39,111 +39,372 @@ class _StepBasicInfoState extends ConsumerState<StepBasicInfo> {
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingProvider);
     final notifier = ref.read(onboardingProvider.notifier);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Basic Information', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Tell us about yourself', style: TextStyle(color: AppColors.textSecondary)),
+          // Header
+          Text(
+            'Basic Information',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tell us about yourself',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.45)
+                  : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Glass card
+          _GlassCard(
+            isDark: isDark,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Full Name
+                _OnboardField(
+                  controller: _nameCtrl,
+                  hint: 'Full Name *',
+                  icon: Icons.person_outline_rounded,
+                  isDark: isDark,
+                  onChanged: (v) => notifier.updateBasicInfo(fullName: v),
+                ),
+                const SizedBox(height: 14),
+
+                // Date of Birth
+                GestureDetector(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: state.dateOfBirth ?? DateTime(2000),
+                      firstDate: DateTime(1930),
+                      lastDate: DateTime.now(),
+                    );
+                    if (date != null) notifier.updateBasicInfo(dateOfBirth: date);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFE2E8F0),
+                        width: 0.6,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cake_outlined,
+                            size: 18,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.30)
+                                : const Color(0xFF94A3B8)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            state.dateOfBirth != null
+                                ? '${state.dateOfBirth!.day}/${state.dateOfBirth!.month}/${state.dateOfBirth!.year}'
+                                : 'Date of Birth',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: state.dateOfBirth != null
+                                  ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.25)
+                                      : const Color(0xFF94A3B8)),
+                            ),
+                          ),
+                        ),
+                        Icon(Icons.calendar_month_rounded,
+                            size: 18,
+                            color: const Color(0xFF3B82F6).withValues(alpha: 0.60)),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Gender
+                _SectionLabel('Gender', Icons.wc_rounded, isDark),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _genders.map((g) {
+                    final sel = state.gender == g;
+                    return _PillChip(
+                      label: g,
+                      selected: sel,
+                      isDark: isDark,
+                      onTap: () => notifier.updateBasicInfo(gender: g),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Height & Weight
+                Row(
+                  children: [
+                    Expanded(
+                      child: _OnboardField(
+                        controller: _heightCtrl,
+                        hint: 'Height (cm)',
+                        icon: Icons.height_rounded,
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => notifier.updateBasicInfo(heightCm: v),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _OnboardField(
+                        controller: _weightCtrl,
+                        hint: 'Weight (kg)',
+                        icon: Icons.monitor_weight_outlined,
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => notifier.updateBasicInfo(weightKg: v),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Blood Group
+                _SectionLabel('Blood Group', Icons.bloodtype_outlined, isDark),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _bloodGroups.map((bg) {
+                    final sel = state.bloodGroup == bg;
+                    return _PillChip(
+                      label: bg,
+                      selected: sel,
+                      isDark: isDark,
+                      onTap: () => notifier.updateBasicInfo(bloodGroup: bg),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
 
-          // Full Name
-          TextFormField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Full Name *',
-              prefixIcon: Icon(Icons.person_outline),
+// ── Shared Onboarding Widgets ─────────────────────────────────────────────
+
+class _GlassCard extends StatelessWidget {
+  final bool isDark;
+  final Widget child;
+  const _GlassCard({required this.isDark, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 0.8,
             ),
-            onChanged: (v) => notifier.updateBasicInfo(fullName: v),
-          ),
-          const SizedBox(height: 16),
-
-          // Date of Birth
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.cake_outlined, color: AppColors.primary),
-            title: Text(
-              state.dateOfBirth != null
-                  ? '${state.dateOfBirth!.day}/${state.dateOfBirth!.month}/${state.dateOfBirth!.year}'
-                  : 'Date of Birth',
-              style: TextStyle(color: state.dateOfBirth != null ? null : AppColors.textSecondary),
-            ),
-            trailing: const Icon(Icons.calendar_month),
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: state.dateOfBirth ?? DateTime(2000),
-                firstDate: DateTime(1930),
-                lastDate: DateTime.now(),
-              );
-              if (date != null) notifier.updateBasicInfo(dateOfBirth: date);
-            },
-          ),
-          const Divider(),
-          const SizedBox(height: 16),
-
-          // Gender
-          const Text('Gender', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: _genders.map((g) => ChoiceChip(
-              label: Text(g),
-              selected: state.gender == g,
-              onSelected: (_) => notifier.updateBasicInfo(gender: g),
-              selectedColor: AppColors.softBlue,
-            )).toList(),
-          ),
-          const SizedBox(height: 16),
-
-          // Height & Weight
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _heightCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Height (cm)',
-                    prefixIcon: Icon(Icons.height),
-                  ),
-                  onChanged: (v) => notifier.updateBasicInfo(heightCm: v),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _weightCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Weight (kg)',
-                    prefixIcon: Icon(Icons.monitor_weight_outlined),
-                  ),
-                  onChanged: (v) => notifier.updateBasicInfo(weightKg: v),
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
 
-          // Blood Group
-          const Text('Blood Group', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _bloodGroups.map((bg) => ChoiceChip(
-              label: Text(bg),
-              selected: state.bloodGroup == bg,
-              onSelected: (_) => notifier.updateBasicInfo(bloodGroup: bg),
-              selectedColor: AppColors.softBlue,
-            )).toList(),
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final bool isDark;
+  const _SectionLabel(this.text, this.icon, this.isDark);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon,
+            size: 14,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.35)
+                : const Color(0xFF64748B)),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.40)
+                : const Color(0xFF475569),
           ),
-          const SizedBox(height: 32),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PillChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool isDark;
+  final VoidCallback onTap;
+  const _PillChip({
+    required this.label,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF3B82F6)
+              : isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF3B82F6).withValues(alpha: 0.40)
+                : isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFE2E8F0),
+            width: 0.6,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.20),
+                    blurRadius: 6,
+                  )
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected
+                ? Colors.white
+                : isDark
+                    ? Colors.white.withValues(alpha: 0.50)
+                    : const Color(0xFF475569),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OnboardField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final bool isDark;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+
+  const _OnboardField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.isDark,
+    this.keyboardType,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFE2E8F0),
+          width: 0.6,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        style: TextStyle(
+          fontSize: 14,
+          color: isDark ? Colors.white : const Color(0xFF1E293B),
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            fontSize: 13,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.25)
+                : const Color(0xFF94A3B8),
+          ),
+          prefixIcon: Icon(icon,
+              size: 18,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.30)
+                  : const Color(0xFF94A3B8)),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
       ),
     );
   }

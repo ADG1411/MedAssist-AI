@@ -192,34 +192,34 @@ class _RealHealthMetricsCardState extends ConsumerState<RealHealthMetricsCard>
           crossAxisSpacing: 12,
           childAspectRatio: 0.92,
           children: [
-            _StepsCard(
+            _StaggerFadeSlide(index: 0, child: _StepsCard(
               steps: m.steps,
               goal: m.stepGoal,
               progress: m.stepProgress,
               isDark: isDark,
-            ),
-            _HeartRateCard(
+            )),
+            _StaggerFadeSlide(index: 1, child: _HeartRateCard(
               bpm: m.heartRate,
               pulseAnim: _pulseAnim,
               isDark: isDark,
-            ),
-            _SleepCard(
+            )),
+            _StaggerFadeSlide(index: 2, child: _SleepCard(
               hours: m.sleepHours,
               goal: m.sleepGoal,
               progress: m.sleepProgress,
               isDark: isDark,
-            ),
-            _CaloriesCard(
+            )),
+            _StaggerFadeSlide(index: 3, child: _CaloriesCard(
               burned: m.caloriesBurned,
               goal: m.calorieGoal,
               progress: m.calorieProgress,
               isDark: isDark,
-            ),
+            )),
           ],
         ),
         if (m.bloodOxygen > 0) ...[
           const SizedBox(height: 12),
-          _BloodOxygenBanner(spO2: m.bloodOxygen, isDark: isDark),
+          _StaggerFadeSlide(index: 4, child: _BloodOxygenBanner(spO2: m.bloodOxygen, isDark: isDark)),
         ],
       ],
     );
@@ -919,6 +919,57 @@ class _HeartbeatPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HeartbeatPainter old) => false;
+}
+
+// ── Staggered Entrance Animation ─────────────────────────────────────────────
+class _StaggerFadeSlide extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggerFadeSlide({required this.index, required this.child});
+
+  @override
+  State<_StaggerFadeSlide> createState() => _StaggerFadeSlideState();
+}
+
+class _StaggerFadeSlideState extends State<_StaggerFadeSlide>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    );
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.10),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+
+    Future.delayed(Duration(milliseconds: 60 + widget.index * 90), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

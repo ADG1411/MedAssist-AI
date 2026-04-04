@@ -41,11 +41,14 @@ class AppRouter {
     return CustomTransitionPage(
       key: key,
       child: child,
+      transitionDuration: const Duration(milliseconds: 360),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(animation),
-          child: child,
-        );
+        final slide = Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        final fade = Tween<double>(begin: 0.0, end: 1.0)
+            .animate(CurvedAnimation(parent: animation, curve: const Interval(0.0, 0.55, curve: Curves.easeOut)));
+        return FadeTransition(opacity: fade, child: SlideTransition(position: slide, child: child));
       },
     );
   }
@@ -54,11 +57,14 @@ class AppRouter {
     return CustomTransitionPage(
       key: key,
       child: child,
+      transitionDuration: const Duration(milliseconds: 380),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(animation),
-          child: child,
-        );
+        final slide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+            .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        final fade = Tween<double>(begin: 0.0, end: 1.0)
+            .animate(CurvedAnimation(parent: animation, curve: const Interval(0.0, 0.45, curve: Curves.easeOut)));
+        return FadeTransition(opacity: fade, child: SlideTransition(position: slide, child: child));
       },
     );
   }
@@ -67,8 +73,15 @@ class AppRouter {
     return CustomTransitionPage(
       key: key,
       child: child,
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
+        final scale = Tween<double>(begin: 0.96, end: 1.0)
+            .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: scale, child: child),
+        );
       },
     );
   }

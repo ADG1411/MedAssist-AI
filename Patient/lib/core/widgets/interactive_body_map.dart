@@ -49,31 +49,31 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap> {
   final double originalWidth = 663.0;
   final double originalHeight = 1063.0;
 
-  // Tightened bounds — arms/hands pulled inward to hug the anatomy
+  // Accurately mapped bounds for 663×1063 full_body.png front anatomy
   final Map<BodyPart, Rect> _bodyPartBounds = {
-    BodyPart.head:           const Rect.fromLTRB(269,   5, 394, 135),
-    BodyPart.neck:           const Rect.fromLTRB(285, 135, 378, 172),
-    BodyPart.leftShoulder:   const Rect.fromLTRB(155, 160, 275, 248),
-    BodyPart.rightShoulder:  const Rect.fromLTRB(388, 160, 508, 248),
-    BodyPart.chest:          const Rect.fromLTRB(265, 180, 398, 310),
-    BodyPart.leftUpperArm:   const Rect.fromLTRB(120, 248, 230, 380),
-    BodyPart.rightUpperArm:  const Rect.fromLTRB(433, 248, 543, 380),
-    BodyPart.abdomen:        const Rect.fromLTRB(260, 310, 403, 445),
-    BodyPart.leftElbow:      const Rect.fromLTRB( 95, 380, 195, 445),
-    BodyPart.rightElbow:     const Rect.fromLTRB(468, 380, 568, 445),
-    BodyPart.hipPelvis:      const Rect.fromLTRB(248, 445, 415, 555),
-    BodyPart.leftForearm:    const Rect.fromLTRB( 65, 445, 165, 570),
-    BodyPart.rightForearm:   const Rect.fromLTRB(498, 445, 598, 570),
-    BodyPart.leftHand:       const Rect.fromLTRB( 40, 570, 135, 680),
-    BodyPart.rightHand:      const Rect.fromLTRB(528, 570, 623, 680),
-    BodyPart.leftThigh:      const Rect.fromLTRB(228, 555, 328, 745),
-    BodyPart.rightThigh:     const Rect.fromLTRB(335, 555, 435, 745),
-    BodyPart.leftKnee:       const Rect.fromLTRB(238, 745, 322, 818),
-    BodyPart.rightKnee:      const Rect.fromLTRB(341, 745, 425, 818),
-    BodyPart.leftShin:       const Rect.fromLTRB(232, 818, 320, 975),
-    BodyPart.rightShin:      const Rect.fromLTRB(343, 818, 431, 975),
-    BodyPart.leftFoot:       const Rect.fromLTRB(210, 975, 318, 1058),
-    BodyPart.rightFoot:      const Rect.fromLTRB(345, 975, 453, 1058),
+    BodyPart.head:           const Rect.fromLTRB(280,  12, 383, 125),
+    BodyPart.neck:           const Rect.fromLTRB(298, 125, 365, 168),
+    BodyPart.leftShoulder:   const Rect.fromLTRB(195, 168, 280, 225),
+    BodyPart.rightShoulder:  const Rect.fromLTRB(383, 168, 468, 225),
+    BodyPart.chest:          const Rect.fromLTRB(280, 172, 383, 300),
+    BodyPart.leftUpperArm:   const Rect.fromLTRB(150, 225, 232, 358),
+    BodyPart.rightUpperArm:  const Rect.fromLTRB(431, 225, 513, 358),
+    BodyPart.abdomen:        const Rect.fromLTRB(275, 300, 388, 432),
+    BodyPart.leftElbow:      const Rect.fromLTRB(122, 358, 200, 418),
+    BodyPart.rightElbow:     const Rect.fromLTRB(463, 358, 541, 418),
+    BodyPart.hipPelvis:      const Rect.fromLTRB(262, 432, 401, 538),
+    BodyPart.leftForearm:    const Rect.fromLTRB( 88, 418, 172, 548),
+    BodyPart.rightForearm:   const Rect.fromLTRB(491, 418, 575, 548),
+    BodyPart.leftHand:       const Rect.fromLTRB( 82, 538, 162, 635),
+    BodyPart.rightHand:      const Rect.fromLTRB(501, 538, 581, 635),
+    BodyPart.leftThigh:      const Rect.fromLTRB(250, 538, 330, 714),
+    BodyPart.rightThigh:     const Rect.fromLTRB(333, 538, 413, 714),
+    BodyPart.leftKnee:       const Rect.fromLTRB(253, 714, 328, 792),
+    BodyPart.rightKnee:      const Rect.fromLTRB(335, 714, 410, 792),
+    BodyPart.leftShin:       const Rect.fromLTRB(248, 792, 326, 950),
+    BodyPart.rightShin:      const Rect.fromLTRB(337, 792, 415, 950),
+    BodyPart.leftFoot:       const Rect.fromLTRB(228, 950, 326, 1048),
+    BodyPart.rightFoot:      const Rect.fromLTRB(337, 950, 435, 1048),
   };
 
   // Map for human-readable labels shown on the body
@@ -147,33 +147,32 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Dot indicator
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: isSelected ? 18 : (isHovered ? 14 : 8),
-                                height: isSelected ? 18 : (isHovered ? 14 : 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? widget.highlightColor
-                                      : (isHovered
-                                          ? widget.highlightColor.withOpacity(0.7)
-                                          : widget.highlightColor.withOpacity(0.25)),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected ? Colors.white : Colors.transparent,
-                                    width: isSelected ? 2.5 : 0,
+                              // Dot indicator — only visible when selected or hovered
+                              if (isSelected || isHovered)
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: isSelected ? 18 : 14,
+                                  height: isSelected ? 18 : 14,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? widget.highlightColor
+                                        : widget.highlightColor.withOpacity(0.7),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected ? Colors.white : Colors.transparent,
+                                      width: isSelected ? 2.5 : 0,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: widget.highlightColor.withOpacity(0.5),
+                                              blurRadius: 10,
+                                              spreadRadius: 3,
+                                            )
+                                          ]
+                                        : null,
                                   ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: widget.highlightColor.withOpacity(0.5),
-                                            blurRadius: 10,
-                                            spreadRadius: 3,
-                                          )
-                                        ]
-                                      : null,
                                 ),
-                              ),
                               // Label (only shown on select / hover)
                               if (isSelected || isHovered)
                                 Padding(

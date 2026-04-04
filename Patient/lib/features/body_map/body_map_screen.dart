@@ -1,11 +1,17 @@
+// Body Map Screen — Premium AI Clinical Diagnostic Intake
+// UI-only rewrite. All existing backend logic preserved:
+// symptomCheckProvider, SymptomCheckNotifier, BodyPart enum,
+// InteractiveBodyMap, context.push('/symptom-chat').
+// Overflow permanently fixed via DraggableScrollableSheet.
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/widgets/interactive_body_map.dart';
-import '../../shared/widgets/base_screen.dart';
-import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/app_background.dart';
 import 'providers/symptom_check_provider.dart';
+import 'widgets/body_map_hero.dart';
+import 'widgets/clinical_intake_bottom_sheet.dart';
 
 class BodyMapScreen extends ConsumerStatefulWidget {
   const BodyMapScreen({super.key});
@@ -17,19 +23,13 @@ class BodyMapScreen extends ConsumerStatefulWidget {
 class _BodyMapScreenState extends ConsumerState<BodyMapScreen> {
   final _notesController = TextEditingController();
 
-  final List<String> _symptomTypes = const [
-    'Mild', 'Moderate', 'Severe', 'Burning', 'Sharp', 'Dull', 'Throbbing', 'Aching'
-  ];
-
-  final List<String> _durations = const [
-    'Just now', 'Few hours', '1-2 days', '3-7 days', '1-2 weeks', 'More than 2 weeks', 'Chronic'
-  ];
-
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
   }
+
+  // ── Existing mapping helpers (preserved) ────────────────────────────────
 
   String _getStringFromPart(BodyPart part) {
     switch (part) {
@@ -69,239 +69,133 @@ class _BodyMapScreenState extends ConsumerState<BodyMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(symptomCheckProvider);
     final notifier = ref.read(symptomCheckProvider.notifier);
 
-    return BaseScreen(
-      appBar: AppBar(
-        title: const Text('Where does it hurt?'),
-        leading: const BackButton(),
-      ),
-      body: Column(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      body: Stack(
         children: [
-          // Interactive Body Map
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(
-                child: InteractiveBodyMap(
-                  selectedPart: _getPartFromString(state.selectedRegion),
-                  onPartSelected: (BodyPart part) {
-                    notifier.selectRegion(_getStringFromPart(part));
-                  },
+          // Background
+          AppBackground(isDark: isDark),
+
+          // Header bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.30)
+                      : Colors.white.withValues(alpha: 0.60),
+                  padding: EdgeInsets.fromLTRB(
+                      8, MediaQuery.paddingOf(context).top + 4, 12, 8),
+                  child: Row(
+                    children: [
+                      // Back button
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.09)
+                                : Colors.white.withValues(alpha: 0.72),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : Colors.white,
+                                width: 0.8),
+                          ),
+                          child: Icon(Icons.arrow_back_rounded,
+                              size: 16,
+                              color: isDark ? Colors.white : Colors.black87),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Where does it hurt?',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E293B),
+                                    letterSpacing: -0.3)),
+                            Text('Tap a body region to begin diagnosis',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.45)
+                                        : Colors.grey)),
+                          ],
+                        ),
+                      ),
+                      // AI badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome,
+                                size: 10, color: Colors.white),
+                            SizedBox(width: 3),
+                            Text('AI',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
 
-          // Bottom panel — scrollable for detailed input
-          _BottomPanel(
+          // Body map hero — fills top area behind sheet
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 52,
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).size.height * 0.15,
+            child: BodyMapHero(
+              selectedPart: _getPartFromString(state.selectedRegion),
+              selectedRegionLabel: state.selectedRegion,
+              isFrontView: state.isFrontView,
+              onPartSelected: (BodyPart part) {
+                notifier.selectRegion(_getStringFromPart(part));
+              },
+              onToggleView: notifier.toggleView,
+            ),
+          ),
+
+          // Clinical intake bottom sheet — DraggableScrollableSheet
+          ClinicalIntakeBottomSheet(
             state: state,
             notifier: notifier,
-            symptomTypes: _symptomTypes,
-            durations: _durations,
             notesController: _notesController,
+            onContinue: () => context.push('/symptom-chat'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Bottom panel with symptom details ──
-class _BottomPanel extends StatelessWidget {
-  final SymptomCheckState state;
-  final SymptomCheckNotifier notifier;
-  final List<String> symptomTypes;
-  final List<String> durations;
-  final TextEditingController notesController;
-
-  const _BottomPanel({
-    required this.state,
-    required this.notifier,
-    required this.symptomTypes,
-    required this.durations,
-    required this.notesController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.45,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            // Selected region badge
-            if (state.selectedRegion != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.my_location, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      state.selectedRegion!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(Icons.check_circle, size: 18, color: AppColors.primary),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // ── Pain type chips ──
-            const Text(
-              'How does it feel?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: symptomTypes.map((symptom) {
-                final isSelected = state.selectedSymptoms.contains(symptom);
-                return FilterChip(
-                  label: Text(symptom),
-                  selected: isSelected,
-                  onSelected: (_) => notifier.toggleSymptom(symptom),
-                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                  checkmarkColor: AppColors.primary,
-                  labelStyle: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    fontSize: 13,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected ? AppColors.primary : AppColors.border,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Duration selection ──
-            const Text(
-              'How long have you had this?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: durations.map((dur) {
-                final isSelected = state.duration == dur;
-                return ChoiceChip(
-                  label: Text(dur),
-                  selected: isSelected,
-                  onSelected: (_) => notifier.setDuration(dur),
-                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                  checkmarkColor: AppColors.primary,
-                  labelStyle: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    fontSize: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected ? AppColors.primary : AppColors.border,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Additional notes ──
-            const Text(
-              'Tell us more (optional)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Any specific details that can help with the diagnosis',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: notesController,
-              maxLines: 3,
-              minLines: 2,
-              onChanged: notifier.setAdditionalNotes,
-              decoration: InputDecoration(
-                hintText: 'e.g. Pain gets worse at night, started after exercise, numbness in fingers...',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                contentPadding: const EdgeInsets.all(14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Continue button
-            AppButton(
-              text: 'Continue to AI Analysis',
-              onPressed: state.canContinue ? () => context.push('/symptom-chat') : null,
-            ),
-          ],
-        ),
       ),
     );
   }
