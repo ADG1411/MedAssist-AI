@@ -66,7 +66,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-safe">
+    <div className="w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-safe">
       
       <ProfileHeader 
         profile={profile}

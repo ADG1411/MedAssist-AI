@@ -120,7 +120,7 @@ const DashboardLayout = () => {
   const bottomNavItems = BOTTOM_NAV;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-hidden font-sans">
+    <div className="h-screen bg-slate-50 flex overflow-hidden font-sans">
 
       {/* ── Mobile Backdrop ── */}
       <div
@@ -197,7 +197,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* ── Main Content ── */}
-      <main className="flex-1 flex flex-col min-h-screen min-w-0 bg-[#F9FBFF] pb-[72px] md:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#F9FBFF] pb-[72px] md:pb-0 overflow-hidden">
 
         {/* Top Navbar */}
         {location.pathname !== '/dashboard/ai' && (
@@ -325,8 +325,10 @@ const DashboardLayout = () => {
 
         {/* Page Content */}
         <div className={cn(
-          'flex-1 overflow-auto custom-scrollbar flex flex-col',
-          location.pathname !== '/dashboard/ai' ? 'p-3 md:p-8' : 'p-0'
+          'flex-1 flex flex-col',
+          location.pathname === '/dashboard/ai'
+            ? 'overflow-hidden p-0'
+            : 'overflow-auto custom-scrollbar p-3 md:p-8'
         )}>
           <Outlet />
         </div>
