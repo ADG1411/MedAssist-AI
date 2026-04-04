@@ -8,6 +8,7 @@ import '../../shared/widgets/glass_card.dart';
 import 'providers/health_data_provider.dart';
 import 'providers/health_history_provider.dart';
 import 'widgets/health_activity_card.dart';
+import 'widgets/neumorphic_health_score.dart';
 import 'widgets/weekly_chart_card.dart';
 import 'widgets/workout_log_card.dart';
 import 'widgets/water_intake_logger.dart';
@@ -391,63 +392,12 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
           },
         ),
 
-        // Health Score Summary
+        // Health Score — Premium Neumorphic Card
         const SizedBox(height: 20),
-        GlassCard(
-          radius: 18,
-          blur: 14,
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      _scoreColor(m.computedScore),
-                      _scoreColor(m.computedScore).withValues(alpha: 0.6),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    '${m.computedScore}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Health Score',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Computed from your real Health Connect data',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        NeumorphicHealthScoreCard(
+          score: m.computedScore,
+          label: 'Health Score',
+          subtitle: 'Computed from your real Health Connect data',
         ),
       ],
     );
@@ -477,9 +427,5 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
     );
   }
 
-  Color _scoreColor(int s) {
-    if (s >= 71) return const Color(0xFF10B981);
-    if (s >= 41) return const Color(0xFFF59E0B);
-    return const Color(0xFFEF4444);
-  }
+  // Score colors are now handled internally by NeumorphicHealthScoreCard
 }
