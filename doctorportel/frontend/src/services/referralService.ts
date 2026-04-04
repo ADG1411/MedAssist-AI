@@ -3,7 +3,7 @@ import type {
   Booking, Ticket, Earning, EarningsSummary,
   CreateReferralPayload, CreateBookingPayload,
 } from '../types/referral';
-import { supabase } from './supabaseClient';
+import { supabase } from '../lib/supabase';
 
 const BASE = '/api/v1';
 

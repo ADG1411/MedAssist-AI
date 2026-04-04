@@ -92,7 +92,7 @@ export interface AIConsultResponse {
   _model?: string;
 }
 
-import { supabase } from './supabaseClient';
+import { supabase } from '../lib/supabase';
 
 // ── Mock database (Fallback — kept intact) ──────────────────────────────
 
