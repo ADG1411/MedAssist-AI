@@ -12,6 +12,7 @@ import { DocumentsTab } from '../components/profile/DocumentsTab';
 import { SettingsTab } from '../components/profile/SettingsTab';
 import { StatsSidebar } from '../components/profile/StatsSidebar';
 import { AIAssistant } from '../components/profile/AIAssistant';
+import { getProfile as getRealProfile } from '../services/doctorProfileService';
 import { profileService, type DoctorProfile } from '../services/profileService';
 
 export default function Profile() {
@@ -19,22 +20,22 @@ export default function Profile() {
   const defaultProfile: DoctorProfile = {
     id: "mock-1",
     user_id: "user-1",
-    full_name: "Dr. Sarah Mitchell",
-    email: "sarah.mitchell@example.com",
+    full_name: "Doctor",
+    email: "",
     phone_number: "+1 (555) 123-4567",
-    specialization: "Cardiology",
-    experience_years: 12,
-    rating: 4.9,
-    languages: "English, Spanish",
-    bio: "Experienced cardiologist with over 10 years of practice.",
-    location: "New York, USA",
-    avatar: "https://i.pravatar.cc/150?img=32",
+    specialization: "General",
+    experience_years: 0,
+    rating: 5.0,
+    languages: "English",
+    bio: "",
+    location: "",
+    avatar: "https://ui-avatars.com/api/?name=Doctor&background=1A6BFF&color=fff",
     is_active: true,
     stats: {
-      total_patients: 1250,
-      consultations: 85,
-      success_rate: "98%",
-      earnings_this_month: 12450.00
+      total_patients: 0,
+      consultations: 0,
+      success_rate: "100%",
+      earnings_this_month: 0
     }
   };
 
@@ -43,13 +44,33 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
-      // Removed setLoading(true) to show data immediately
-      const data = await profileService.getProfile();
-      if (data) {
-        setProfile(data);
+      try {
+        const [realProfile, oldProfile] = await Promise.all([
+          getRealProfile(),
+          profileService.getProfile()
+        ]);
+
+        if (realProfile) {
+          setProfile({
+            id: realProfile.id || "mock-1",
+            user_id: realProfile.id || "user-1",
+            full_name: realProfile.overview?.full_name || "Doctor",
+            email: "doctor@example.com",
+            phone_number: "+1 (555) 123-4567",
+            specialization: realProfile.overview?.specialization || "General Medicine",
+            experience_years: realProfile.overview?.years_of_experience || 0,
+            rating: oldProfile?.rating || 5.0,
+            languages: realProfile.overview?.languages?.join(", ") || "English",
+            bio: realProfile.overview?.bio || "",
+            location: realProfile.overview?.city || "",
+            avatar: realProfile.overview?.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(realProfile.overview?.full_name || 'Doctor')}&background=1A6BFF&color=fff`,
+            is_active: realProfile.verification_status === 'approved',
+            stats: oldProfile?.stats || defaultProfile.stats
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load generic profile", error);
       }
-      // No longer displaying an error if the database connection fails
-      // as we want to show the mock data directly.
     };
     fetchProfileData();
   }, []);

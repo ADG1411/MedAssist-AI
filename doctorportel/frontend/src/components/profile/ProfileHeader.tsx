@@ -26,7 +26,7 @@ export const ProfileHeader = ({ profile, onEdit, onShare, onPreview }: ProfileHe
           {/* Avatar */}
           <div className="-mt-16 relative w-32 h-32 shrink-0">
             <img 
-              src={profile.avatar || "https://ui-avatars.com/api/?name=Dr+Smith"} 
+              src={profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Doctor')}`} 
               alt={profile.full_name}
               className="w-full h-full rounded-2xl border-4 border-white shadow-md object-cover bg-white"
             />

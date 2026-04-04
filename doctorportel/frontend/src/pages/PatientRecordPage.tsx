@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { accessFullRecord, type FullRecord } from '../services/medcardService';
 import { generateDemoToken } from '../services/medcardService';
+import { getProfile, type DoctorProfile } from '../services/doctorProfileService';
 import { cn } from '../layouts/DashboardLayout';
 import { AnnotateRecordModal } from '../components/AnnotateRecordModal';
 
@@ -35,6 +36,7 @@ export default function PatientRecordPage() {
   const navigate = useNavigate();
 
   const [record, setRecord]     = useState<FullRecord | null>(null);
+  const [profile, setProfile]   = useState<DoctorProfile | null>(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
@@ -46,8 +48,15 @@ export default function PatientRecordPage() {
     if (isNaN(id)) { setError('Invalid patient ID'); setLoading(false); return; }
 
     const token = generateDemoToken(id);
-    accessFullRecord(token, false)
-      .then(data => { setRecord(data); setLoading(false); })
+    Promise.all([
+      accessFullRecord(token, false),
+      getProfile()
+    ])
+      .then(([data, prof]) => { 
+        setRecord(data); 
+        setProfile(prof);
+        setLoading(false); 
+      })
       .catch(e  => { setError(e.message); setLoading(false); });
   }, [patientId]);
 
@@ -131,7 +140,7 @@ export default function PatientRecordPage() {
         <div className="hidden print:flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
           <div>
             <p className="font-black text-xl text-slate-800">MedAssist · Patient Medical Record</p>
-            <p className="text-[12px] text-slate-500 mt-0.5">Printed by Dr. Smith · {printDate}</p>
+            <p className="text-[12px] text-slate-500 mt-0.5">Printed by {profile?.overview?.full_name || 'Doctor'} · {printDate}</p>
           </div>
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-teal-600" />
@@ -356,7 +365,7 @@ export default function PatientRecordPage() {
         {/* ── Print footer ── */}
         <div className="border-t border-slate-200 pt-4 text-center">
           <p className="text-[10px] text-slate-400 font-medium">
-            MedAssist Doctor Portal · Patient ID #{patient.id} · Accessed by Dr. Smith · {printDate}
+            MedAssist Doctor Portal · Patient ID #{patient.id} · Accessed by {profile?.overview?.full_name || 'Doctor'} · {printDate}
           </p>
           <p className="text-[10px] text-red-400 font-bold mt-0.5">
             CONFIDENTIAL — This document contains protected health information. Do not share or distribute.

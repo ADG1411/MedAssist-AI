@@ -55,6 +55,7 @@ const DashboardLayout = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,7 +75,8 @@ const DashboardLayout = () => {
       }
       
       try {
-        await getProfile();
+        const prof = await getProfile();
+        setProfile(prof);
         // Removed forced navigation so portal remains open
       } catch (err) {
         console.error("Error fetching profile", err);
@@ -246,7 +248,7 @@ const DashboardLayout = () => {
 
               {/* Mobile avatar */}
               <div className="md:hidden w-8 h-8 rounded-full overflow-hidden border-2 border-slate-200 shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
-                <img src="https://ui-avatars.com/api/?name=Dr.+Smith&background=1A6BFF&color=fff" className="w-full h-full object-cover" alt="Dr Smith" />
+                <img src={profile?.overview?.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.overview?.full_name || 'Doctor')}&background=1A6BFF&color=fff`} className="w-full h-full object-cover" alt={profile?.overview?.full_name || "Doctor"} />
               </div>
             </div>
           </header>

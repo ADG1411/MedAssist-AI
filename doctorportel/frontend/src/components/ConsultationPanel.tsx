@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Appointment } from '../types/appointment';
 import {
   Mic, MicOff, VideoOff, PhoneOff, Upload, Sparkles, Send,
@@ -16,6 +16,7 @@ import {
   PrescriptionPreview
 } from './prescription/PrescriptionComponents';
 import type { MedicineItem, PatientInfo } from './prescription/PrescriptionComponents';
+import { getProfile } from '../services/doctorProfileService';
 
 
 interface ConsultationPanelProps {
@@ -35,7 +36,7 @@ const VITALS = [
 const QUICK_CHIPS = ['Gen. Checkup', 'Follow-up', 'Refill Request', 'Lab Order', 'Referral'];
 
 // ── Video Panel ────────────────────────────────────────────────────────────────
-const VideoFeed = ({ appointment }: { appointment: Appointment }) => (
+const VideoFeed = ({ appointment, doctorName, doctorAvatar }: { appointment: Appointment, doctorName: string, doctorAvatar: string }) => (
   <div className="flex flex-col h-full gap-2.5">
 
     {/* Video feed — fills all available vertical space */}
@@ -60,7 +61,8 @@ const VideoFeed = ({ appointment }: { appointment: Appointment }) => (
       {/* Self-view PIP */}
       <div className="absolute bottom-4 right-3 w-[72px] h-24 bg-slate-800 rounded-xl ring-2 ring-white/20 overflow-hidden shadow-xl">
         <img
-          src="https://ui-avatars.com/api/?name=Dr.+Smith&background=2563EB&color=fff"
+          src={doctorAvatar}
+          alt={doctorName}
           className="w-full h-full object-cover"
         />
       </div>
@@ -111,6 +113,17 @@ export const ConsultationPanel = ({ appointment }: ConsultationPanelProps) => {
   
   const navigate = useNavigate();
   const [medicines, setMedicines] = useState<MedicineItem[]>([]);
+  const [doctorName, setDoctorName] = useState('Doctor');
+  const [doctorAvatar, setDoctorAvatar] = useState('https://ui-avatars.com/api/?name=Doctor&background=2563EB&color=fff');
+
+  useEffect(() => {
+    getProfile().then(prof => {
+      if (prof?.overview?.full_name) {
+        setDoctorName(prof.overview.full_name);
+        setDoctorAvatar(prof.overview.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(prof.overview.full_name)}&background=2563EB&color=fff`);
+      }
+    }).catch(console.error);
+  }, []);
 
   const isOnline    = appointment.type    === 'online';
   const isEmergency = appointment.priority === 'Emergency';
@@ -124,7 +137,7 @@ export const ConsultationPanel = ({ appointment }: ConsultationPanelProps) => {
     age: parseInt(appointment.patientAge?.toString() || '34', 10),
     gender: 'Unknown', 
     date: new Date().toLocaleDateString(),
-    doctor: 'Dr. Smith',
+    doctor: doctorName,
     rxNumber: 'RX-' + Math.floor(100000 + Math.random() * 900000)
   };
 
@@ -189,7 +202,7 @@ export const ConsultationPanel = ({ appointment }: ConsultationPanelProps) => {
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> Video Call Active
             </div>
-            <VideoFeed appointment={appointment} />
+            <VideoFeed appointment={appointment} doctorName={doctorName} doctorAvatar={doctorAvatar} />
           </div>
 
           {/* Right: Smart Prescription Writer */}
@@ -241,7 +254,7 @@ export const ConsultationPanel = ({ appointment }: ConsultationPanelProps) => {
 
           {/* Left: Large video (55%) */}
           <div className="w-full md:w-[52%] shrink-0 flex flex-col p-4 border-b md:border-b-0 md:border-r border-slate-100 bg-slate-50/30 min-h-0">
-            <VideoFeed appointment={appointment} />
+            <VideoFeed appointment={appointment} doctorName={doctorName} doctorAvatar={doctorAvatar} />
           </div>
 
           {/* Right: Notes / Chat (48%) */}
