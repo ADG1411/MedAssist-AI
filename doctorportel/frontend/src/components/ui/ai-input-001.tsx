@@ -89,15 +89,27 @@ export const AiInput: React.FC<AIInputProps> = ({
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-white">
-      <MessageList messages={messages} scrollRef={scrollRef} isLoading={isLoading} renderMessage={renderMessage} />
+      {/* Scrollable messages area — takes all remaining space */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {!hasMessages ? (
+          <div className="flex h-full items-end justify-center pb-4">
+            {/* Empty state - suggestions shown in ChatInput below */}
+          </div>
+        ) : (
+          <MessageList messages={messages} scrollRef={scrollRef} isLoading={isLoading} renderMessage={renderMessage} />
+        )}
+      </div>
 
-      <ChatInput
-        models={models}
-        suggestions={suggestions}
-        placeholder={placeholder}
-        hasMessages={hasMessages}
-        onSend={onSendMessage}
-      />
+      {/* Input area — always pinned at bottom */}
+      <div className="shrink-0">
+        <ChatInput
+          models={models}
+          suggestions={suggestions}
+          placeholder={placeholder}
+          hasMessages={hasMessages}
+          onSend={onSendMessage}
+        />
+      </div>
     </div>
   );
 };
@@ -118,7 +130,7 @@ const MessageList = ({
   return (
     <div
       ref={scrollRef}
-      className="z-10 flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-hidden pt-6 sm:pt-10 scrollbar-thin scrollbar-thumb-slate-200"
+      className="z-10 flex w-full h-full flex-col items-center overflow-y-auto overflow-x-hidden pt-6 sm:pt-10 scrollbar-thin scrollbar-thumb-slate-200"
       style={{ scrollbarGutter: 'stable' }}
     >
       <div className="flex w-full max-w-3xl flex-col gap-4 px-3 pb-6 sm:px-4 sm:pb-10">
@@ -215,12 +227,8 @@ const ChatInput = ({
   };
 
   return (
-    <motion.div
-      layout
-      transition={{ type: "spring", stiffness: 200, damping: 25 }}
-      className={`z-20 flex w-full flex-col justify-center items-center px-3 py-4 sm:px-4 ${
-        !hasMessages ? "flex-1" : ""
-      }`}
+    <div
+      className="z-20 flex w-full flex-col justify-center items-center px-3 py-3 sm:px-4 bg-white border-t border-slate-100"
     >
       {!hasMessages && suggestions.length > 0 && (
         <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 px-2">
@@ -405,7 +413,7 @@ const ChatInput = ({
         )}
       </AnimatePresence>
 
-    </motion.div>
+    </div>
   );
 };
 

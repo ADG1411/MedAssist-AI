@@ -75,17 +75,29 @@ export async function updateBookingStatus(bookingId: string, status: 'confirmed'
  * Fetches the patient profile for a given patient_id from profiles table.
  */
 export async function getPatientProfile(patientId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name, age, gender, blood_group, allergies, chronic_conditions, emergency_contacts')
-    .eq('id', patientId)
-    .single();
+  try {
+    // Try with common column names from the Patient Flutter app
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', patientId)
+      .maybeSingle();
 
-  if (error) {
-    console.warn('Failed to fetch patient profile:', error);
+    if (error || !data) return null;
+
+    // Normalize — the Patient app may use 'name' or 'full_name'
+    return {
+      full_name: data.full_name || data.name || `Patient ${patientId.substring(0, 8)}`,
+      age: data.age ?? null,
+      gender: data.gender ?? null,
+      blood_group: data.blood_group ?? null,
+      allergies: data.allergies ?? null,
+      chronic_conditions: data.chronic_conditions ?? null,
+      emergency_contacts: data.emergency_contacts ?? null,
+    };
+  } catch {
     return null;
   }
-  return data;
 }
 
 /**
