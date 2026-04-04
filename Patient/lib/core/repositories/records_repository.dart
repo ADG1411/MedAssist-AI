@@ -76,5 +76,41 @@ class RecordsRepository {
       return null;
     }
   }
+
+  Future<bool> deleteRecord(String recordId, {String? fileUrl}) async {
+    if (useMock) return true;
+
+    try {
+      // Try to remove the storage file if URL is available
+      if (fileUrl != null && fileUrl.isNotEmpty) {
+        try {
+          final uri = Uri.tryParse(fileUrl);
+          if (uri != null) {
+            final pathSegments = uri.pathSegments;
+            final bucketIndex = pathSegments.indexOf('medical-records');
+            if (bucketIndex >= 0 && bucketIndex < pathSegments.length - 1) {
+              final storagePath = pathSegments.sublist(bucketIndex + 1).join('/');
+              await SupabaseService.client.storage
+                  .from('medical-records')
+                  .remove([storagePath]);
+            }
+          }
+        } catch (e) {
+          print('Storage delete skipped: $e');
+        }
+      }
+
+      // Delete the DB row from health_records
+      await SupabaseService.client
+          .from('health_records')
+          .delete()
+          .eq('id', recordId);
+
+      return true;
+    } catch (e) {
+      print('Delete record error: $e');
+      return false;
+    }
+  }
 }
 

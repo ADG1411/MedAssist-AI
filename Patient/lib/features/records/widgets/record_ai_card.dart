@@ -1,12 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../providers/records_provider.dart';
 import '../record_intelligence_viewer.dart';
 
-class RecordAiCard extends StatelessWidget {
+class RecordAiCard extends ConsumerWidget {
   final Map<String, dynamic> record;
 
   const RecordAiCard({super.key, required this.record});
+
+  Future<void> _deleteRecord(BuildContext context, WidgetRef ref) async {
+    final recordId = record['id']?.toString();
+    if (recordId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Record?',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        content: Text(
+          'This will permanently delete "${record['title'] ?? 'this record'}" from your vault and cannot be undone.',
+          style: const TextStyle(fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref.read(recordsProvider.notifier).deleteRecord(
+      recordId,
+      fileUrl: record['file_url']?.toString(),
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success
+            ? '🗑️ Record deleted successfully.'
+            : '⚠️ Failed to delete. Please try again.'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+    }
+  }
 
   Future<void> _openSourceFile(BuildContext context) async {
     final fileUrl = record['file_url']?.toString() ?? '';
@@ -32,7 +83,7 @@ class RecordAiCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final metadata = record['metadata'] as Map<String, dynamic>? ?? {};
     final aiSummary = metadata['ai_summary'] as String?;
@@ -333,6 +384,26 @@ class RecordAiCard extends StatelessWidget {
                         ),
                       ],
                     ],
+                  ),
+
+                  // ── Delete Button ─────────────────────────────────────
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _deleteRecord(context, ref),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 15),
+                      label: const Text('Delete Record',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: BorderSide(
+                            color: const Color(0xFFEF4444).withValues(alpha: 0.35)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
                   ),
                 ],
               ),

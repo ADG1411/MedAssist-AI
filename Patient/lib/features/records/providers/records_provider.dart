@@ -119,6 +119,25 @@ class RecordsNotifier extends AsyncNotifier<RecordsState> {
     }
   }
 
+  Future<bool> deleteRecord(String recordId, {String? fileUrl}) async {
+    // Optimistically remove from state immediately for snappy UX
+    if (state case AsyncData(:final value)) {
+      final updated = value.allRecords
+          .where((r) => r['id'] != recordId)
+          .toList();
+      state = AsyncData(value.copyWith(allRecords: updated));
+    }
+
+    final repo = ref.read(recordsRepositoryProvider);
+    final success = await repo.deleteRecord(recordId, fileUrl: fileUrl);
+
+    if (!success) {
+      // Roll back by refreshing
+      await refresh();
+    }
+    return success;
+  }
+
   String _inferRecordType(String fileName) {
     final lower = fileName.toLowerCase();
     if (lower.contains('lab') || lower.contains('blood') || lower.contains('lipid')) return 'Blood Test';
