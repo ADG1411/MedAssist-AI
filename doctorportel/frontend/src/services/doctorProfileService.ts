@@ -99,7 +99,7 @@ export async function getProfile(): Promise<DoctorProfile> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No active user session");
 
-  const { data, error } = await supabase.from('doctor_profiles').select('*').eq('id', user.id).single();
+  const { data, error } = await supabase.from('doctor_profiles').select('*').eq('id', user.id).maybeSingle();
   if (error && error.code !== 'PGRST116') { console.error("Error fetching profile from Supabase:", error); return { ...defaultProfile, id: user.id }; }
   
   if (!data) return { ...defaultProfile, id: user.id };

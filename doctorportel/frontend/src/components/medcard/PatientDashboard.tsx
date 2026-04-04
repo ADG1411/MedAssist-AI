@@ -101,7 +101,11 @@ const SectionHeader = ({ icon: Icon, title, count, color = 'text-slate-600', bg 
 export const PatientDashboard = ({ record, isEmergency = false, onNewScan }: Props) => {
   const { patient, records, family_members, ai_summary } = record;
   const gradient = BLOOD_GRADIENT[patient.blood_group] ?? 'from-slate-600 to-slate-800';
-  const allergiesList = patient.allergies?.split(',').map(a => a.trim()).filter(Boolean) ?? [];
+  const allergiesList = Array.isArray(patient.allergies)
+    ? patient.allergies.map(String).filter(Boolean)
+    : typeof patient.allergies === 'string'
+      ? patient.allergies.split(',').map(a => a.trim()).filter(Boolean)
+      : [];
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
