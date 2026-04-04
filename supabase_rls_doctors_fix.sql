@@ -23,14 +23,14 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- 2. Grant SELECT on the doctors_live VIEW + doctor_profiles table
-GRANT SELECT ON public.doctors_live TO authenticated;
-GRANT SELECT ON public.doctors_live TO anon;
+-- 2. Grant SELECT on doctor_profiles table
 GRANT SELECT ON public.doctor_profiles TO authenticated;
 
--- 3. Update the doctors_live VIEW to include video_fee and in_person_fee
---    so the Patient app gets both pricing tiers
-CREATE OR REPLACE VIEW public.doctors_live AS
+-- 3. DROP the old view first (required — PG won't let you rename columns in-place)
+DROP VIEW IF EXISTS public.doctors_live;
+
+-- 4. Recreate with new columns: video_fee, in_person_fee, verification_status, degree, city
+CREATE VIEW public.doctors_live AS
 SELECT 
   dp.id::text AS id,
   dp.id AS user_id,
@@ -38,19 +38,19 @@ SELECT
   COALESCE(dp.overview->>'specialization', 'General Practice') AS specialty,
   COALESCE((dp.overview->>'years_of_experience')::int, 0) AS experience,
   4.5::numeric AS rating,
-  -- Primary fee (used for fallback compatibility)
+  -- Primary fee (fallback compatibility)
   COALESCE((dp.fees->>'offline_fee')::int, 500) AS consultation_fee,
-  -- Both fee types for the new detail screen
+  -- Both fee types for the patient detail screen
   COALESCE((dp.fees->>'online_fee')::int, (dp.fees->>'offline_fee')::int, 500) AS video_fee,
   COALESCE((dp.fees->>'offline_fee')::int, 500) AS in_person_fee,
   COALESCE(dp.overview->>'bio', '') AS bio,
   dp.overview->>'profile_photo' AS photo_url,
-  -- Verification status so patient sees the badge
+  -- Verification badge
   dp.verification_status,
-  -- Degree + city for extra detail
+  -- Extra details
   dp.overview->>'degree' AS degree,
   dp.overview->>'city' AS city,
-  -- Build available_slots from availability JSONB
+  -- Available slots from availability JSONB
   COALESCE(
     (SELECT jsonb_agg(slot)
      FROM (
@@ -79,5 +79,9 @@ WHERE dp.verification_status != 'rejected'
   AND dp.overview->>'full_name' IS NOT NULL
   AND dp.overview->>'full_name' != '';
 
--- Done! Re-run this after any schema changes.
+-- 5. Grant SELECT on the new view
+GRANT SELECT ON public.doctors_live TO authenticated;
+GRANT SELECT ON public.doctors_live TO anon;
+
+-- Done!
 -- ============================================================
