@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math.dart' as vm;
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
 
@@ -49,7 +51,14 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
     super.dispose();
   }
 
-  Color _scoreColor(int s) {
+  List<Color> _ringGradient(int s) {
+    if (s >= 80) return const [Color(0xFF34D399), Color(0xFF10B981), Color(0xFF059669)];
+    if (s >= 60) return const [Color(0xFFF1DA95), Color(0xFFFBBF24), Color(0xFFF59E0B)];
+    if (s >= 40) return const [Color(0xFFFBBF24), Color(0xFFF97316), Color(0xFFEF4444)];
+    return const [Color(0xFFF97316), Color(0xFFEF4444), Color(0xFFDC2626)];
+  }
+
+  Color _scoreAccent(int s) {
     if (s >= 80) return const Color(0xFF10B981);
     if (s >= 60) return const Color(0xFFF59E0B);
     return const Color(0xFFEF4444);
@@ -62,11 +71,19 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
     return 'Needs Attention';
   }
 
+  IconData _scoreIcon(int s) {
+    if (s >= 80) return Icons.emoji_events_rounded;
+    if (s >= 60) return Icons.thumb_up_alt_rounded;
+    if (s >= 40) return Icons.info_outline_rounded;
+    return Icons.warning_amber_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final score = widget.healthScore;
-    final color = _scoreColor(score);
+    final accent = _scoreAccent(score);
+    final gradColors = _ringGradient(score);
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSub = isDark
         ? Colors.white.withValues(alpha: 0.50)
@@ -98,39 +115,23 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Top row: ring + info
+          // Top row: neumorphic ring + info
           Row(
             children: [
+              // ── Neumorphic Score Ring ──────────────────
               SizedBox(
                 width: 118,
                 height: 118,
                 child: AnimatedBuilder(
                   animation: _ringAnim,
-                  builder: (context, child) => CustomPaint(
-                    painter: _ScoreRingPainter(
-                      progress: _ringAnim.value,
-                      color: color,
-                      isDark: isDark,
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${(score * _ringAnim.value).round()}',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              color: color,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          Text('/100',
-                              style: TextStyle(fontSize: 11, color: textSub)),
-                        ],
+                  builder: (context, child) =>
+                      _NeumorphicDashboardRing(
+                        score: score,
+                        progress: _ringAnim.value,
+                        gradientColors: gradColors,
+                        accentColor: accent,
+                        isDark: isDark,
                       ),
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(width: 18),
@@ -138,28 +139,30 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Status badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.14),
+                        gradient: LinearGradient(
+                          colors: [
+                            accent.withValues(alpha: 0.18),
+                            accent.withValues(alpha: 0.08),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: accent.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle, color: color),
-                          ),
+                          Icon(_scoreIcon(score), size: 12, color: accent),
                           const SizedBox(width: 6),
                           Text(_scoreLabel(score),
                               style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: color)),
+                                  color: accent)),
                         ],
                       ),
                     ),
@@ -266,8 +269,269 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
   }
 }
 
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
+// ── Neumorphic Dashboard Ring ──────────────────────────────────────────────────
+class _NeumorphicDashboardRing extends StatelessWidget {
+  final int score;
+  final double progress;
+  final List<Color> gradientColors;
+  final Color accentColor;
+  final bool isDark;
 
+  const _NeumorphicDashboardRing({
+    required this.score,
+    required this.progress,
+    required this.gradientColors,
+    required this.accentColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isDark ? const Color(0xFF1E2328) : const Color(0xFFF0F2F5);
+    final shadowColor = isDark ? const Color(0xFF0A0D10) : const Color(0xFFBEC3CB);
+    final highlightColor = isDark 
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.white.withValues(alpha: 0.8);
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outer neumorphic inset container
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: bgColor,
+          ),
+          child: Stack(
+            children: [
+              // Inner highlight (bottom-right)
+              ClipPath(
+                clipper: _DiagonalClipper(topLeft: false),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [bgColor, highlightColor],
+                      center: const AlignmentDirectional(-0.05, -0.05),
+                      focal: const AlignmentDirectional(-0.05, -0.05),
+                      radius: 0.6,
+                      focalRadius: 0.1,
+                      stops: const [0.75, 1.0],
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        stops: const [0.55, 1],
+                        colors: [bgColor, bgColor.withValues(alpha: 0)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Inner shadow (top-left)
+              ClipPath(
+                clipper: _DiagonalClipper(topLeft: true),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [bgColor, shadowColor],
+                      center: const AlignmentDirectional(0.05, 0.05),
+                      focal: Alignment.center,
+                      radius: 0.5,
+                      focalRadius: 0,
+                      stops: const [0.75, 1.0],
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        stops: const [0, 0.45],
+                        colors: [bgColor.withValues(alpha: 0), bgColor],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Gradient progress ring
+        SizedBox.expand(
+          child: CustomPaint(
+            painter: _GradientRingPainter(
+              progress: (score / 100.0) * progress,
+              colors: gradientColors,
+              strokeWidth: 8.0,
+              isDark: isDark,
+            ),
+          ),
+        ),
+
+        // Inner elevated circle with score number
+        LayoutBuilder(builder: (context, c) {
+          final sz = c.maxWidth * 0.48;
+          return Container(
+            width: sz,
+            height: sz,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: bgColor,
+              boxShadow: [
+                BoxShadow(
+                  color: highlightColor,
+                  offset: const Offset(-2, -2),
+                  blurRadius: 5,
+                ),
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: isDark ? 0.7 : 0.3),
+                  offset: const Offset(2, 2),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${(score * progress).round()}',
+                    style: TextStyle(
+                      fontSize: sz * 0.36,
+                      fontWeight: FontWeight.w900,
+                      color: accentColor,
+                      letterSpacing: -1,
+                      shadows: [
+                        Shadow(
+                          color: accentColor.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text('/100', style: TextStyle(fontSize: 9, color: textSub)),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+// ── Gradient Ring Painter ──────────────────────────────────────────────────────
+class _GradientRingPainter extends CustomPainter {
+  final double progress;
+  final List<Color> colors;
+  final double strokeWidth;
+  final bool isDark;
+
+  _GradientRingPainter({
+    required this.progress,
+    required this.colors,
+    required this.strokeWidth,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final inset = size.width * 0.14;
+    final rect = Rect.fromLTRB(inset, inset, size.width - inset, size.height - inset);
+
+    // Background track
+    canvas.drawArc(
+      rect,
+      vm.radians(-90),
+      vm.radians(360),
+      false,
+      Paint()
+        ..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth,
+    );
+
+    if (progress > 0) {
+      // Gradient arc
+      canvas.drawArc(
+        rect,
+        vm.radians(-90),
+        vm.radians(360 * progress),
+        false,
+        Paint()
+          ..shader = SweepGradient(
+            startAngle: vm.radians(-90),
+            endAngle: vm.radians(-90 + 360 * progress),
+            colors: colors,
+          ).createShader(rect)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round,
+      );
+
+      // Glow dot at the tip
+      final angle = vm.radians(-90 + 360 * progress);
+      final radius = (size.width - inset * 2) / 2;
+      final cx = size.width / 2 + radius * math.cos(angle);
+      final cy = size.height / 2 + radius * math.sin(angle);
+
+      canvas.drawCircle(
+        Offset(cx, cy),
+        strokeWidth * 0.55,
+        Paint()
+          ..color = colors.last.withValues(alpha: 0.45)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      canvas.drawCircle(
+        Offset(cx, cy),
+        strokeWidth * 0.28,
+        Paint()..color = Colors.white,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GradientRingPainter old) =>
+      old.progress != progress || old.isDark != isDark;
+}
+
+// ── Diagonal Clipper ──────────────────────────────────────────────────────────
+class _DiagonalClipper extends CustomClipper<Path> {
+  final bool topLeft;
+  _DiagonalClipper({required this.topLeft});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    if (topLeft) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, 0);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(size.width, 0);
+      path.lineTo(0, size.height);
+      path.lineTo(size.width, size.height);
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+// ── Sub-widgets ───────────────────────────────────────────────────────────────
 class _Pillar {
   final String label;
   final double value;
@@ -395,55 +659,4 @@ class _ReasonRow extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Score Ring Painter ────────────────────────────────────────────────────────
-
-class _ScoreRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final bool isDark;
-  const _ScoreRingPainter(
-      {required this.progress, required this.color, required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 10;
-    const startAngle = -math.pi / 2;
-    final sweepAngle = 2 * math.pi * progress;
-
-    canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..color = (isDark ? Colors.white : Colors.black)
-              .withValues(alpha: 0.08)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 9
-          ..strokeCap = StrokeCap.round);
-
-    if (progress > 0) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        Paint()
-          ..shader = SweepGradient(
-            startAngle: startAngle,
-            endAngle: startAngle + sweepAngle,
-            colors: [color.withValues(alpha: 0.55), color],
-          ).createShader(
-              Rect.fromCircle(center: center, radius: radius))
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 9
-          ..strokeCap = StrokeCap.round,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ScoreRingPainter old) =>
-      old.progress != progress;
 }

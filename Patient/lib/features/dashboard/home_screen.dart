@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../shared/widgets/app_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -122,7 +123,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
         // ④ Live Vitals Rail
         const LiveVitalsGlassRail(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
+
+        // View All Health Data link
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => context.push('/health-connect'),
+            icon: const Icon(Icons.monitor_heart_rounded, size: 14),
+            label: const Text('View All Health Data →',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
 
         // ⑤ Predictive AI Insight Stream
         AiInsightStream(data: data),

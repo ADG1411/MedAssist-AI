@@ -2,6 +2,7 @@
 /// Pick from camera or gallery → animated scan → results with nutrition
 import 'dart:ui';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,30 +76,46 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Future<void> _pickImage({required bool fromCamera}) async {
     try {
-      if (fromCamera) {
-        final status = await Permission.camera.request();
-        if (status.isDenied || status.isPermanentlyDenied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Camera permission needed to scan food.'),
-                action: SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
+      ImageSource source = fromCamera ? ImageSource.camera : ImageSource.gallery;
+
+      // On web: always use gallery (no camera available)
+      if (kIsWeb && fromCamera) {
+        source = ImageSource.gallery;
+      }
+
+      // On Android: request camera permission before using camera
+      if (fromCamera && !kIsWeb) {
+        try {
+          final status = await Permission.camera.request();
+          if (!status.isGranted) {
+            // Permission not granted — fall back to gallery silently
+            debugPrint('Camera permission not granted (status: $status), using gallery');
+            source = ImageSource.gallery;
+            if (status.isPermanentlyDenied && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Camera permission denied. Opening gallery instead.'),
+                  action: SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
-          return; // Stop here if no permission
+        } catch (e) {
+          // permission_handler can throw — just use gallery
+          debugPrint('Permission request failed: $e, falling back to gallery');
+          source = ImageSource.gallery;
         }
       }
 
       final XFile? picked = await _imagePicker.pickImage(
-        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85, // Compress to stay under 1MB
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
       );
 
       if (picked != null) {
@@ -112,6 +129,30 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
       }
     } catch (e) {
       debugPrint('Image pick error: $e');
+      // Final fallback: try plain gallery with no options
+      if (fromCamera) {
+        try {
+          final XFile? picked = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+          );
+          if (picked != null && mounted) {
+            final bytes = await picked.readAsBytes();
+            setState(() {
+              _imageBytes = bytes;
+              _result = null;
+              _hasError = false;
+            });
+            _startRecognition();
+            return;
+          }
+        } catch (_) {}
+      }
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Could not load image. Please try again.';
+        });
+      }
     }
   }
 
