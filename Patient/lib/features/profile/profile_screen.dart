@@ -180,6 +180,31 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    // Settings icon
+                    GestureDetector(
+                      onTap: () => context.push('/settings'),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.09)
+                              : Colors.white.withValues(alpha: 0.72),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.white,
+                              width: 0.8),
+                        ),
+                        child: Icon(Icons.settings_rounded,
+                            size: 14,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     // Edit profile
                     GestureDetector(
                       onTap: () => context.push('/onboarding-wizard'),

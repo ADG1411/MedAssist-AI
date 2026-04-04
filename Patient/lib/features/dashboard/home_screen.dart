@@ -200,7 +200,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _stagger(4, t, _RecoveryCard(
           score: recoveryScore,
           isDark: isDark,
-          onTap: () => context.push('/monitoring'),
+          onTap: () => context.push('/recovery-report'),
         )),
         const SizedBox(height: 16),
 
@@ -299,13 +299,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        // Search
-        _HeaderIconBtn(
-          icon: Icons.search_rounded,
-          isDark: isDark,
-          onTap: () {},
-        ),
-        const SizedBox(width: 10),
+
         // Avatar
         Container(
           width: 44,

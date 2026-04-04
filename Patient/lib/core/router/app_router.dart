@@ -32,6 +32,7 @@ import '../../features/records/health_records_screen.dart';
 import '../../features/records/medassist_card_screen.dart';
 import '../../features/pharmacy/pharmacy_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/settings_screen.dart';
 import '../../features/sos/sos_screen.dart';
 import '../../features/health/health_connect_screen.dart';
 import '../../features/health/health_detail_screen.dart';
@@ -230,6 +231,10 @@ class AppRouter {
       GoRoute(
         path: '/daily-followup',
         pageBuilder: (context, state) => _slideBTT(const DailyFollowupScreen(), state.pageKey),
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) => _slideRTL(const SettingsScreen(), state.pageKey),
       ),
       GoRoute(
         path: '/medassist-card',

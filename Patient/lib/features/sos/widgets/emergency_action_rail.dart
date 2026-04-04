@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Emergency Action Rail — bottom action bar with quick actions:
-/// call family, call doctor, hospital directions, share QR ID,
-/// flashlight, loud alarm. Large touch targets. Pure UI widget.
+/// Emergency Action Rail — bottom action bar with quick actions.
+/// [isFlashlightOn] and [isAlarmOn] drive active visual states.
 class EmergencyActionRail extends StatelessWidget {
   final VoidCallback? onCallFamily;
   final VoidCallback? onCallDoctor;
@@ -11,6 +10,8 @@ class EmergencyActionRail extends StatelessWidget {
   final VoidCallback? onShareQr;
   final VoidCallback? onFlashlight;
   final VoidCallback? onAlarm;
+  final bool isFlashlightOn;
+  final bool isAlarmOn;
 
   const EmergencyActionRail({
     super.key,
@@ -20,6 +21,8 @@ class EmergencyActionRail extends StatelessWidget {
     this.onShareQr,
     this.onFlashlight,
     this.onAlarm,
+    this.isFlashlightOn = false,
+    this.isAlarmOn = false,
   });
 
   @override
@@ -50,16 +53,24 @@ class EmergencyActionRail extends StatelessWidget {
         onTap: onShareQr,
       ),
       _ActionItem(
-        icon: Icons.flashlight_on_rounded,
+        icon: isFlashlightOn
+            ? Icons.flashlight_on_rounded
+            : Icons.flashlight_off_rounded,
         label: 'Flash',
-        color: const Color(0xFFF59E0B),
+        color: isFlashlightOn
+            ? const Color(0xFFFDE047) // bright yellow when on
+            : const Color(0xFFF59E0B),
         onTap: onFlashlight,
+        isActive: isFlashlightOn,
       ),
       _ActionItem(
-        icon: Icons.volume_up_rounded,
-        label: 'Alarm',
-        color: const Color(0xFFF97316),
+        icon: isAlarmOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+        label: isAlarmOn ? 'Alarm ON' : 'Alarm',
+        color: isAlarmOn
+            ? const Color(0xFFFF6B6B) // bright red-orange when blaring
+            : const Color(0xFFF97316),
         onTap: onAlarm,
+        isActive: isAlarmOn,
       ),
     ];
 
@@ -74,41 +85,114 @@ class EmergencyActionRail extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: actions.map((action) {
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              action.onTap?.call();
-            },
-            child: SizedBox(
-              width: 52,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: action.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: action.color.withValues(alpha: 0.25),
-                          width: 0.6),
-                    ),
-                    child: Icon(action.icon,
-                        size: 20, color: action.color),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(action.label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.white.withValues(alpha: 0.60),
-                          fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          );
+          return _ActionButton(action: action);
         }).toList(),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatefulWidget {
+  final _ActionItem action;
+  const _ActionButton({required this.action});
+
+  @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    if (widget.action.isActive) _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_ActionButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.action.isActive && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!widget.action.isActive && _pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final action = widget.action;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        action.onTap?.call();
+      },
+      child: SizedBox(
+        width: 52,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedBuilder(
+              animation: _pulse,
+              builder: (context, child) {
+                final glow = action.isActive ? _pulse.value : 0.0;
+                return Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: action.isActive
+                        ? action.color.withValues(alpha: 0.25 + glow * 0.15)
+                        : action.color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: action.isActive
+                          ? action.color.withValues(alpha: 0.70 + glow * 0.30)
+                          : action.color.withValues(alpha: 0.25),
+                      width: action.isActive ? 1.5 : 0.6,
+                    ),
+                    boxShadow: action.isActive
+                        ? [
+                            BoxShadow(
+                              color: action.color
+                                  .withValues(alpha: 0.30 + glow * 0.20),
+                              blurRadius: 8 + glow * 6,
+                              spreadRadius: 1,
+                            )
+                          ]
+                        : null,
+                  ),
+                  child: Icon(action.icon, size: 20, color: action.color),
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              action.label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 8,
+                  color: action.isActive
+                      ? action.color
+                      : Colors.white.withValues(alpha: 0.60),
+                  fontWeight:
+                      action.isActive ? FontWeight.w800 : FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -119,11 +203,13 @@ class _ActionItem {
   final String label;
   final Color color;
   final VoidCallback? onTap;
+  final bool isActive;
 
   const _ActionItem({
     required this.icon,
     required this.label,
     required this.color,
     this.onTap,
+    this.isActive = false,
   });
 }

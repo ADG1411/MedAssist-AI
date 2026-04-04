@@ -69,6 +69,8 @@ dependencies:
   latlong2: ^0.9.1
   geolocator: ^14.0.2
   url_launcher: ^6.3.2
+  audioplayers: ^6.6.0
+  torch_light: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -105,6 +107,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

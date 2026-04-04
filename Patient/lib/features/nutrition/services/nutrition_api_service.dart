@@ -1,4 +1,4 @@
-// Ported from OpenNutriTracker OFFDataSource + FDCDataSource
+// OFFDataSource + FDCDataSource
 // Adapted for MedAssist  returns MealEntity directly, no Sentry, no Hive
 import 'dart:convert';
 import 'package:http/http.dart' as http;

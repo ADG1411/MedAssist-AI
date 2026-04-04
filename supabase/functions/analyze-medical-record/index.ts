@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.4.1";
 
-const NIM_API_KEY = Deno.env.get("NIM_API_KEY") || "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";
+const NIM_API_KEY = Deno.env.get("NIM_API_KEY") || "bhai Ato raz 6";
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const MODEL = "google/gemma-3n-e4b-it";
 
@@ -86,17 +86,17 @@ Deno.serve(async (req) => {
 
     const nimData = await nimResponse.json();
     let respText = nimData.choices[0].message.content;
-    
+
     // Strip markdown formatting like ```json ... ```
     if (respText.startsWith('```json')) respText = respText.substring(7);
     if (respText.endsWith('```')) respText = respText.substring(0, respText.length - 3);
-    
+
     const parsedData = JSON.parse(respText.trim());
 
     // ---- Save Extract as TXT Document inside Storage ----
     const extractedText = parsedData.extracted_text || "No readable text found.";
     const transcriptFileName = `${record_id}_transcript.txt`;
-    
+
     // Generate text buffer using TextEncoder
     const fileBytes = new TextEncoder().encode(extractedText);
 
@@ -108,13 +108,13 @@ Deno.serve(async (req) => {
         contentType: 'text/plain',
         upsert: true
       });
-      
+
     if (uploadError) {
       console.warn("Storage upload failed, but AI completed normally. Error:", uploadError);
     }
-    
-    const transcriptUrl = uploadError 
-      ? null 
+
+    const transcriptUrl = uploadError
+      ? null
       : supabaseClient.storage.from('vault-records').getPublicUrl(`patients/${transcriptFileName}`).data.publicUrl;
 
     // ---- Update Health Records schema ----

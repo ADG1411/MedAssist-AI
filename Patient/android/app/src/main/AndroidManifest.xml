@@ -3,10 +3,16 @@
 
     <!-- Microphone: Required for Speech-to-Text and Jitsi video calls -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- Camera: Required for Jitsi video calls -->
+    <!-- Camera: Required for Jitsi video calls and SOS flashlight -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false"/>
+    <!-- SOS Emergency: Phone calls, SMS, Flashlight, Vibration -->
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.FLASHLIGHT"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <!-- Internet: Required for all API calls -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Location: Required for fetching nearby hospitals -->
@@ -18,6 +24,11 @@
     <!-- Bluetooth: For headset/earbuds during calls -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <!-- Jitsi Meet: Audio routing + call management -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Health Connect permissions (Read) -->
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
@@ -103,6 +114,21 @@
         <!-- Required for image_picker camera on Android 11+ -->
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
+        <!-- Required for url_launcher to open phone dialer (SOS calls) -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <!-- Required for url_launcher to open SMS app (SOS SMS) -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="sms"/>
+        </intent>
+        <!-- Required for url_launcher to open Google Maps (hospital directions) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https" android:host="www.google.com"/>
         </intent>
         <!-- Required for Health Connect -->
         <package android:name="com.google.android.apps.healthdata"/>
