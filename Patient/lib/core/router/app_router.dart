@@ -33,6 +33,8 @@ import '../../features/records/medassist_card_screen.dart';
 import '../../features/pharmacy/pharmacy_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/sos/sos_screen.dart';
+import '../../features/health/health_connect_screen.dart';
+import '../../features/health/health_detail_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -240,6 +242,26 @@ class AppRouter {
       GoRoute(
         path: '/sos',
         pageBuilder: (context, state) => _slideBTT(const SosScreen(), state.pageKey),
+      ),
+      GoRoute(
+        path: '/health-connect',
+        pageBuilder: (context, state) => _slideRTL(const HealthConnectScreen(), state.pageKey),
+      ),
+      GoRoute(
+        path: '/health-detail',
+        pageBuilder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>;
+          return _slideRTL(
+            HealthDetailScreen(
+              metricName: extras['metricName'] as String,
+              unit: extras['unit'] as String,
+              icon: extras['icon'] as IconData,
+              color: extras['color'] as Color,
+              currentValue: extras['currentValue'] as String,
+            ),
+            state.pageKey,
+          );
+        },
       ),
     ],
   );
