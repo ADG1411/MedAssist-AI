@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.4.1";
 
 const NIM_API_KEY = Deno.env.get("NIM_API_KEY") || "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";
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const MODEL = "moonshotai/kimi-k2.5";
+const MODEL = "google/gemma-3n-e4b-it";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +31,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Early break for PDF files as the Gemma vision model natively operates best on images 
+    if (file_type === 'application/pdf') {
+      return new Response(JSON.stringify({ success: true, message: "Skipped native AI processing for PDF." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const payload = {
       model: MODEL,
       messages: [
@@ -39,16 +46,15 @@ Deno.serve(async (req) => {
           content: [
             {
               type: "text",
-              text: `You are an expert AI radiologist and medical document parser. Analyze the provided medical record image.
-              Return ONLY valid JSON format exactly matching this structure:
+              text: `You are an expert AI medical document transcriber and clinical analyst. 
+              Extract all the text present in the medical record image precisely. Also analyze its clinical contents.
+              Return ONLY valid JSON format strictly matching this structure (no markdown fences around it):
               {
+                "extracted_text": "The exact full raw text read from the image. Retain all lines and words.",
                 "category": "Blood Test | Prescription | Imaging | Discharge Note | Doctor Note | Insurance | Other",
                 "summary": "Brief 1-2 sentence clinical summary.",
                 "risk_level": "Low | Medium | High | Critical",
-                "abnormal_values": [ { "marker": "name", "value": "x", "range": "x-y", "status": "high|low|critical" } ],
-                "doctor_specialization": "Specialist type implied",
-                "recommended_action": "consult_doctor | monitor | routine",
-                "tags": ["tag1", "tag2"],
+                "metrics": { "marker_name": "x", "other_key": "val" },
                 "plain_language_explanation": "Simple 1 sentence explanation for the patient."
               }`
             },
@@ -59,8 +65,9 @@ Deno.serve(async (req) => {
           ]
         }
       ],
-      max_tokens: 1024,
-      temperature: 0.2
+      max_tokens: 2048,
+      temperature: 0.20,
+      top_p: 0.70,
     };
 
     const nimResponse = await fetch(NIM_BASE_URL, {
@@ -86,22 +93,57 @@ Deno.serve(async (req) => {
     
     const parsedData = JSON.parse(respText.trim());
 
-    // Update the database record securely
+    // ---- Save Extract as TXT Document inside Storage ----
+    const extractedText = parsedData.extracted_text || "No readable text found.";
+    const transcriptFileName = `${record_id}_transcript.txt`;
+    
+    // Generate text buffer using TextEncoder
+    const fileBytes = new TextEncoder().encode(extractedText);
+
+    // Upload to 'vault-records' storage bucket directly
+    const { data: uploadData, error: uploadError } = await supabaseClient
+      .storage
+      .from('vault-records')
+      .upload(`patients/${transcriptFileName}`, fileBytes, {
+        contentType: 'text/plain',
+        upsert: true
+      });
+      
+    if (uploadError) {
+      console.warn("Storage upload failed, but AI completed normally. Error:", uploadError);
+    }
+    
+    const transcriptUrl = uploadError 
+      ? null 
+      : supabaseClient.storage.from('vault-records').getPublicUrl(`patients/${transcriptFileName}`).data.publicUrl;
+
+    // ---- Update Health Records schema ----
+    // Fetch original record metadata first to avoid overwriting existing properties if any
+    const { data: existingRecord } = await supabaseClient
+      .from("health_records")
+      .select("metadata")
+      .eq("id", record_id)
+      .single();
+
+    const newMetadata = {
+      ...(existingRecord?.metadata || {}),
+      ai_summary: parsedData.summary,
+      extracted_metrics: parsedData.metrics || {},
+      plain_text_explanation: parsedData.plain_language_explanation,
+      transcript_url: transcriptUrl
+    };
+
+    // Update health_records table
     const { error: dbError } = await supabaseClient
-      .from("medical_records")
+      .from("health_records")
       .update({
-        category: parsedData.category,
-        ai_summary: parsedData.summary,
-        ai_risk_level: parsedData.risk_level,
-        abnormal_flags: parsedData.abnormal_values || [],
-        ai_tags: parsedData.tags || [],
-        extracted_text: parsedData.plain_language_explanation,
+        metadata: newMetadata
       })
       .eq("id", record_id);
 
     if (dbError) throw dbError;
 
-    return new Response(JSON.stringify({ success: true, data: parsedData }), {
+    return new Response(JSON.stringify({ success: true, data: parsedData, file: transcriptUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

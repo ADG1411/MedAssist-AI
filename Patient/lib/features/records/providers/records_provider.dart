@@ -91,7 +91,7 @@ class RecordsNotifier extends AsyncNotifier<RecordsState> {
 
       if (recordId == null) throw Exception("Failed to upload to Security Vault");
 
-      // 3. Trigger Kimi Moonshot AI Processing in background
+      // 3. Trigger NVIDIA Gemma AI Processing in background
       try {
         final base64File = base64Encode(fileBytes);
         
@@ -104,7 +104,7 @@ class RecordsNotifier extends AsyncNotifier<RecordsState> {
           },
         );
       } catch (e) {
-        debugPrint('Kimi NIM Edge Function failed: $e');
+        debugPrint('NVIDIA NIM Edge Function failed: $e');
         // It's still safely stored, it just lacks AI summary for now.
       }
 
