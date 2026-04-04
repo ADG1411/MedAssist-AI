@@ -13,3 +13,8 @@
 -keepclasseswithmembers class * {
   public void onPayment*(...);
 }
+
+# Health Connect SDK — prevent R8 from stripping
+-keep class androidx.health.connect.** { *; }
+-keep class androidx.health.platform.** { *; }
+-dontwarn androidx.health.**

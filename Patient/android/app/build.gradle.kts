@@ -49,3 +49,10 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Required for Health Connect PermissionsRationaleActivity
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    // Required for Health Connect SDK
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
+}

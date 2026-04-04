@@ -2,6 +2,7 @@
 /// Pick from camera or gallery → animated scan → results with nutrition
 import 'dart:ui';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,7 +76,8 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Future<void> _pickImage({required bool fromCamera}) async {
     try {
-      if (fromCamera) {
+      // On native Android: request camera permission
+      if (fromCamera && !kIsWeb) {
         final status = await Permission.camera.request();
         if (status.isDenied || status.isPermanentlyDenied) {
           if (mounted) {
@@ -90,15 +92,28 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
               ),
             );
           }
-          return; // Stop here if no permission
+          return;
         }
+      }
+
+      // On web, camera may not be available — show helpful message
+      if (fromCamera && kIsWeb) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera capture works best on the Android app. Use Gallery to upload a photo instead.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        // Still try — some browsers support getUserMedia
       }
 
       final XFile? picked = await _imagePicker.pickImage(
         source: fromCamera ? ImageSource.camera : ImageSource.gallery,
         maxWidth: 512,
         maxHeight: 512,
-        imageQuality: 85, // Compress to stay under 1MB
+        imageQuality: 85,
       );
 
       if (picked != null) {
@@ -112,6 +127,14 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
       }
     } catch (e) {
       debugPrint('Image pick error: $e');
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = fromCamera
+              ? 'Camera not available. Try uploading from Gallery instead.'
+              : 'Could not load image. Please try again.';
+        });
+      }
     }
   }
 
