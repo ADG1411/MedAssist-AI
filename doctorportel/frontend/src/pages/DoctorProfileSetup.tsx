@@ -142,7 +142,7 @@ export default function DoctorProfileSetup() {
   // ── RENDER ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-32 md:pb-20">
+    <div className="w-full animate-in fade-in duration-500 pb-32 md:pb-20">
 
       {/* Header + Completion */}
       <div className="mb-6">

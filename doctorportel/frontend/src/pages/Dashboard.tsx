@@ -74,7 +74,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8 flex flex-col gap-6 relative">
+    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8 flex flex-col gap-6 relative">
 
       {/* Toast stack */}
       <div className="fixed top-4 right-4 z-[999] flex flex-col gap-2 pointer-events-none">

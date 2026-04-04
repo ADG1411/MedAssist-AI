@@ -288,7 +288,7 @@ const PatientsPage = () => {
   ];
 
   return (
-    <div className="max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
+    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
       
       {/* Top Bar (Smart Control Panel) */}
       <div className="sticky top-0 z-20 bg-white/70 backdrop-blur-2xl py-5 -mx-4 px-4 md:-mx-8 md:px-8 mb-8 border-b border-slate-200/50 flex flex-col xl:flex-row gap-5 justify-between items-start xl:items-center shadow-sm">

@@ -33,34 +33,85 @@ const MODEL = 'stepfun-ai/step-3.5-flash';
 
 // ── Local mock data (replaces dead Python backend) ──────────────────────
 
-export async function getAnalyticsSummary(_period: string): Promise<AnalyticsSummary> {
+export async function getAnalyticsSummary(period: string): Promise<AnalyticsSummary> {
   await new Promise(r => setTimeout(r, 300));
-  return {
-    total_patients: { value: 248, trend: '+12%', is_positive: true },
-    appointments_today: { value: 8, trend: '+3', is_positive: true },
-    completed_cases: { value: 156, trend: '+8%', is_positive: true },
-    monthly_earnings: { value: '₹1,24,500', trend: '+15%', is_positive: true },
-  };
+  if (period === 'Today') {
+    return {
+      total_patients: { value: 12, trend: '+2', is_positive: true },
+      appointments_today: { value: 8, trend: '+3', is_positive: true },
+      completed_cases: { value: 6, trend: '+1', is_positive: true },
+      monthly_earnings: { value: '₹4,500', trend: '+5%', is_positive: true },
+    };
+  } else if (period === 'This Week') {
+    return {
+      total_patients: { value: 84, trend: '+18%', is_positive: true },
+      appointments_today: { value: 42, trend: '+5', is_positive: true },
+      completed_cases: { value: 38, trend: '+12%', is_positive: true },
+      monthly_earnings: { value: '₹28,400', trend: '+8%', is_positive: true },
+    };
+  } else {
+    // This Month
+    return {
+      total_patients: { value: 248, trend: '+12%', is_positive: true },
+      appointments_today: { value: 156, trend: '-2', is_positive: false },
+      completed_cases: { value: 142, trend: '+8%', is_positive: true },
+      monthly_earnings: { value: '₹1,24,500', trend: '+15%', is_positive: true },
+    };
+  }
 }
 
-export async function getPatientGrowth(_period: string): Promise<VolumeData[]> {
+export async function getPatientGrowth(period: string): Promise<VolumeData[]> {
   await new Promise(r => setTimeout(r, 200));
-  return [
-    { name: 'Week 1', current: 42, previous: 38 },
-    { name: 'Week 2', current: 55, previous: 45 },
-    { name: 'Week 3', current: 48, previous: 50 },
-    { name: 'Week 4', current: 63, previous: 52 },
-  ];
+  if (period === 'Today') {
+    return [
+      { name: '9 AM', current: 2, previous: 1 },
+      { name: '11 AM', current: 4, previous: 2 },
+      { name: '1 PM', current: 1, previous: 3 },
+      { name: '3 PM', current: 3, previous: 1 },
+      { name: '5 PM', current: 2, previous: 2 },
+    ];
+  } else if (period === 'This Week') {
+    return [
+      { name: 'Mon', current: 12, previous: 10 },
+      { name: 'Tue', current: 15, previous: 12 },
+      { name: 'Wed', current: 18, previous: 14 },
+      { name: 'Thu', current: 14, previous: 15 },
+      { name: 'Fri', current: 16, previous: 13 },
+      { name: 'Sat', current: 9,  previous: 8 },
+    ];
+  } else {
+    return [
+      { name: 'Week 1', current: 42, previous: 38 },
+      { name: 'Week 2', current: 55, previous: 45 },
+      { name: 'Week 3', current: 48, previous: 50 },
+      { name: 'Week 4', current: 63, previous: 52 },
+    ];
+  }
 }
 
-export async function getRevenueBreakdown(_period: string): Promise<RevenueData[]> {
+export async function getRevenueBreakdown(period: string): Promise<RevenueData[]> {
   await new Promise(r => setTimeout(r, 200));
-  return [
-    { name: 'Week 1', Online: 15000, Offline: 22000, Emergency: 8000 },
-    { name: 'Week 2', Online: 18000, Offline: 25000, Emergency: 5000 },
-    { name: 'Week 3', Online: 21000, Offline: 20000, Emergency: 12000 },
-    { name: 'Week 4', Online: 24000, Offline: 28000, Emergency: 7000 },
-  ];
+  if (period === 'Today') {
+    return [
+      { name: 'Morning', Online: 1200, Offline: 1500, Emergency: 500 },
+      { name: 'Afternoon', Online: 800, Offline: 1200, Emergency: 0 },
+      { name: 'Evening', Online: 1500, Offline: 2000, Emergency: 1000 },
+    ];
+  } else if (period === 'This Week') {
+    return [
+      { name: 'Mon', Online: 4000, Offline: 5000, Emergency: 1000 },
+      { name: 'Wed', Online: 4500, Offline: 5500, Emergency: 2000 },
+      { name: 'Fri', Online: 5000, Offline: 6500, Emergency: 1500 },
+      { name: 'Sun', Online: 2000, Offline: 1000, Emergency: 3000 },
+    ];
+  } else {
+    return [
+      { name: 'Week 1', Online: 15000, Offline: 22000, Emergency: 8000 },
+      { name: 'Week 2', Online: 18000, Offline: 25000, Emergency: 5000 },
+      { name: 'Week 3', Online: 21000, Offline: 20000, Emergency: 12000 },
+      { name: 'Week 4', Online: 24000, Offline: 28000, Emergency: 7000 },
+    ];
+  }
 }
 
 export async function getAIInsights(period: string): Promise<AIInsight[]> {

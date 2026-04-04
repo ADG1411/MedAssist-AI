@@ -166,7 +166,7 @@ export default function Analytics() {
   const PERIODS: Period[] = ['Today', 'This Week', 'This Month'];
 
   return (
-    <div ref={printRef} className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 print:p-4">
+    <div ref={printRef} className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 print:p-4">
 
       {/* ── Header ── */}
       <div className="flex flex-col gap-3 mb-6">
