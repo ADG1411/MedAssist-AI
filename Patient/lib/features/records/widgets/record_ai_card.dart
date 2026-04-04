@@ -1,109 +1,337 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../record_intelligence_viewer.dart';
 
 class RecordAiCard extends StatelessWidget {
   final Map<String, dynamic> record;
 
   const RecordAiCard({super.key, required this.record});
 
+  Future<void> _openSourceFile(BuildContext context) async {
+    final fileUrl = record['file_url']?.toString() ?? '';
+    if (fileUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No source file available for this record.')),
+      );
+      return;
+    }
+
+    final uri = Uri.tryParse(fileUrl);
+    if (uri == null) return;
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open file. Please try again.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final metadata = record['metadata'] as Map<String, dynamic>? ?? {};
     final aiSummary = metadata['ai_summary'] as String?;
     final metrics = metadata['extracted_metrics'] as Map<String, dynamic>?;
+    final fileUrl = record['file_url']?.toString() ?? '';
+    final isPdf = record['file_type']?.toString().contains('pdf') == true ||
+        fileUrl.toLowerCase().endsWith('.pdf');
+    final hasFile = fileUrl.isNotEmpty;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.border.withValues(alpha: 0.6),
+          width: 0.8,
+        ),
       ),
+      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           leading: Container(
-            padding: const EdgeInsets.all(12),
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
-              color: AppColors.softBlue,
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(Icons.description, color: AppColors.primary),
+            child: const Icon(Icons.description_rounded, color: AppColors.primary, size: 22),
           ),
-          title: Text(record['title'] ?? 'Record', style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(
-            record['record_type'] ?? 'General',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          title: Text(
+            record['title'] ?? 'Record',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    record['record_type'] ?? 'General',
+                    style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (isPdf) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('PDF',
+                        style: TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ],
+            ),
           ),
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  
-                  // AI Summary Section
-                  if (aiSummary != null) ...[
+                  Divider(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.black.withValues(alpha: 0.05),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Image Preview ─────────────────────────────────────
+                  if (hasFile && !isPdf) ...[
+                    GestureDetector(
+                      onTap: () => _openSourceFile(context),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          fileUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildFilePlaceholder(
+                              isDark, Icons.broken_image_rounded, 'Failed to load image'),
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.04)
+                                    : Colors.black.withValues(alpha: 0.03),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: AppColors.primary),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // ── PDF File Placeholder ──────────────────────────────
+                  if (hasFile && isPdf) ...[
+                    GestureDetector(
+                      onTap: () => _openSourceFile(context),
+                      child: _buildFilePlaceholder(
+                          isDark, Icons.picture_as_pdf_rounded, 'Tap to open PDF'),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // ── AI Summary Section ────────────────────────────────
+                  if (aiSummary != null && aiSummary.isNotEmpty) ...[
                     Row(
                       children: const [
-                        Icon(Icons.auto_awesome, color: AppColors.warning, size: 20),
-                        SizedBox(width: 8),
-                        Text('AI Abstract', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 14),
+                        SizedBox(width: 6),
+                        Text('AI Summary',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: AppColors.primary)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                        border:
+                            Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
                       ),
-                      child: Text(aiSummary, style: const TextStyle(color: AppColors.textPrimary)),
+                      child: Text(
+                        aiSummary,
+                        style: TextStyle(
+                            color: isDark ? Colors.white.withValues(alpha: 0.80) : AppColors.textPrimary,
+                            fontSize: 13,
+                            height: 1.5),
+                      ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Extracted Metrics Section
-                  if (metrics != null && metrics.isNotEmpty) ...[
-                    const Text('Extracted Key Metrics', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    ...metrics.entries.map((e) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(e.key, style: const TextStyle(color: AppColors.textSecondary)),
-                              Text(e.value.toString(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        )),
                     const SizedBox(height: 16),
                   ],
 
-                  // Action Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.share_outlined, size: 18),
-                        label: const Text('Share'),
+                  // ── Extracted Metrics Section ─────────────────────────
+                  if (metrics != null && metrics.isNotEmpty) ...[
+                    Text('Key Metrics',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: isDark ? Colors.white : AppColors.textPrimary)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : Colors.black.withValues(alpha: 0.02),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : Colors.black.withValues(alpha: 0.05)),
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.visibility_outlined, size: 18),
-                        label: const Text('View Source'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.softBlue,
-                          foregroundColor: AppColors.primary,
-                          elevation: 0,
+                      child: Column(
+                        children: metrics.entries.map((e) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                e.key.replaceAll('_', ' '),
+                                style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.55)
+                                        : AppColors.textSecondary,
+                                    fontSize: 12),
+                              ),
+                              Text(
+                                e.value.toString(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: AppColors.primary),
+                              ),
+                            ],
+                          ),
+                        )).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── No AI yet placeholder ─────────────────────────────
+                  if ((aiSummary == null || aiSummary.isEmpty) &&
+                      (metrics == null || metrics.isEmpty)) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : Colors.black.withValues(alpha: 0.02),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.hourglass_top_rounded,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.30)
+                                  : AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'AI analysis pending…',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.40)
+                                    : AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── Action Buttons ────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  RecordIntelligenceViewer(record: record),
+                            ),
+                          ),
+                          icon: const Icon(Icons.analytics_rounded, size: 15),
+                          label: const Text('AI Report', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.40)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
                         ),
                       ),
+                      if (hasFile) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openSourceFile(context),
+                            icon: Icon(
+                                isPdf
+                                    ? Icons.picture_as_pdf_rounded
+                                    : Icons.image_rounded,
+                                size: 15),
+                            label: Text('View ${isPdf ? 'PDF' : 'Image'}',
+                                style: const TextStyle(fontSize: 12)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -111,6 +339,30 @@ class RecordAiCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilePlaceholder(bool isDark, IconData icon, String label) {
+    return Container(
+      height: 100,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 32, color: AppColors.primary.withValues(alpha: 0.60)),
+          const SizedBox(height: 6),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.primary.withValues(alpha: 0.70),
+                  fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }

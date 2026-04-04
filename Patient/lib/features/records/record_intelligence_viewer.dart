@@ -4,6 +4,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -297,6 +298,113 @@ class RecordIntelligenceViewer extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // ═════════════════════════════════════════════════════════
+              // 1.5. ACTUAL FILE PREVIEW (IMAGE / PDF)
+              // ═════════════════════════════════════════════════════════
+              if ((record['file_url']?.toString() ?? '').isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: GlassCard(
+                      radius: 18,
+                      blur: 14,
+                      padding: const EdgeInsets.all(12),
+                      child: Builder(builder: (ctx) {
+                        final fileUrl = record['file_url']!.toString();
+                        final isPdf = fileUrl.toLowerCase().endsWith('.pdf') ||
+                            (record['file_type']?.toString().contains('pdf') == true);
+                        if (isPdf) {
+                          return GestureDetector(
+                            onTap: () async {
+                              final uri = Uri.tryParse(fileUrl);
+                              if (uri != null && await canLaunchUrl(uri)) {
+                                await launchUrl(uri,
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Container(
+                              height: 120,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: const Color(0xFFEF4444).withValues(alpha: 0.20)),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.picture_as_pdf_rounded,
+                                      size: 40, color: Color(0xFFEF4444)),
+                                  const SizedBox(height: 6),
+                                  Text('Tap to open PDF',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: const Color(0xFFEF4444).withValues(alpha: 0.80),
+                                          fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        // IMAGE
+                        return GestureDetector(
+                          onTap: () async {
+                            final uri = Uri.tryParse(fileUrl);
+                            if (uri != null && await canLaunchUrl(uri)) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              fileUrl,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image_rounded,
+                                        size: 36, color: AppColors.primary),
+                                    SizedBox(height: 6),
+                                    Text('Preview unavailable',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.primary)),
+                                  ],
+                                ),
+                              ),
+                              loadingBuilder: (_, child, progress) {
+                                if (progress == null) return child;
+                                return Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.04)
+                                        : Colors.black.withValues(alpha: 0.03),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: AppColors.primary),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
 
               // ═════════════════════════════════════════════════════════
               // 2. AI SUMMARY
