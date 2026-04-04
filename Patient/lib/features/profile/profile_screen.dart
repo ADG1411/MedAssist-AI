@@ -157,10 +157,7 @@ class ProfileScreen extends ConsumerWidget {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFF0EA5E9),
-                          Color(0xFF6366F1)
-                        ]),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.person_rounded,
@@ -183,6 +180,31 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    // Settings icon
+                    GestureDetector(
+                      onTap: () => context.push('/settings'),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.09)
+                              : Colors.white.withValues(alpha: 0.72),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.white,
+                              width: 0.8),
+                        ),
+                        child: Icon(Icons.settings_rounded,
+                            size: 14,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     // Edit profile
                     GestureDetector(
                       onTap: () => context.push('/onboarding-wizard'),
@@ -247,7 +269,7 @@ class ProfileScreen extends ConsumerWidget {
               child: _SectionLabel(
                 icon: Icons.history_rounded,
                 label: 'Clinical History Memory',
-                color: const Color(0xFF8B5CF6),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -356,10 +378,7 @@ class ProfileScreen extends ConsumerWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFF0EA5E9),
-                          Color(0xFF6366F1)
-                        ]),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.qr_code_rounded,
@@ -386,18 +405,16 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0EA5E9)
-                            .withValues(alpha: 0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: const Color(0xFF0EA5E9)
-                                .withValues(alpha: 0.22),
+                            color: AppColors.primary.withValues(alpha: 0.22),
                             width: 0.6),
                       ),
                       child: const Text('Open',
                           style: TextStyle(
                               fontSize: 10,
-                              color: Color(0xFF0EA5E9),
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w700)),
                     ),
                   ],

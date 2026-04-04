@@ -22,13 +22,13 @@ class HealthRecordsScreen extends ConsumerWidget {
   const HealthRecordsScreen({super.key});
 
   static const _categories = [
-    (title: 'Prescriptions', icon: Icons.medication_rounded, color: Color(0xFF10B981), type: 'Prescription'),
-    (title: 'Blood Tests', icon: Icons.science_rounded, color: Color(0xFF0EA5E9), type: 'Blood Test'),
-    (title: 'Imaging / X-ray', icon: Icons.image_rounded, color: Color(0xFF8B5CF6), type: 'Imaging'),
-    (title: 'Discharge Notes', icon: Icons.local_hospital_rounded, color: Color(0xFFEF4444), type: 'Discharge Note'),
-    (title: 'Doctor Notes', icon: Icons.note_alt_rounded, color: Color(0xFF6366F1), type: 'Doctor Note'),
-    (title: 'Insurance', icon: Icons.shield_rounded, color: Color(0xFF14B8A6), type: 'Insurance'),
-    (title: 'Documents', icon: Icons.description_rounded, color: Color(0xFF64748B), type: 'Other'),
+    (title: 'Prescriptions', icon: Icons.medication_rounded, color: AppColors.primary, type: 'Prescription'),
+    (title: 'Blood Tests', icon: Icons.science_rounded, color: AppColors.primary, type: 'Blood Test'),
+    (title: 'Imaging / X-ray', icon: Icons.image_rounded, color: AppColors.primary, type: 'Imaging'),
+    (title: 'Discharge Notes', icon: Icons.local_hospital_rounded, color: AppColors.primary, type: 'Discharge Note'),
+    (title: 'Doctor Notes', icon: Icons.note_alt_rounded, color: AppColors.primary, type: 'Doctor Note'),
+    (title: 'Insurance', icon: Icons.shield_rounded, color: AppColors.primary, type: 'Insurance'),
+    (title: 'Documents', icon: Icons.description_rounded, color: AppColors.primary, type: 'Other'),
   ];
 
   @override
@@ -90,12 +90,11 @@ class HealthRecordsScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-              colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.35),
+              color: AppColors.primary.withValues(alpha: 0.35),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -211,8 +210,7 @@ class HealthRecordsScreen extends ConsumerWidget {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                            colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.folder_special_rounded,
@@ -268,15 +266,13 @@ class HealthRecordsScreen extends ConsumerWidget {
                         height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF0EA5E9)
-                              .withValues(alpha: 0.12),
+                          color: AppColors.primary.withValues(alpha: 0.12),
                           border: Border.all(
-                              color: const Color(0xFF0EA5E9)
-                                  .withValues(alpha: 0.22),
+                              color: AppColors.primary.withValues(alpha: 0.22),
                               width: 0.8),
                         ),
                         child: const Icon(Icons.share_rounded,
-                            size: 15, color: Color(0xFF0EA5E9)),
+                            size: 15, color: AppColors.primary),
                       ),
                     ),
                   ],
@@ -302,7 +298,7 @@ class HealthRecordsScreen extends ConsumerWidget {
                       label: 'Total',
                       value: '$totalCount',
                       icon: Icons.description_rounded,
-                      color: const Color(0xFF3B82F6)),
+                      color: AppColors.primary),
                   const SizedBox(width: 8),
                   _StatPill(
                       label: 'Abnormal',
@@ -414,7 +410,7 @@ class HealthRecordsScreen extends ConsumerWidget {
                     color: cat.color,
                     count: catRecords.length,
                     lastUpdated: catRecords.isNotEmpty
-                        ? (catRecords.first['date']?.toString() ?? '')
+                        ? (catRecords.first['created_at']?.toString() ?? catRecords.first['date']?.toString() ?? '')
                         : '',
                     aiPreview: catRecords.isNotEmpty
                         ? ((catRecords.first['metadata']
@@ -595,12 +591,8 @@ class _FilterPill extends StatelessWidget {
           padding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            gradient: isSelected
-                ? const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF2563EB)])
-                : null,
             color: isSelected
-                ? null
+                ? AppColors.primary
                 : (isDark
                     ? Colors.white.withValues(alpha: 0.07)
                     : Colors.white.withValues(alpha: 0.60)),

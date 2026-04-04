@@ -1,31 +1,39 @@
-// Native-specific Jitsi implementation using jitsi_meet_flutter_sdk
-// On Android/iOS, launches the real Jitsi Meet native SDK for full E2E video
-
+// Native-only Jitsi implementation using jitsi_meet_flutter_sdk
+// Fixes: proper SDK launch on join, hangup listener, permission request before join
 import 'package:flutter/material.dart';
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/theme/app_colors.dart';
 
-// Store the Jitsi plugin instance
 final _jitsiMeet = JitsiMeet();
-String? _activeRoomId;
 
-void registerJitsiView(String roomId) {
-  _activeRoomId = roomId;
-}
+// Called from consultation_screen.dart initState — nothing to register on native
+void registerJitsiView(String roomId) {}
 
+/// Returns a placeholder widget; actual call view is a native overlay
 Widget buildJitsiView(String roomId) {
-  // This returns a widget that provides a "Connected" status
-  // The actual Jitsi call runs as a native overlay via the SDK
   return _NativeJitsiCallView(roomId: roomId);
 }
 
-/// Launch the real Jitsi meeting (called from consultation_screen.dart)
+/// Requests camera + mic, then launches the native Jitsi meeting.
+/// [onConferenceTerminated] is called when the user hangs up.
 Future<void> launchJitsiMeeting({
   required String roomId,
   String displayName = 'MedAssist Patient',
+  String email = '',
   bool audioMuted = false,
   bool videoMuted = false,
+  void Function()? onConferenceTerminated,
 }) async {
+  // 1. Request permissions BEFORE launching — Jitsi crashes without them
+  final camStatus = await Permission.camera.request();
+  final micStatus = await Permission.microphone.request();
+  if (camStatus.isDenied || micStatus.isDenied) {
+    debugPrint('[Jitsi] Permissions denied — cam=$camStatus mic=$micStatus');
+    return;
+  }
+
+  // 2. Configure the meeting
   final options = JitsiMeetConferenceOptions(
     serverURL: 'https://meet.jit.si',
     room: roomId,
@@ -33,7 +41,12 @@ Future<void> launchJitsiMeeting({
       'startWithAudioMuted': audioMuted,
       'startWithVideoMuted': videoMuted,
       'subject': 'MedAssist Consultation',
-      'prejoinPageEnabled': false,
+      'prejoinPageEnabled': false,         // skip prejoin page
+      'disableDeepLinking': true,
+      'requireDisplayName': false,
+      'enableWelcomePage': false,
+      'p2p.enabled': true,                 // direct P2P = lower latency
+      'disableTileView': false,
     },
     featureFlags: {
       'unsaferoomwarning.enabled': false,
@@ -45,18 +58,41 @@ Future<void> launchJitsiMeeting({
       'breakout-rooms.enabled': false,
       'pip.enabled': true,
       'chat.enabled': true,
+      'meeting-name.enabled': true,
+      'video-share.enabled': false,
     },
     userInfo: JitsiMeetUserInfo(
       displayName: displayName,
-      email: '',
+      email: email,
     ),
   );
 
-  await _jitsiMeet.join(options);
+  // 3. Attach event listener to handle hangup
+  final listener = JitsiMeetEventListener(
+    conferenceJoined: (url) {
+      debugPrint('[Jitsi] Conference joined: $url');
+    },
+    conferenceTerminated: (url, error) {
+      debugPrint('[Jitsi] Conference terminated: $url error=$error');
+      onConferenceTerminated?.call();
+    },
+    conferenceWillJoin: (url) {
+      debugPrint('[Jitsi] Will join: $url');
+    },
+    participantJoined: (email, name, role, id) {
+      debugPrint('[Jitsi] Participant joined: $name');
+    },
+    participantLeft: (id) {
+      debugPrint('[Jitsi] Participant left: $id');
+    },
+  );
+
+  // 4. Launch
+  await _jitsiMeet.join(options, listener);
 }
 
-/// Internal widget shown in the consultation screen while the native
-/// Jitsi overlay is running on top.
+// ── Internal widget shown while the native overlay is running ─────────────────
+
 class _NativeJitsiCallView extends StatefulWidget {
   final String roomId;
   const _NativeJitsiCallView({required this.roomId});
@@ -67,89 +103,123 @@ class _NativeJitsiCallView extends StatefulWidget {
 
 class _NativeJitsiCallViewState extends State<_NativeJitsiCallView> {
   bool _launched = false;
+  bool _joining = false;
 
   @override
   void initState() {
     super.initState();
-    // Auto-launch the native Jitsi call
-    _launchCall();
+    _autoLaunch();
   }
 
-  Future<void> _launchCall() async {
+  Future<void> _autoLaunch() async {
     if (_launched) return;
+    setState(() => _joining = true);
     _launched = true;
-    
-    // Short delay to let the UI settle
-    await Future.delayed(const Duration(milliseconds: 500));
-    
+
+    // Small settle delay
+    await Future.delayed(const Duration(milliseconds: 400));
+
     try {
-      await launchJitsiMeeting(roomId: widget.roomId);
+      await launchJitsiMeeting(
+        roomId: widget.roomId,
+        onConferenceTerminated: () {
+          if (mounted) setState(() => _launched = false);
+        },
+      );
     } catch (e) {
-      debugPrint('Jitsi launch error: $e');
+      debugPrint('[Jitsi] Launch error: $e');
+      if (mounted) setState(() => _launched = false);
     }
+    if (mounted) setState(() => _joining = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF1A1A2E),
+      color: const Color(0xFF0D1117),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
+            // Animated ring
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withValues(alpha: 0.7),
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF60A5FA)],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.40),
+                    blurRadius: _joining ? 24 : 8,
+                    spreadRadius: _joining ? 4 : 0,
+                  ),
+                ],
               ),
-              child: const Icon(Icons.video_call, size: 40, color: Colors.white),
+              child: const Icon(Icons.video_call_rounded,
+                  size: 44, color: Colors.white),
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Video call is running',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            const SizedBox(height: 24),
+            Text(
+              _joining ? 'Connecting to room…' : 'Video call running',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Room: ${widget.roomId}',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+              widget.roomId,
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.40), fontSize: 12),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.15),
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.30)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.fiber_manual_record, color: AppColors.success, size: 10),
+                  Icon(Icons.fiber_manual_record,
+                      color: Color(0xFF10B981), size: 8),
                   SizedBox(width: 6),
                   Text(
-                    'E2E Encrypted • Jitsi Meet',
-                    style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w600),
+                    'E2E Encrypted · Jitsi Meet',
+                    style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            TextButton.icon(
-              onPressed: () async {
-                setState(() => _launched = false);
-                await _launchCall();
-              },
-              icon: const Icon(Icons.refresh, color: Colors.white70, size: 18),
-              label: const Text('Rejoin Call', style: TextStyle(color: Colors.white70)),
-            ),
+            if (!_joining)
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _launched = false;
+                    _joining = false;
+                  });
+                  _autoLaunch();
+                },
+                icon: const Icon(Icons.refresh_rounded,
+                    color: Colors.white70, size: 18),
+                label: const Text('Rejoin Call',
+                    style: TextStyle(color: Colors.white70)),
+              ),
           ],
         ),
       ),

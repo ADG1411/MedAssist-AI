@@ -3,6 +3,7 @@
 // sendMessage, VoiceInputSheet, navigation routes.
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
@@ -35,6 +36,7 @@ class _SymptomChatScreenState extends ConsumerState<SymptomChatScreen>
   double _severity = 5;
   bool _sentInitialContext = false;
   bool _showSeverity = false;
+  DateTime? _lastSendTime;
 
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
@@ -122,9 +124,143 @@ class _SymptomChatScreenState extends ConsumerState<SymptomChatScreen>
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
+    final guardrailMsg = _validateInput(text);
+    if (guardrailMsg != null) {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          const Icon(Icons.shield_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Flexible(child: Text(guardrailMsg, style: const TextStyle(fontWeight: FontWeight.w600))),
+        ]),
+        backgroundColor: const Color(0xFFF59E0B),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ));
+      return;
+    }
+
+    _lastSendTime = DateTime.now();
     ref.read(chatProvider.notifier).sendMessage(text, _severity, _bodyPart);
     _controller.clear();
     _scrollToBottom();
+  }
+
+  // ── Health-topic keywords (lowercase) ─────────────────────────────────
+  static const _healthKeywords = {
+    // symptoms
+    'pain', 'ache', 'hurt', 'sore', 'burning', 'sting', 'throb', 'cramp',
+    'nausea', 'vomit', 'dizzy', 'dizziness', 'faint', 'fatigue', 'tired',
+    'weak', 'fever', 'cough', 'cold', 'flu', 'sneeze', 'congestion',
+    'headache', 'migraine', 'swelling', 'swollen', 'rash', 'itch', 'itchy',
+    'bleed', 'bleeding', 'blood', 'bruise', 'numb', 'numbness', 'tingle',
+    'stiff', 'stiffness', 'spasm', 'twitch', 'breathless', 'wheezing',
+    'chest', 'throat', 'stomach', 'abdomen', 'back', 'neck', 'shoulder',
+    'knee', 'ankle', 'wrist', 'hip', 'leg', 'arm', 'head', 'eye', 'ear',
+    'nose', 'mouth', 'skin', 'muscle', 'joint', 'bone', 'spine',
+    // conditions
+    'diabetes', 'asthma', 'allergy', 'allergic', 'infection', 'inflammation',
+    'arthritis', 'hypertension', 'cholesterol', 'thyroid', 'anemia',
+    'insomnia', 'anxiety', 'depression', 'stress', 'panic',
+    // medical
+    'medicine', 'medication', 'drug', 'tablet', 'pill', 'dose', 'dosage',
+    'prescription', 'doctor', 'hospital', 'clinic', 'treatment', 'therapy',
+    'surgery', 'diagnosis', 'symptom', 'symptoms', 'condition', 'disease',
+    'illness', 'health', 'medical', 'test', 'scan', 'xray', 'mri',
+    'bp', 'pulse', 'oxygen', 'spo2', 'temperature', 'weight', 'bmi',
+    // body actions
+    'sleep', 'sleeping', 'eat', 'eating', 'drink', 'drinking', 'walk',
+    'walking', 'exercise', 'breathing', 'swallow', 'urinate', 'urine',
+    'bowel', 'stool', 'diarrhea', 'constipation', 'vomiting', 'coughing',
+    // severity / descriptors
+    'worse', 'better', 'severe', 'mild', 'moderate', 'sharp', 'dull',
+    'chronic', 'acute', 'sudden', 'constant', 'intermittent', 'occasional',
+    'intense', 'unbearable', 'improving', 'worsening', 'spreading',
+    // conversational follow-ups (valid in medical chat)
+    'yes', 'no', 'yeah', 'nah', 'ok', 'okay', 'thanks', 'thank',
+    'since', 'ago', 'days', 'weeks', 'hours', 'morning', 'night',
+    'left', 'right', 'both', 'sometimes', 'always', 'never', 'often',
+  };
+
+  // Off-topic question patterns
+  static final _offTopicPatterns = [
+    RegExp(r'\b(capital|president|prime\s*minister|population|country|city|state)\b', caseSensitive: false),
+    RegExp(r'\b(who\s+(is|was|are)|what\s+(is|was|are)\s+(the|a)\s+(capital|largest|smallest|tallest|fastest))\b', caseSensitive: false),
+    RegExp(r'\b(math|calculate|solve|equation|formula|multiply|divide|add|subtract)\b', caseSensitive: false),
+    RegExp(r'\b(recipe|cook|movie|song|music|game|play|score|weather|news|joke|story|poem)\b', caseSensitive: false),
+    RegExp(r'\b(code|program|software|javascript|python|flutter|html|css|api)\b', caseSensitive: false),
+    RegExp(r'\b(buy|sell|price|stock|crypto|bitcoin|money|loan|bank|invest)\b', caseSensitive: false),
+    RegExp(r'\b(homework|essay|assignment|exam|school|college|university)\b', caseSensitive: false),
+    RegExp(r'\b(translate|meaning\s+of|definition\s+of|spell|grammar)\b', caseSensitive: false),
+    RegExp(r'\b(who\s+invented|who\s+discovered|when\s+was\s+\w+\s+(born|founded|built|created))\b', caseSensitive: false),
+    RegExp(r'\b(tell\s+me\s+about|explain|describe)\s+(?!.*?(pain|symptom|condition|disease|health|feel|hurt))', caseSensitive: false),
+  ];
+
+  String? _validateInput(String text) {
+    // Rate limit: 2 seconds between sends
+    if (_lastSendTime != null &&
+        DateTime.now().difference(_lastSendTime!).inMilliseconds < 2000) {
+      return 'Please wait a moment before sending another message.';
+    }
+
+    // Too short
+    if (text.length < 3) {
+      return 'Please describe your symptoms in more detail.';
+    }
+
+    // Too long
+    if (text.length > 2000) {
+      return 'Message is too long. Please keep it under 2000 characters.';
+    }
+
+    // Mostly digits (>60%) — catches "25255", "123456" etc.
+    final digitCount = text.runes.where((c) => c >= 48 && c <= 57).length;
+    if (digitCount > text.length * 0.6 && text.length > 3) {
+      return 'That looks like random numbers. Please describe your symptoms.';
+    }
+
+    // Repeated character spam — 4+ same char in a row ("aaaa", "yyyy")
+    if (RegExp(r'(.)\1{3,}').hasMatch(text)) {
+      return 'Please type a valid health-related message.';
+    }
+
+    // Keyboard mash — no vowels in a long alpha string
+    final alphaOnly = text.replaceAll(RegExp(r'[^a-zA-Z]'), '');
+    if (alphaOnly.length >= 5) {
+      final vowels = alphaOnly.toLowerCase().split('').where(
+          (c) => 'aeiou'.contains(c)).length;
+      if (vowels == 0) {
+        return 'That doesn\'t look like a real message. Please describe your symptoms.';
+      }
+    }
+
+    // Must contain at least 2 alphabetic characters
+    if (RegExp(r'[a-zA-Z]').allMatches(text).length < 2) {
+      return 'Please use words to describe what you\'re feeling.';
+    }
+
+    // ── Off-topic detection ──────────────────────────────────────────
+    for (final pattern in _offTopicPatterns) {
+      if (pattern.hasMatch(text)) {
+        return 'I can only help with health and medical questions. Please describe your symptoms.';
+      }
+    }
+
+    // ── Health relevance check (for messages with 4+ words) ─────────
+    final words = text.toLowerCase().split(RegExp(r'\s+'));
+    if (words.length >= 4) {
+      final hasHealthWord = words.any((w) {
+        final clean = w.replaceAll(RegExp(r'[^a-z]'), '');
+        return _healthKeywords.contains(clean);
+      });
+      if (!hasHealthWord) {
+        return 'This doesn\'t seem health-related. Please describe your symptoms or medical concerns.';
+      }
+    }
+
+    return null; // all checks passed
   }
 
   void _scrollToBottom() {

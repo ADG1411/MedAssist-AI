@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.4.1";
 
-const NIM_API_KEY = Deno.env.get("NIM_API_KEY") || "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";
+const NIM_API_KEY = Deno.env.get("NIM_API_KEY") || "Kale malje kale apish 😁Hackathon pachi";
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const MODEL = "moonshotai/kimi-k2.5";
 

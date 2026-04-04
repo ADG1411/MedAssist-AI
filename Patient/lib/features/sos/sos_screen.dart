@@ -1,10 +1,11 @@
-// SOS Screen — Premium Emergency Dispatch Cockpit
-// UI-only rewrite. All existing backend logic patterns preserved:
-// animation controller, hold-to-trigger, _triggerSos, context.pop().
+// SOS Screen — Fully functional Emergency Dispatch Cockpit
+// Connected to SosNotifier via Riverpod — no more stubs.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import 'sos_provider.dart';
 import 'widgets/emergency_dispatch_hero.dart';
 import 'widgets/radial_sos_trigger.dart';
 import 'widgets/rescue_location_card.dart';
@@ -13,34 +14,16 @@ import 'widgets/dispatch_timeline_widget.dart';
 import 'widgets/ai_waiting_instruction_card.dart';
 import 'widgets/emergency_action_rail.dart';
 
-class SosScreen extends StatefulWidget {
+class SosScreen extends ConsumerStatefulWidget {
   const SosScreen({super.key});
 
   @override
-  State<SosScreen> createState() => _SosScreenState();
+  ConsumerState<SosScreen> createState() => _SosScreenState();
 }
 
-class _SosScreenState extends State<SosScreen>
+class _SosScreenState extends ConsumerState<SosScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _bgPulseController;
-  SosState _sosState = SosState.ready;
-  bool _isCancelled = false;
-
-  // Mock profile for medical packet (in real app, from provider)
-  final Map<String, dynamic> _mockProfile = const {
-    'name': 'Rahul',
-    'bloodGroup': 'O+',
-    'age': 32,
-    'gender': 'Male',
-    'weight_kg': '72',
-    'allergies': ['Penicillin', 'Peanuts'],
-    'chronicConditions': ['GERD'],
-    'current_medications': [],
-    'insurance': '',
-    'emergency_contacts': [
-      {'name': 'Mom', 'phone': '+91 98765 43210'},
-    ],
-  };
 
   @override
   void initState() {
@@ -57,46 +40,11 @@ class _SosScreenState extends State<SosScreen>
     super.dispose();
   }
 
-  // ── Existing trigger logic (preserved pattern) ──────────────────────────
+  // ── Actions wired to notifier ─────────────────────────────────────────────
 
   void _onSosTriggered() {
-    setState(() => _sosState = SosState.dispatching);
     HapticFeedback.heavyImpact();
-
-    // Simulate dispatch sequence
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted || _isCancelled) return;
-      setState(() => _sosState = SosState.active);
-      _triggerSos();
-    });
-  }
-
-  void _triggerSos() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                    child: Text(
-                        'Hospital Notified — Civil Hospital, 1.2km',
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-              ],
-            ),
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    });
+    ref.read(sosProvider.notifier).triggerSos();
   }
 
   void _cancelSos() {
@@ -116,19 +64,27 @@ class _SosScreenState extends State<SosScreen>
               child: const Text('Keep Active',
                   style: TextStyle(color: Color(0xFFEF4444)))),
           TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx);
-                setState(() {
-                  _isCancelled = true;
-                  _sosState = SosState.cancelled;
-                });
+                await ref.read(sosProvider.notifier).cancelSos();
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('False alarm — contacts notified')),
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.white),
+                        SizedBox(width: 10),
+                        Text('False alarm — contacts notified'),
+                      ],
+                    ),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
                 );
-                Future.delayed(const Duration(seconds: 2), () {
-                  if (mounted) context.pop();
-                });
+                await Future.delayed(const Duration(seconds: 2));
+                if (mounted) context.pop();
               },
               child: const Text('Cancel SOS',
                   style: TextStyle(color: Colors.white70))),
@@ -139,10 +95,12 @@ class _SosScreenState extends State<SosScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isActive = _sosState == SosState.active;
-    final isReady = _sosState == SosState.ready;
-    final emergencyContacts =
-        (_mockProfile['emergency_contacts'] as List?) ?? [];
+    final sos = ref.watch(sosProvider);
+    final notifier = ref.read(sosProvider.notifier);
+
+    final isActive = sos.sosState == SosState.active;
+    final isReady = sos.sosState == SosState.ready;
+    final emergencyContacts = sos.emergencyContacts;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -165,8 +123,8 @@ class _SosScreenState extends State<SosScreen>
             ),
             child: SafeArea(
               child: isReady
-                  ? _buildReadyState(context)
-                  : _buildActiveState(context, emergencyContacts),
+                  ? _buildReadyState(context, sos, notifier)
+                  : _buildActiveState(context, sos, notifier, emergencyContacts),
             ),
           );
         },
@@ -174,9 +132,13 @@ class _SosScreenState extends State<SosScreen>
     );
   }
 
-  // ── READY STATE — centered trigger ──────────────────────────────────────
+  // ── READY STATE ────────────────────────────────────────────────────────────
 
-  Widget _buildReadyState(BuildContext context) {
+  Widget _buildReadyState(
+    BuildContext context,
+    SosFullState sos,
+    SosNotifier notifier,
+  ) {
     return Column(
       children: [
         // Top bar
@@ -198,18 +160,11 @@ class _SosScreenState extends State<SosScreen>
                 ),
               ),
               const Spacer(),
-              // Voice SOS
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Listening for voice command…')),
-                  );
-                },
-                child: Container(
+              // Location chip
+              if (sos.position != null)
+                Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
@@ -220,18 +175,48 @@ class _SosScreenState extends State<SosScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.mic_rounded,
-                          size: 16, color: Colors.white),
-                      const SizedBox(width: 5),
-                      Text('Voice SOS',
+                      const Icon(Icons.gps_fixed_rounded,
+                          size: 14, color: Color(0xFF10B981)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${sos.position!.latitude.toStringAsFixed(3)}, '
+                        '${sos.position!.longitude.toStringAsFixed(3)}',
+                        style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 10,
+                        height: 10,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Colors.white54,
+                        ),
+                      ),
+                      SizedBox(width: 6),
+                      Text('Locating…',
                           style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.80),
-                              fontWeight: FontWeight.w700)),
+                              fontSize: 10,
+                              color: Colors.white54,
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -240,9 +225,9 @@ class _SosScreenState extends State<SosScreen>
 
         // Dispatch hero
         EmergencyDispatchHero(
-          sosState: _sosState,
-          nearestHospital: 'Civil Hospital',
-          hospitalEta: '4 mins',
+          sosState: sos.sosState,
+          nearestHospital: sos.nearestHospital,
+          hospitalEta: sos.hospitalEta,
         ),
 
         const SizedBox(height: 32),
@@ -255,16 +240,18 @@ class _SosScreenState extends State<SosScreen>
 
         const Spacer(flex: 2),
 
-        // Action rail
+        // Action rail (ready state)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: EmergencyActionRail(
-            onCallFamily: () => _snack('Calling family…'),
-            onCallDoctor: () => _snack('Calling doctor…'),
-            onHospitalDirections: () => _snack('Opening directions…'),
+            isFlashlightOn: sos.isFlashlightOn,
+            isAlarmOn: sos.isAlarmOn,
+            onCallFamily: () => notifier.callFirstEmergencyContact(),
+            onCallDoctor: () => notifier.callDoctor(),
+            onHospitalDirections: () => notifier.openHospitalDirections(),
             onShareQr: () => context.push('/medassist-card'),
-            onFlashlight: () => _snack('Flashlight toggled'),
-            onAlarm: () => _snack('Alarm sounding…'),
+            onFlashlight: () => notifier.toggleFlashlight(),
+            onAlarm: () => notifier.toggleAlarm(),
           ),
         ),
 
@@ -273,10 +260,14 @@ class _SosScreenState extends State<SosScreen>
     );
   }
 
-  // ── ACTIVE STATE — scrollable dispatch cockpit ──────────────────────────
+  // ── ACTIVE STATE ───────────────────────────────────────────────────────────
 
   Widget _buildActiveState(
-      BuildContext context, List<dynamic> emergencyContacts) {
+    BuildContext context,
+    SosFullState sos,
+    SosNotifier notifier,
+    List<Map<String, dynamic>> emergencyContacts,
+  ) {
     return CustomScrollView(
       slivers: [
         // Top bar
@@ -319,7 +310,7 @@ class _SosScreenState extends State<SosScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: _sosState == SosState.active
+                    color: sos.sosState == SosState.active
                         ? const Color(0xFF10B981).withValues(alpha: 0.25)
                         : const Color(0xFFF59E0B).withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(8),
@@ -332,20 +323,20 @@ class _SosScreenState extends State<SosScreen>
                         height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _sosState == SosState.active
+                          color: sos.sosState == SosState.active
                               ? const Color(0xFF10B981)
                               : const Color(0xFFF59E0B),
                         ),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        _sosState == SosState.active
+                        sos.sosState == SosState.active
                             ? 'ACTIVE'
                             : 'DISPATCHING',
                         style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: _sosState == SosState.active
+                            color: sos.sosState == SosState.active
                                 ? const Color(0xFF10B981)
                                 : const Color(0xFFF59E0B),
                             letterSpacing: 0.8),
@@ -363,68 +354,72 @@ class _SosScreenState extends State<SosScreen>
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: EmergencyDispatchHero(
-              sosState: _sosState,
+              sosState: sos.sosState,
               contactsNotified: emergencyContacts.length,
-              nearestHospital: 'Civil Hospital',
-              hospitalEta: '4 mins',
+              nearestHospital: sos.nearestHospital,
+              hospitalEta: sos.hospitalEta,
             ),
           ),
         ),
 
-        // Dispatch Timeline
+        // Animated Dispatch Timeline
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: DispatchTimelineWidget(
               isActive: true,
               contactCount: emergencyContacts.length,
+              dispatchStep: sos.dispatchStep,
+              emergencyContacts: emergencyContacts,
             ),
           ),
         ),
 
-        // Rescue location
+        // Rescue location (real GPS)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: RescueLocationCard(
-              latitude: 23.0225,
-              longitude: 72.5714,
-              address: 'Near Paldi Cross Rd, Ahmedabad',
-              nearestHospital: 'Civil Hospital',
-              hospitalEta: '4 mins',
-              gpsAccuracy: 12,
-              isOnline: true,
+              latitude: sos.position?.latitude ?? 0.0,
+              longitude: sos.position?.longitude ?? 0.0,
+              address: sos.address,
+              nearestHospital: sos.nearestHospital,
+              hospitalEta: sos.hospitalEta,
+              gpsAccuracy: sos.position?.accuracy,
+              isOnline: sos.position != null,
             ),
           ),
         ),
 
-        // Medical packet
+        // Medical packet (from real profile)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: EmergencyMedicalPacket(profile: _mockProfile),
+            child: EmergencyMedicalPacket(profile: sos.profile),
           ),
         ),
 
         // AI waiting instructions
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: const AiWaitingInstructionCard(),
+            padding: EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: AiWaitingInstructionCard(),
           ),
         ),
 
-        // Action rail
+        // Action rail with live states
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
             child: EmergencyActionRail(
-              onCallFamily: () => _snack('Calling family…'),
-              onCallDoctor: () => _snack('Calling doctor…'),
-              onHospitalDirections: () => _snack('Opening directions…'),
+              isFlashlightOn: sos.isFlashlightOn,
+              isAlarmOn: sos.isAlarmOn,
+              onCallFamily: () => notifier.callFirstEmergencyContact(),
+              onCallDoctor: () => notifier.callDoctor(),
+              onHospitalDirections: () => notifier.openHospitalDirections(),
               onShareQr: () => context.push('/medassist-card'),
-              onFlashlight: () => _snack('Flashlight toggled'),
-              onAlarm: () => _snack('Alarm sounding…'),
+              onFlashlight: () => notifier.toggleFlashlight(),
+              onAlarm: () => notifier.toggleAlarm(),
             ),
           ),
         ),
@@ -433,10 +428,4 @@ class _SosScreenState extends State<SosScreen>
       ],
     );
   }
-
-  void _snack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
-  }
 }
-

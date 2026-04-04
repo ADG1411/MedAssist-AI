@@ -1,4 +1,4 @@
-/// FatSecret Image Recognition API Service
+/// Image Recognition API Service
 /// Handles OAuth2 token flow + food image recognition
 /// Completely separate from existing OpenFoodFacts / barcode / USDA flows
 library;

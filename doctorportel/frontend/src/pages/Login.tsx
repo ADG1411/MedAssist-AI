@@ -16,13 +16,6 @@ const LoginPage = () => {
     setLoading(true);
     setErrorMsg('');
     
-    // Dev bypass for testing
-    if (email === 'test' || password === 'test') {
-      console.log('Dev bypass login');
-      navigate('/dashboard');
-      return;
-    }
-    
     // Call Supabase Auth
     const { data, error } = await authService.login(email, password);
     
@@ -32,6 +25,19 @@ const LoginPage = () => {
       setErrorMsg(error.message);
     } else {
       console.log("Logged in:", data.user);
+      
+      // Check if doctor profile is complete — redirect to setup if not
+      try {
+        const { data: profile } = await import('../lib/supabase').then(m =>
+          m.supabase.from('doctor_profiles').select('completion_percent').eq('id', data.user?.id).maybeSingle()
+        );
+        if (!profile || (profile.completion_percent ?? 0) < 60) {
+          navigate('/dashboard/profile-setup');
+          return;
+        }
+      } catch {
+        // Profile check failed — go to dashboard anyway
+      }
       navigate('/dashboard');
     }
   };

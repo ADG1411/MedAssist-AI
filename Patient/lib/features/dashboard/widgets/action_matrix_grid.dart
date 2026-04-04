@@ -37,7 +37,7 @@ class ActionMatrixGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 0.90,
+          childAspectRatio: 0.88,
           children: acts
               .map((a) => _ActionPod(action: a, isDark: isDark))
               .toList(),
@@ -141,19 +141,26 @@ class _ActionPodState extends State<_ActionPod> {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 2),
+                          horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(colors: [
                           Color(0xFF6366F1),
                           Color(0xFF8B5CF6)
                         ]),
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('AI',
-                          style: TextStyle(
-                              fontSize: 7,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800)),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, size: 7, color: Colors.white),
+                          SizedBox(width: 2),
+                          Text('AI',
+                              style: TextStyle(
+                                  fontSize: 7.5,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800)),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -161,15 +168,16 @@ class _ActionPodState extends State<_ActionPod> {
               const Spacer(),
               Text(a.label,
                   style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
                       color: widget.isDark
                           ? Colors.white
                           : AppColors.textPrimary)),
               const SizedBox(height: 2),
               Text(a.sub,
                   style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 9.5,
                       color: widget.isDark
                           ? Colors.white.withValues(alpha: 0.48)
                           : AppColors.textSecondary)),

@@ -23,8 +23,10 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
     with TickerProviderStateMixin {
   late AnimationController _ringCtrl;
   late AnimationController _expandCtrl;
+  late AnimationController _glowCtrl;
   late Animation<double> _ringAnim;
   late Animation<double> _expandAnim;
+  late Animation<double> _glowAnim;
   bool _expanded = false;
 
   @override
@@ -35,6 +37,7 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
       duration: const Duration(milliseconds: 1400),
     );
     _expandCtrl = AnimationController(
+<<<<<<< HEAD
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
@@ -46,6 +49,18 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
       parent: _expandCtrl,
       curve: Curves.easeInOutCubic,
     );
+=======
+        vsync: this, duration: const Duration(milliseconds: 300));
+    _glowCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2200))
+      ..repeat(reverse: true);
+    _ringAnim = Tween<double>(begin: 0.0, end: widget.healthScore / 100.0)
+        .animate(CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOutCubic));
+    _expandAnim =
+        CurvedAnimation(parent: _expandCtrl, curve: Curves.easeInOutCubic);
+    _glowAnim = Tween<double>(begin: 0.18, end: 0.45)
+        .animate(CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _ringCtrl.forward();
     });
@@ -55,6 +70,7 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
   void dispose() {
     _ringCtrl.dispose();
     _expandCtrl.dispose();
+    _glowCtrl.dispose();
     super.dispose();
   }
 
@@ -105,6 +121,20 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
         (widget.data['recovery_score'] as num?)?.toInt() ?? 70;
     final sleepHours = (monitoring?['sleep_hours'] as num?)?.toDouble() ?? 6.5;
 
+    // Score delta factors — computed from available data
+    final deltas = <_DeltaChip>[
+      if (monitoring != null && (monitoring['hydration_cups'] as num? ?? 0) >= 6)
+        const _DeltaChip('+6', 'Hydration', Color(0xFF3B82F6), true),
+      if (sleepHours >= 7)
+        const _DeltaChip('+3', 'Sleep', Color(0xFF8B5CF6), true),
+      if (sleepHours < 6)
+        const _DeltaChip('-3', 'Sleep', Color(0xFFEF4444), false),
+      if (monitoring != null)
+        const _DeltaChip('+4', 'Logging', Color(0xFF10B981), true),
+      if (monitoring == null)
+        const _DeltaChip('-2', 'No Log', Color(0xFFF59E0B), false),
+    ];
+
     final pillars = [
       _Pillar(
         'Vitals',
@@ -139,19 +169,20 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
     ];
 
     return GlassCard(
-      radius: 28,
+      radius: 26,
       blur: 24,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       child: Column(
         children: [
           // Top row: neumorphic ring + info
           Row(
             children: [
-              // ── Neumorphic Score Ring ──────────────────
+              // ── Neumorphic Score Ring with radial glow ──
               SizedBox(
-                width: 118,
-                height: 118,
+                width: 122,
+                height: 122,
                 child: AnimatedBuilder(
+<<<<<<< HEAD
                   animation: _ringAnim,
                   builder: (context, child) => _NeumorphicDashboardRing(
                     score: score,
@@ -159,10 +190,39 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                     gradientColors: gradColors,
                     accentColor: accent,
                     isDark: isDark,
+=======
+                  animation: Listenable.merge([_ringAnim, _glowAnim]),
+                  builder: (context, child) => Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Radial glow behind ring
+                      Container(
+                        width: 122,
+                        height: 122,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withValues(alpha: _glowAnim.value),
+                              blurRadius: 32,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                      _NeumorphicDashboardRing(
+                        score: score,
+                        progress: _ringAnim.value,
+                        gradientColors: gradColors,
+                        accentColor: accent,
+                        isDark: isDark,
+                      ),
+                    ],
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
                   ),
                 ),
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,12 +299,40 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                         ),
                       ],
                     ),
+                    // Score delta chips
+                    if (deltas.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 5,
+                        children: deltas.map((d) => Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: d.color.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: d.color.withValues(alpha: 0.20),
+                                width: 0.5),
+                          ),
+                          child: Text(
+                            '${d.delta} ${d.label}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: d.color,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           // 5 pillars
           Row(
             children: pillars
@@ -255,7 +343,15 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                 )
                 .toList(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+          // Divider
+          Container(
+            height: 0.5,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+          const SizedBox(height: 12),
           // Expandable drawer toggle
           GestureDetector(
             onTap: () {
@@ -604,12 +700,21 @@ class _Pillar {
   const _Pillar(this.label, this.value, this.icon, this.color);
 }
 
+class _DeltaChip {
+  final String delta;
+  final String label;
+  final Color color;
+  final bool positive;
+  const _DeltaChip(this.delta, this.label, this.color, this.positive);
+}
+
 class _PillarTile extends StatelessWidget {
   final _Pillar pillar;
   final bool isDark;
   const _PillarTile({required this.pillar, required this.isDark});
 
   @override
+<<<<<<< HEAD
   Widget build(BuildContext context) => Column(
     children: [
       Container(
@@ -647,6 +752,47 @@ class _PillarTile extends StatelessWidget {
       ),
     ],
   );
+=======
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Column(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: pillar.color.withValues(alpha: 0.12),
+              ),
+              child: Icon(pillar.icon, size: 16, color: pillar.color),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 3.5,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: (pillar.value / 100).clamp(0.0, 1.0),
+                  backgroundColor: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                  valueColor: AlwaysStoppedAnimation(pillar.color),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(pillar.label,
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.55)
+                        : AppColors.textSecondary)),
+          ],
+        ),
+      );
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
 }
 
 class _Badge extends StatelessWidget {
