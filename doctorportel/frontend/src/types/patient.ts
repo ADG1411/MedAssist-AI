@@ -15,4 +15,7 @@ export interface Patient {
   avatar: string;
   phone: string;
   email: string;
+  blood_group?: string;
+  allergies?: string[];
+  chronic_conditions?: string[];
 }

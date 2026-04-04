@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { BarChart3, TrendingUp, TrendingDown, Layers, Users } from 'lucide-react';
+import { DashboardView } from '@/components/watermelon/e-commerce-dashboard/dashboardView';
 
 const diseaseData = [
   { name: 'Cardiology', cases: 1420 },
@@ -56,6 +57,10 @@ export const Analytics: React.FC = () => {
                <Insight title="Prescription Flags" val="1,402 Prevented" desc="AI flagged 1.4k conflicting medication prescriptions before issuance." />
             </div>
          </div>
+      </div>
+
+      <div className="mt-8">
+        <DashboardView />
       </div>
     </div>
   );

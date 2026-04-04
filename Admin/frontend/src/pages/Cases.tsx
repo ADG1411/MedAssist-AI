@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, ArrowRight, UserCircle, Activity } from 'lucide-react';
+import { IncidentManagementDashboard } from '@/components/ui/incident-management-dashboard';
 
 const activeCases = [
   { id: '#CAS-1109', patient: 'Mark Williams', doctor: 'Dr. Sarah Jenkins', status: 'In Progress', priority: 'Critical', time: '10 mins ago', type: 'Cardiology' },
@@ -39,6 +40,10 @@ export const Cases: React.FC = () => {
             {tab}
           </button>
         ))}
+      </div>
+
+      <div className="mb-6">
+        <IncidentManagementDashboard />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

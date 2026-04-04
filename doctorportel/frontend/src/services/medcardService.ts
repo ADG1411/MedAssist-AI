@@ -244,6 +244,40 @@ function aiSummaryMock(patientId: number): string[] {
   return insights;
 }
 
+// ── Auto-save Patient Directory ──────────────────────────────────────────
+
+async function logPatientToDirectory(patientId: string) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Check if link exists
+    const { data: existing } = await supabase
+      .from('doctor_patients')
+      .select('visit_count')
+      .eq('doctor_id', user.id)
+      .eq('patient_id', patientId)
+      .single();
+
+    if (existing) {
+      await supabase.from('doctor_patients').update({
+        last_visit: new Date().toISOString(),
+        visit_count: (existing.visit_count || 1) + 1
+      }).eq('doctor_id', user.id).eq('patient_id', patientId);
+    } else {
+      await supabase.from('doctor_patients').insert({
+        doctor_id: user.id,
+        patient_id: patientId,
+        first_visit: new Date().toISOString(),
+        last_visit: new Date().toISOString(),
+        visit_count: 1
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to auto-save patient to directory:', err);
+  }
+}
+
 // ── Patient UUID Lookup by prefix ───────────────────────────────────────
 
 async function findPatientByIdPrefix(prefix: string): Promise<string | null> {
@@ -381,6 +415,8 @@ export async function accessFullRecord(token: string, emergency = false): Promis
           const data = await response.json();
           const profile = data.patient || {};
           
+          await logPatientToDirectory(patientUUID);
+          
           return {
             patient: {
               id: profile.id || patientUUID,
@@ -424,6 +460,8 @@ export async function accessFullRecord(token: string, emergency = false): Promis
     try {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', patientUUID).single();
       if (profile) {
+        await logPatientToDirectory(profile.id);
+        
         return {
           patient: {
             id: profile.id,

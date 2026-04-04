@@ -67,6 +67,9 @@ function mapBackendPatient(b: Record<string, any>): Patient {
     avatar:        b.avatar ?? `https://ui-avatars.com/api/?name=${b.first_name}+${b.last_name}&background=random&color=fff`,
     phone:         b.phone_number ?? '',
     email:         b.email ?? '',
+    blood_group:   b.blood_group,
+    allergies:     b.allergies,
+    chronic_conditions: b.chronic_conditions,
   };
 }
 
@@ -250,12 +253,12 @@ const PatientsPage = () => {
   useEffect(() => {
     const loadPatients = async () => {
       const data = await fetchBackendPatients();
-      if (data && data.length > 0) {
+      if (data !== null) {
         const mapped = data.map(mapBackendPatient);
         setPatients(mapped);
         saveToCache(mapped);
       } else {
-        // Backend unavailable → try localStorage cache first, then static mocks
+        // Backend unavailable -> try localStorage cache first, then static mocks
         const cached = loadFromCache();
         setPatients(cached && cached.length > 0 ? cached : mockPatients);
       }
