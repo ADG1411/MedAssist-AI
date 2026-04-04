@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Share2, Lock, ShieldCheck, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { RevealAndCopy } from '../ui/reveal-copy';
 import type { QRPreview } from '../../services/medcardService';
 
 interface Props {
@@ -22,7 +23,6 @@ export const PatientPreview = ({ preview, onAccess, onEmergency, loading }: Prop
   const qrUrl  = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=112x112&bgcolor=ffffff&color=1a2535&margin=5`;
 
   const maskedPhone = preview.phone_masked;
-  const maskedId    = `MED-${new Date().getFullYear()}-*-********`;
 
   const handleShare = () => {
     const text = `MedAssist Patient Card\nName: ${preview.name}\nID: ${hid}\nBlood: ${preview.blood_group}`;
@@ -71,9 +71,7 @@ export const PatientPreview = ({ preview, onAccess, onEmergency, loading }: Prop
             {/* Health ID */}
             <div>
               <p className="text-teal-500 text-[8px] font-black uppercase tracking-[0.18em] mb-0.5">Health ID</p>
-              <p className="text-teal-400 font-black text-[13px] font-mono tracking-wide">
-                {hidden ? maskedId : hid}
-              </p>
+              <RevealAndCopy cardNumber={hid} hiddenIndexes={[2, 3]} revealDuration={2500} />
             </div>
 
             {/* Blood group + Age row */}

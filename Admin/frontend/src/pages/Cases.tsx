@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, AlertTriangle, ArrowRight, UserCircle, Activity } from 'lucide-react';
+import { Search, Filter, ArrowRight, UserCircle, Activity } from 'lucide-react';
 
 const activeCases = [
   { id: '#CAS-1109', patient: 'Mark Williams', doctor: 'Dr. Sarah Jenkins', status: 'In Progress', priority: 'Critical', time: '10 mins ago', type: 'Cardiology' },

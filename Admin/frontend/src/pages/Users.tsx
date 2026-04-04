@@ -1,5 +1,37 @@
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, UserCheck, UserX, ShieldBan } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, UserCheck, ShieldBan, Users as UsersIcon, Activity, Building2, UserPlus } from 'lucide-react';
+import { MinimalCarousel, CarouselCard } from '../components/ui/minimal-carousel';
+
+const statsCards: CarouselCard[] = [
+  {
+    id: "total",
+    title: "Total Users",
+    value: "1,248",
+    color: "bg-teal-600",
+    icon: UsersIcon,
+  },
+  {
+    id: "active",
+    title: "Active Today",
+    value: "156",
+    color: "bg-emerald-600",
+    icon: Activity,
+  },
+  {
+    id: "hospitals",
+    title: "Partner Entities",
+    value: "24",
+    color: "bg-blue-600",
+    icon: Building2,
+  },
+  {
+    id: "new",
+    title: "New Applications",
+    value: "38",
+    color: "bg-amber-600",
+    icon: UserPlus,
+  }
+];
 
 const usersData = [
   { id: '#DOC-101', name: 'Dr. Sarah Jenkins', role: 'Doctor', specialty: 'Cardiologist', status: 'Active', joined: '12 Jan 2026' },
@@ -29,6 +61,10 @@ export const Users: React.FC = () => {
              +  Add New User
           </button>
         </div>
+      </div>
+
+      <div className="mb-8 w-full max-w-4xl mx-auto">
+        <MinimalCarousel cards={statsCards} />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">

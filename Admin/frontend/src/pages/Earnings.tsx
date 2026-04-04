@@ -1,5 +1,6 @@
 import React from 'react';
 import { CircleDollarSign, TrendingUp, Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { BudgetCard } from '@/components/ui/budget-card';
 
 export const Earnings: React.FC = () => {
   return (
@@ -12,25 +13,19 @@ export const Earnings: React.FC = () => {
         <p className="text-slate-500 font-medium text-sm mt-3 ml-[3.25rem]">Manage platform revenue, commissions, and payouts</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-2xl shadow-md border border-emerald-500/20 relative overflow-hidden">
-           <Wallet className="absolute -bottom-4 -right-4 h-24 w-24 text-white/10" />
-           <p className="text-sm font-bold text-emerald-100 uppercase tracking-widest relative z-10">Total Platform Revenue</p>
-           <p className="text-4xl font-extrabold tabular-nums mt-1 relative z-10">$142,500.00</p>
-           <p className="text-xs font-semibold mt-3 text-emerald-200 flex items-center gap-1 relative z-10"><ArrowUpRight className="h-4 w-4" /> +15.3% this month</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Commission Earned</p>
-           <p className="text-4xl font-extrabold text-slate-800 tabular-nums mt-1">$21,375.00</p>
-           <p className="text-xs font-semibold mt-3 text-emerald-500 flex items-center gap-1"><TrendingUp className="h-4 w-4" /> Stable at 15% rate</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Pending Doctor Payouts</p>
-           <p className="text-4xl font-extrabold text-slate-800 tabular-nums mt-1">$8,450.00</p>
-           <button className="mt-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 w-max">
-             <ArrowDownRight className="h-3.5 w-3.5" /> Process Payouts
-           </button>
-        </div>
+      <div className="mb-8">
+        <BudgetCard
+          month="April"
+          totalBudget={150000}
+          spentAmount={142500}
+          breakdown={[
+            { label: "Platform Revenue", amount: 100000, color: "#059669" },
+            { label: "Commission Earned", amount: 21375, color: "#10B981" },
+            { label: "Doctor Payouts", amount: 21125, color: "#34D399" }
+          ]}
+          onMonthChange={(m) => console.log('Month changed to', m)}
+          onViewDetails={() => console.log('View details clicked')}
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-6">

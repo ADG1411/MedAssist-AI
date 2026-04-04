@@ -76,7 +76,7 @@ export default function PatientRecordPage() {
 
   const { patient, records, family_members, ai_summary } = record;
   const gradient = BLOOD_GRADIENT[patient.blood_group] ?? 'from-slate-600 to-slate-800';
-  const allergiesList = patient.allergies?.split(',').map(a => a.trim()).filter(Boolean) ?? [];
+  const allergiesList = Array.isArray(patient.allergies) ? patient.allergies : (typeof patient.allergies === 'string' ? patient.allergies.split(',').map((a: string) => a.trim()).filter(Boolean) : []);
   const riskLevel: 'high' | 'moderate' | 'low' =
     allergiesList.length > 0 && records.length >= 3 ? 'high' :
     records.length >= 2 ? 'moderate' : 'low';
@@ -101,7 +101,7 @@ export default function PatientRecordPage() {
         }
       `}</style>
 
-      <div className="max-w-3xl mx-auto pb-20 print-page">
+      <div className="w-full max-w-6xl mx-auto pb-20 print-page">
 
         {/* ── Top bar ── */}
         <div className="no-print flex items-center justify-between mb-6 gap-3">

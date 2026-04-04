@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Mic, Filter, Sparkles, Plus,
+  Filter, Sparkles, Plus,
   Users, Activity, AlertCircle, DollarSign, LayoutGrid, List, ArrowLeft,
   X, Check, Loader2
 } from 'lucide-react';
@@ -13,7 +13,7 @@ import type { Patient } from '../types/patient';
 import { cn } from '../layouts/DashboardLayout';
 import { fetchBackendPatients } from '../services/userService';
 import { mockPatients } from '../data/mockPatients';
-
+import { CommandSearch } from '../components/ui/command-search';
 // ── MinimalCarousel helpers ────────────────────────────────────────────────
 const ACTIVE_COLORS = [
   'bg-emerald-500','bg-teal-500','bg-cyan-600','bg-blue-500',
@@ -302,19 +302,10 @@ const PatientsPage = () => {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <div className="relative flex-1 group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-brand-blue transition-colors" />       
-                <input
-                  type="text"
-                  placeholder="Search by name, disease, symptoms..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50/50 hover:bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-14 py-3.5 text-[15px] font-medium outline-none focus:bg-white focus:border-brand-blue/30 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] transition-all placeholder:font-normal placeholder:text-slate-400 text-slate-800"
-                />
-                <button onClick={() => alert("Voice search is unavailable")} className="absolute top-1/2 -translate-y-1/2 right-3 p-2 bg-white hover:bg-slate-100 rounded-xl text-slate-500 transition-colors shadow-sm border border-slate-100">
-                  <Mic className="w-4 h-4" />
-                </button>
-              </div>
+              <CommandSearch 
+                value={searchQuery} 
+                onChange={setSearchQuery} 
+              />
            </div>
 
            {/* Actions & Filters */}
