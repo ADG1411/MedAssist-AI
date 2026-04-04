@@ -35,7 +35,9 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
   void initState() {
     super.initState();
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
   }
@@ -117,10 +119,11 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                           ? Colors.black.withValues(alpha: 0.30)
                           : Colors.white.withValues(alpha: 0.60),
                       padding: EdgeInsets.fromLTRB(
-                          16,
-                          MediaQuery.paddingOf(context).top + 10,
-                          16,
-                          10),
+                        16,
+                        MediaQuery.paddingOf(context).top + 10,
+                        16,
+                        10,
+                      ),
                       child: Row(
                         children: [
                           // Back button
@@ -135,18 +138,19 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                                     ? Colors.white.withValues(alpha: 0.09)
                                     : Colors.white.withValues(alpha: 0.72),
                                 border: Border.all(
-                                    color: isDark
-                                        ? Colors.white
-                                            .withValues(alpha: 0.12)
-                                        : Colors.white,
-                                    width: 0.8),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.12)
+                                      : Colors.white,
+                                  width: 0.8,
+                                ),
                               ),
                               child: Icon(
-                                  Icons.arrow_back_ios_new_rounded,
-                                  size: 14,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textPrimary),
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 14,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -156,29 +160,33 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                             width: 36,
                             height: 36,
                             decoration: const BoxDecoration(
-                              gradient: LinearGradient(colors: [
-                                Color(0xFF10B981),
-                                Color(0xFF059669)
-                              ]),
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                              ),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.eco_rounded,
-                                size: 16, color: Colors.white),
+                            child: const Icon(
+                              Icons.eco_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
                           const SizedBox(width: 10),
 
                           // Title + status
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Dr. NutriAssist',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: textPrimary,
-                                        letterSpacing: -0.3)),
+                                Text(
+                                  'Dr. NutriAssist',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: textPrimary,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
                                 Row(
                                   children: [
                                     Container(
@@ -189,18 +197,22 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                                         color: _statusColor(state),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: _statusColor(state)
-                                                .withValues(alpha: 0.40),
+                                            color: _statusColor(
+                                              state,
+                                            ).withValues(alpha: 0.40),
                                             blurRadius: 4,
                                           ),
                                         ],
                                       ),
                                     ),
                                     const SizedBox(width: 5),
-                                    Text(_statusText(state),
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            color: textSub)),
+                                    Text(
+                                      _statusText(state),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: textSub,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -210,20 +222,23 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                           // Nutrition badge
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF10B981),
-                                    Color(0xFF059669)
-                                  ]),
+                                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('Nutrition AI',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700)),
+                            child: const Text(
+                              'Nutrition AI',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -238,14 +253,12 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                   child: ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.only(top: 8, bottom: 8),
-                    itemCount:
-                        messages.length + (state.isTyping ? 1 : 0),
+                    itemCount: messages.length + (state.isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == messages.length && state.isTyping) {
                         return _buildTypingIndicator(isDark);
                       }
-                      return _buildRichBubble(
-                          messages[index], state, isDark);
+                      return _buildRichBubble(messages[index], state, isDark);
                     },
                   ),
                 ),
@@ -265,7 +278,10 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
   // ── Rich chat bubble ──────────────────────────────────────────────────
 
   Widget _buildRichBubble(
-      Map<String, dynamic> msg, NutritionAiState state, bool isDark) {
+    Map<String, dynamic> msg,
+    NutritionAiState state,
+    bool isDark,
+  ) {
     final isUser = msg['role'] == 'user';
     final text = msg['text'] ?? '';
     final timestamp = msg['timestamp'] ?? '';
@@ -322,8 +338,9 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // AI avatar
@@ -332,10 +349,9 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  variantColor.withValues(alpha: 0.80),
-                  variantColor,
-                ]),
+                gradient: LinearGradient(
+                  colors: [variantColor.withValues(alpha: 0.80), variantColor],
+                ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -353,8 +369,9 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
           // Bubble
           Flexible(
             child: Column(
-              crossAxisAlignment:
-                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Container(
                   constraints: BoxConstraints(
@@ -364,13 +381,14 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                   decoration: BoxDecoration(
                     gradient: isUser
                         ? const LinearGradient(
-                            colors: [Color(0xFF10B981), Color(0xFF059669)])
+                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                          )
                         : null,
                     color: isUser
                         ? null
                         : (isDark
-                            ? variantColor.withValues(alpha: 0.08)
-                            : variantColor.withValues(alpha: 0.05)),
+                              ? variantColor.withValues(alpha: 0.08)
+                              : variantColor.withValues(alpha: 0.05)),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -381,12 +399,11 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                         ? null
                         : Border.all(
                             color: variantColor.withValues(alpha: 0.15),
-                            width: 0.7),
+                            width: 0.7,
+                          ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isUser
-                                ? const Color(0xFF10B981)
-                                : Colors.black)
+                        color: (isUser ? const Color(0xFF10B981) : Colors.black)
                             .withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
@@ -402,17 +419,21 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  variantColor.withValues(alpha: 0.12),
+                              color: variantColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: Text(variantLabel,
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: variantColor)),
+                            child: Text(
+                              variantLabel,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: variantColor,
+                              ),
+                            ),
                           ),
                         ),
 
@@ -432,19 +453,22 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (isUser) ...[
-                            Icon(Icons.done_all,
-                                size: 13,
-                                color: Colors.white
-                                    .withValues(alpha: 0.65)),
+                            Icon(
+                              Icons.done_all,
+                              size: 13,
+                              color: Colors.white.withValues(alpha: 0.65),
+                            ),
                             const SizedBox(width: 4),
                           ],
-                          Text(timestamp,
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  color: isUser
-                                      ? Colors.white
-                                          .withValues(alpha: 0.65)
-                                      : textSub)),
+                          Text(
+                            timestamp,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: isUser
+                                  ? Colors.white.withValues(alpha: 0.65)
+                                  : textSub,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -458,31 +482,34 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                 // Tip card
                 if (!isUser && dailyTip != null && dailyTip.isNotEmpty)
                   _buildInfoCard(
-                      Icons.lightbulb_outline_rounded,
-                      'Daily Tip',
-                      dailyTip,
-                      const Color(0xFFF59E0B),
-                      isDark),
+                    Icons.lightbulb_outline_rounded,
+                    'Daily Tip',
+                    dailyTip,
+                    const Color(0xFFF59E0B),
+                    isDark,
+                  ),
 
                 // Meal suggestion card
                 if (!isUser &&
                     mealSuggestion != null &&
                     mealSuggestion.isNotEmpty)
                   _buildInfoCard(
-                      Icons.restaurant_rounded,
-                      'Meal Idea',
-                      mealSuggestion,
-                      const Color(0xFF10B981),
-                      isDark),
+                    Icons.restaurant_rounded,
+                    'Meal Idea',
+                    mealSuggestion,
+                    const Color(0xFF10B981),
+                    isDark,
+                  ),
 
                 // Macro note
                 if (!isUser && macroNote != null && macroNote.isNotEmpty)
                   _buildInfoCard(
-                      Icons.bar_chart_rounded,
-                      'Macro Check',
-                      macroNote,
-                      const Color(0xFF3B82F6),
-                      isDark),
+                    Icons.bar_chart_rounded,
+                    'Macro Check',
+                    macroNote,
+                    const Color(0xFF3B82F6),
+                    isDark,
+                  ),
               ],
             ),
           ),
@@ -509,18 +536,20 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                   : const Color(0xFFF59E0B).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.20),
-                  width: 0.6),
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.20),
+                width: 0.6,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        size: 14,
-                        color: const Color(0xFFF59E0B)
-                            .withValues(alpha: 0.80)),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 14,
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.80),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -558,7 +587,12 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
   // ── Info card (tip / meal / macro) ─────────────────────────────────────
 
   Widget _buildInfoCard(
-      IconData icon, String label, String text, Color color, bool isDark) {
+    IconData icon,
+    String label,
+    String text,
+    Color color,
+    bool isDark,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Container(
@@ -568,8 +602,7 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
               ? color.withValues(alpha: 0.08)
               : color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: color.withValues(alpha: 0.15), width: 0.6),
+          border: Border.all(color: color.withValues(alpha: 0.15), width: 0.6),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,20 +621,25 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: color)),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(text,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.65)
-                            : const Color(0xFF334155),
-                        height: 1.35,
-                      )),
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.65)
+                          : const Color(0xFF334155),
+                      height: 1.35,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -623,16 +661,15 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
             height: 32,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF059669)]),
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+              ),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.eco_rounded, size: 15, color: Colors.white),
+            child: const Icon(Icons.eco_rounded, size: 15, color: Colors.white),
           ),
           const SizedBox(width: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isDark
                   ? const Color(0xFF10B981).withValues(alpha: 0.08)
@@ -644,9 +681,9 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                 bottomRight: Radius.circular(18),
               ),
               border: Border.all(
-                  color:
-                      const Color(0xFF10B981).withValues(alpha: 0.15),
-                  width: 0.6),
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                width: 0.6,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -657,7 +694,8 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation(
-                        const Color(0xFF10B981).withValues(alpha: 0.60)),
+                      const Color(0xFF10B981).withValues(alpha: 0.60),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -690,7 +728,11 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
               ? Colors.black.withValues(alpha: 0.30)
               : Colors.white.withValues(alpha: 0.65),
           padding: EdgeInsets.fromLTRB(
-              16, 8, 16, MediaQuery.paddingOf(context).bottom + 10),
+            16,
+            8,
+            16,
+            MediaQuery.paddingOf(context).bottom + 10,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -701,24 +743,26 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _quickChips.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, i) {
                       return GestureDetector(
                         onTap: () => _sendMessage(_quickChips[i]),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.white
-                                    .withValues(alpha: 0.06)
-                                : const Color(0xFF10B981)
-                                    .withValues(alpha: 0.06),
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: const Color(0xFF10B981)
-                                  .withValues(alpha: 0.20),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.20),
                               width: 0.6,
                             ),
                           ),
@@ -737,8 +781,7 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                     },
                   ),
                 ),
-              if (state.messages.length <= 2)
-                const SizedBox(height: 8),
+              if (state.messages.length <= 2) const SizedBox(height: 8),
 
               // Input row
               Row(
@@ -762,23 +805,20 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                         focusNode: _focusNode,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark
-                              ? Colors.white
-                              : AppColors.textPrimary,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                         decoration: InputDecoration(
-                          hintText:
-                              'Ask about meals, diets, nutrition…',
+                          hintText: 'Ask about meals, diets, nutrition…',
                           hintStyle: TextStyle(
                             fontSize: 13,
                             color: isDark
-                                ? Colors.white
-                                    .withValues(alpha: 0.25)
+                                ? Colors.white.withValues(alpha: 0.25)
                                 : const Color(0xFF94A3B8),
                           ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
                           border: InputBorder.none,
                         ),
                         maxLines: null,
@@ -796,23 +836,22 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                       decoration: BoxDecoration(
                         gradient: state.isTyping
                             ? null
-                            : const LinearGradient(colors: [
-                                Color(0xFF10B981),
-                                Color(0xFF059669)
-                              ]),
+                            : const LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                              ),
                         color: state.isTyping
                             ? (isDark
-                                ? Colors.white
-                                    .withValues(alpha: 0.06)
-                                : const Color(0xFFF1F5F9))
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : const Color(0xFFF1F5F9))
                             : null,
                         shape: BoxShape.circle,
                         boxShadow: state.isTyping
                             ? null
                             : [
                                 BoxShadow(
-                                  color: const Color(0xFF10B981)
-                                      .withValues(alpha: 0.30),
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.30),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -823,9 +862,8 @@ class _NutritionAiScreenState extends ConsumerState<NutritionAiScreen>
                         size: 18,
                         color: state.isTyping
                             ? (isDark
-                                ? Colors.white
-                                    .withValues(alpha: 0.20)
-                                : const Color(0xFF94A3B8))
+                                  ? Colors.white.withValues(alpha: 0.20)
+                                  : const Color(0xFF94A3B8))
                             : Colors.white,
                       ),
                     ),

@@ -6,7 +6,7 @@ import '../services/edge_function_service.dart';
 final chatRepositoryProvider = Provider((ref) => ChatRepository());
 
 class ChatRepository {
-  bool get useMock => dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
 
   /// Send a symptom message via the symptom-triage Edge Function (v2 contract)
   Future<Map<String, dynamic>> sendSymptomMessage({

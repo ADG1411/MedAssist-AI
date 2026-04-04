@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 import '../../../core/theme/app_colors.dart';
@@ -32,13 +31,21 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
   void initState() {
     super.initState();
     _ringCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1400));
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
     _expandCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _ringAnim = Tween<double>(begin: 0.0, end: widget.healthScore / 100.0)
-        .animate(CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOutCubic));
-    _expandAnim =
-        CurvedAnimation(parent: _expandCtrl, curve: Curves.easeInOutCubic);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _ringAnim = Tween<double>(
+      begin: 0.0,
+      end: widget.healthScore / 100.0,
+    ).animate(CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOutCubic));
+    _expandAnim = CurvedAnimation(
+      parent: _expandCtrl,
+      curve: Curves.easeInOutCubic,
+    );
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _ringCtrl.forward();
     });
@@ -52,9 +59,12 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
   }
 
   List<Color> _ringGradient(int s) {
-    if (s >= 80) return const [Color(0xFF34D399), Color(0xFF10B981), Color(0xFF059669)];
-    if (s >= 60) return const [Color(0xFFF1DA95), Color(0xFFFBBF24), Color(0xFFF59E0B)];
-    if (s >= 40) return const [Color(0xFFFBBF24), Color(0xFFF97316), Color(0xFFEF4444)];
+    if (s >= 80)
+      return const [Color(0xFF34D399), Color(0xFF10B981), Color(0xFF059669)];
+    if (s >= 60)
+      return const [Color(0xFFF1DA95), Color(0xFFFBBF24), Color(0xFFF59E0B)];
+    if (s >= 40)
+      return const [Color(0xFFFBBF24), Color(0xFFF97316), Color(0xFFEF4444)];
     return const [Color(0xFFF97316), Color(0xFFEF4444), Color(0xFFDC2626)];
   }
 
@@ -93,20 +103,39 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
         widget.data['latest_monitoring'] as Map<String, dynamic>?;
     final recoveryScore =
         (widget.data['recovery_score'] as num?)?.toInt() ?? 70;
-    final sleepHours =
-        (monitoring?['sleep_hours'] as num?)?.toDouble() ?? 6.5;
+    final sleepHours = (monitoring?['sleep_hours'] as num?)?.toDouble() ?? 6.5;
 
     final pillars = [
-      _Pillar('Vitals', monitoring != null ? 80 : 60,
-          Icons.favorite_rounded, const Color(0xFFEF4444)),
-      _Pillar('Nutrition', monitoring != null ? 70 : 55,
-          Icons.restaurant_rounded, const Color(0xFF10B981)),
-      _Pillar('Sleep', (sleepHours / 9.0 * 100).clamp(0, 100),
-          Icons.nightlight_round, const Color(0xFF8B5CF6)),
-      _Pillar('Activity', 72,
-          Icons.directions_run_rounded, const Color(0xFFF59E0B)),
-      _Pillar('Recovery', recoveryScore.toDouble(),
-          Icons.healing_rounded, const Color(0xFF06B6D4)),
+      _Pillar(
+        'Vitals',
+        monitoring != null ? 80 : 60,
+        Icons.favorite_rounded,
+        const Color(0xFFEF4444),
+      ),
+      _Pillar(
+        'Nutrition',
+        monitoring != null ? 70 : 55,
+        Icons.restaurant_rounded,
+        const Color(0xFF10B981),
+      ),
+      _Pillar(
+        'Sleep',
+        (sleepHours / 9.0 * 100).clamp(0, 100),
+        Icons.nightlight_round,
+        const Color(0xFF8B5CF6),
+      ),
+      _Pillar(
+        'Activity',
+        72,
+        Icons.directions_run_rounded,
+        const Color(0xFFF59E0B),
+      ),
+      _Pillar(
+        'Recovery',
+        recoveryScore.toDouble(),
+        Icons.healing_rounded,
+        const Color(0xFF06B6D4),
+      ),
     ];
 
     return GlassCard(
@@ -124,14 +153,13 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                 height: 118,
                 child: AnimatedBuilder(
                   animation: _ringAnim,
-                  builder: (context, child) =>
-                      _NeumorphicDashboardRing(
-                        score: score,
-                        progress: _ringAnim.value,
-                        gradientColors: gradColors,
-                        accentColor: accent,
-                        isDark: isDark,
-                      ),
+                  builder: (context, child) => _NeumorphicDashboardRing(
+                    score: score,
+                    progress: _ringAnim.value,
+                    gradientColors: gradColors,
+                    accentColor: accent,
+                    isDark: isDark,
+                  ),
                 ),
               ),
               const SizedBox(width: 18),
@@ -142,7 +170,9 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                     // Status badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -151,32 +181,43 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: accent.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(_scoreIcon(score), size: 12, color: accent),
                           const SizedBox(width: 6),
-                          Text(_scoreLabel(score),
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: accent)),
+                          Text(
+                            _scoreLabel(score),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: accent,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('Health Command Score',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary)),
+                    Text(
+                      'Health Command Score',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 3),
                     Text(
                       'AI-computed from vitals,\nhabits & clinical history',
                       style: TextStyle(
-                          fontSize: 11, color: textSub, height: 1.4),
+                        fontSize: 11,
+                        color: textSub,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -186,7 +227,7 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                         _Badge(
                           gradient: const [
                             Color(0xFF6366F1),
-                            Color(0xFF8B5CF6)
+                            Color(0xFF8B5CF6),
                           ],
                           icon: Icons.auto_awesome,
                           label: 'AI · 94% conf',
@@ -207,8 +248,11 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
           // 5 pillars
           Row(
             children: pillars
-                .map((p) => Expanded(
-                    child: _PillarTile(pillar: p, isDark: isDark)))
+                .map(
+                  (p) => Expanded(
+                    child: _PillarTile(pillar: p, isDark: isDark),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 14),
@@ -220,20 +264,29 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
             },
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 14, color: AppColors.primary),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 6),
-                Text('Why did my score change?',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  'Why did my score change?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 AnimatedRotation(
                   turns: _expanded ? 0.5 : 0.0,
                   duration: const Duration(milliseconds: 280),
-                  child: Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 18, color: AppColors.primary),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -245,20 +298,25 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ReasonRow('Clinical baseline & AI risk',
-                      monitoring != null
-                          ? 'Active monitoring logged'
-                          : 'No log today — mild buffer applied',
-                      const Color(0xFF6366F1)),
-                  _ReasonRow('Recovery momentum',
-                      'Current score: $recoveryScore / 100',
-                      const Color(0xFF10B981)),
                   _ReasonRow(
-                      'Vitals & monitoring',
-                      monitoring != null
-                          ? 'Sleep: ${sleepHours.toStringAsFixed(1)}h · Severity logged'
-                          : 'No vitals logged today',
-                      const Color(0xFFF59E0B)),
+                    'Clinical baseline & AI risk',
+                    monitoring != null
+                        ? 'Active monitoring logged'
+                        : 'No log today — mild buffer applied',
+                    const Color(0xFF6366F1),
+                  ),
+                  _ReasonRow(
+                    'Recovery momentum',
+                    'Current score: $recoveryScore / 100',
+                    const Color(0xFF10B981),
+                  ),
+                  _ReasonRow(
+                    'Vitals & monitoring',
+                    monitoring != null
+                        ? 'Sleep: ${sleepHours.toStringAsFixed(1)}h · Severity logged'
+                        : 'No vitals logged today',
+                    const Color(0xFFF59E0B),
+                  ),
                 ],
               ),
             ),
@@ -288,8 +346,10 @@ class _NeumorphicDashboardRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = isDark ? const Color(0xFF1E2328) : const Color(0xFFF0F2F5);
-    final shadowColor = isDark ? const Color(0xFF0A0D10) : const Color(0xFFBEC3CB);
-    final highlightColor = isDark 
+    final shadowColor = isDark
+        ? const Color(0xFF0A0D10)
+        : const Color(0xFFBEC3CB);
+    final highlightColor = isDark
         ? Colors.white.withValues(alpha: 0.04)
         : Colors.white.withValues(alpha: 0.8);
     final textSub = isDark
@@ -301,10 +361,7 @@ class _NeumorphicDashboardRing extends StatelessWidget {
       children: [
         // Outer neumorphic inset container
         Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: bgColor,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: bgColor),
           child: Stack(
             children: [
               // Inner highlight (bottom-right)
@@ -380,52 +437,54 @@ class _NeumorphicDashboardRing extends StatelessWidget {
         ),
 
         // Inner elevated circle with score number
-        LayoutBuilder(builder: (context, c) {
-          final sz = c.maxWidth * 0.48;
-          return Container(
-            width: sz,
-            height: sz,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor,
-              boxShadow: [
-                BoxShadow(
-                  color: highlightColor,
-                  offset: const Offset(-2, -2),
-                  blurRadius: 5,
-                ),
-                BoxShadow(
-                  color: shadowColor.withValues(alpha: isDark ? 0.7 : 0.3),
-                  offset: const Offset(2, 2),
-                  blurRadius: 5,
-                ),
-              ],
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${(score * progress).round()}',
-                    style: TextStyle(
-                      fontSize: sz * 0.36,
-                      fontWeight: FontWeight.w900,
-                      color: accentColor,
-                      letterSpacing: -1,
-                      shadows: [
-                        Shadow(
-                          color: accentColor.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
+        LayoutBuilder(
+          builder: (context, c) {
+            final sz = c.maxWidth * 0.48;
+            return Container(
+              width: sz,
+              height: sz,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: bgColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: highlightColor,
+                    offset: const Offset(-2, -2),
+                    blurRadius: 5,
                   ),
-                  Text('/100', style: TextStyle(fontSize: 9, color: textSub)),
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: isDark ? 0.7 : 0.3),
+                    offset: const Offset(2, 2),
+                    blurRadius: 5,
+                  ),
                 ],
               ),
-            ),
-          );
-        }),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${(score * progress).round()}',
+                      style: TextStyle(
+                        fontSize: sz * 0.36,
+                        fontWeight: FontWeight.w900,
+                        color: accentColor,
+                        letterSpacing: -1,
+                        shadows: [
+                          Shadow(
+                            color: accentColor.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text('/100', style: TextStyle(fontSize: 9, color: textSub)),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -448,7 +507,12 @@ class _GradientRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final inset = size.width * 0.14;
-    final rect = Rect.fromLTRB(inset, inset, size.width - inset, size.height - inset);
+    final rect = Rect.fromLTRB(
+      inset,
+      inset,
+      size.width - inset,
+      size.height - inset,
+    );
 
     // Background track
     canvas.drawArc(
@@ -547,39 +611,42 @@ class _PillarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: pillar.color.withValues(alpha: 0.14),
-            ),
-            child: Icon(pillar.icon, size: 16, color: pillar.color),
+    children: [
+      Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: pillar.color.withValues(alpha: 0.14),
+        ),
+        child: Icon(pillar.icon, size: 16, color: pillar.color),
+      ),
+      const SizedBox(height: 5),
+      SizedBox(
+        height: 3,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: (pillar.value / 100).clamp(0.0, 1.0),
+            backgroundColor: isDark
+                ? Colors.white.withValues(alpha: 0.09)
+                : Colors.black.withValues(alpha: 0.07),
+            valueColor: AlwaysStoppedAnimation(pillar.color),
           ),
-          const SizedBox(height: 5),
-          SizedBox(
-            height: 3,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: (pillar.value / 100).clamp(0.0, 1.0),
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.09)
-                    : Colors.black.withValues(alpha: 0.07),
-                valueColor: AlwaysStoppedAnimation(pillar.color),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(pillar.label,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.55)
-                      : AppColors.textSecondary)),
-        ],
-      );
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        pillar.label,
+        style: TextStyle(
+          fontSize: 9,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.55)
+              : AppColors.textSecondary,
+        ),
+      ),
+    ],
+  );
 }
 
 class _Badge extends StatelessWidget {
@@ -589,16 +656,20 @@ class _Badge extends StatelessWidget {
   final IconData? icon;
   final String label;
 
-  const _Badge({this.gradient, this.bg, this.fg, this.icon, required this.label});
+  const _Badge({
+    this.gradient,
+    this.bg,
+    this.fg,
+    this.icon,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        gradient: gradient != null
-            ? LinearGradient(colors: gradient!)
-            : null,
+        gradient: gradient != null ? LinearGradient(colors: gradient!) : null,
         color: bg,
         borderRadius: BorderRadius.circular(8),
       ),
@@ -609,11 +680,14 @@ class _Badge extends StatelessWidget {
             Icon(icon!, size: 10, color: fg ?? Colors.white),
             const SizedBox(width: 4),
           ],
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: fg ?? Colors.white,
-                  fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: fg ?? Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -634,25 +708,34 @@ class _ReasonRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-              width: 4,
-              height: 32,
-              decoration: BoxDecoration(
-                  color: color, borderRadius: BorderRadius.circular(2))),
+            width: 4,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.textPrimary)),
-              Text(subtitle,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.50)
-                          : AppColors.textSecondary)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.50)
+                      : AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ],

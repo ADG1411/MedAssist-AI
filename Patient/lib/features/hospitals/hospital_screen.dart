@@ -32,10 +32,10 @@ class _HospitalScreenState extends State<HospitalScreen> {
         });
       }
     } catch (e) {
-      // Fallback if table doesn't exist yet
+      // Return empty if table doesn't exist or fails
       if (mounted) {
         setState(() {
-          _hospitals = _fallbackHospitals;
+          _hospitals = [];
           _loading = false;
         });
       }

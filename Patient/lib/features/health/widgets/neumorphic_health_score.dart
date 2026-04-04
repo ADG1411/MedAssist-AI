@@ -20,7 +20,8 @@ class NeumorphicHealthScoreCard extends StatefulWidget {
   });
 
   @override
-  State<NeumorphicHealthScoreCard> createState() => _NeumorphicHealthScoreCardState();
+  State<NeumorphicHealthScoreCard> createState() =>
+      _NeumorphicHealthScoreCardState();
 }
 
 class _NeumorphicHealthScoreCardState extends State<NeumorphicHealthScoreCard>
@@ -74,9 +75,12 @@ class _NeumorphicHealthScoreCardState extends State<NeumorphicHealthScoreCard>
 
   // Score → gradient colors
   List<Color> get _ringColors {
-    if (widget.score >= 80) return const [Color(0xFF34D399), Color(0xFF10B981), Color(0xFF059669)];
-    if (widget.score >= 60) return const [Color(0xFFF1DA95), Color(0xFFFBBF24), Color(0xFFF59E0B)];
-    if (widget.score >= 40) return const [Color(0xFFFBBF24), Color(0xFFF97316), Color(0xFFEF4444)];
+    if (widget.score >= 80)
+      return const [Color(0xFF34D399), Color(0xFF10B981), Color(0xFF059669)];
+    if (widget.score >= 60)
+      return const [Color(0xFFF1DA95), Color(0xFFFBBF24), Color(0xFFF59E0B)];
+    if (widget.score >= 40)
+      return const [Color(0xFFFBBF24), Color(0xFFF97316), Color(0xFFEF4444)];
     return const [Color(0xFFF97316), Color(0xFFEF4444), Color(0xFFDC2626)];
   }
 
@@ -150,10 +154,16 @@ class _NeumorphicHealthScoreCardState extends State<NeumorphicHealthScoreCard>
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: _ringColors.take(2).toList()),
+                              gradient: LinearGradient(
+                                colors: _ringColors.take(2).toList(),
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(_scoreIcon, size: 14, color: Colors.white),
+                            child: Icon(
+                              _scoreIcon,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -188,7 +198,10 @@ class _NeumorphicHealthScoreCardState extends State<NeumorphicHealthScoreCard>
                       ),
                       const SizedBox(height: 12),
                       // Mini breakdown bar
-                      _MiniBreakdownBar(score: widget.score, colors: _ringColors),
+                      _MiniBreakdownBar(
+                        score: widget.score,
+                        colors: _ringColors,
+                      ),
                     ],
                   ),
                 ),
@@ -309,50 +322,52 @@ class _NeumorphicScoreRing extends StatelessWidget {
         ),
 
         // ── Inner elevated circle with score ──
-        LayoutBuilder(builder: (context, c) {
-          final size = c.maxWidth * 0.48;
-          return Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor,
-              boxShadow: [
-                BoxShadow(
-                  color: highlightColor,
-                  offset: const Offset(-3, -3),
-                  blurRadius: 6,
-                ),
-                BoxShadow(
-                  color: shadowColor.withValues(alpha: 0.7),
-                  offset: const Offset(3, 3),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  '${(score * progress).toInt()}',
-                  key: ValueKey(score),
-                  style: TextStyle(
-                    fontSize: size * 0.38,
-                    fontWeight: FontWeight.w900,
-                    color: ringColors[1],
-                    letterSpacing: -1,
-                    shadows: [
-                      Shadow(
-                        color: ringColors[1].withValues(alpha: 0.3),
-                        blurRadius: 12,
-                      ),
-                    ],
+        LayoutBuilder(
+          builder: (context, c) {
+            final size = c.maxWidth * 0.48;
+            return Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: bgColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: highlightColor,
+                    offset: const Offset(-3, -3),
+                    blurRadius: 6,
+                  ),
+                  BoxShadow(
+                    color: shadowColor.withValues(alpha: 0.7),
+                    offset: const Offset(3, 3),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    '${(score * progress).toInt()}',
+                    key: ValueKey(score),
+                    style: TextStyle(
+                      fontSize: size * 0.38,
+                      fontWeight: FontWeight.w900,
+                      color: ringColors[1],
+                      letterSpacing: -1,
+                      shadows: [
+                        Shadow(
+                          color: ringColors[1].withValues(alpha: 0.3),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
       ],
     );
   }
@@ -374,7 +389,12 @@ class _HealthRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final strokeWidth = size.width * strokeWidthFactor;
     final inset = size.width * 0.16;
-    final rect = Rect.fromLTRB(inset, inset, size.width - inset, size.height - inset);
+    final rect = Rect.fromLTRB(
+      inset,
+      inset,
+      size.width - inset,
+      size.height - inset,
+    );
 
     // Background track
     canvas.drawArc(
@@ -472,7 +492,7 @@ class _MiniBreakdownBar extends StatelessWidget {
         Row(
           children: [
             Text(
-              '${score}/100',
+              '$score/100',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,

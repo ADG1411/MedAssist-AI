@@ -253,7 +253,7 @@ export default function PatientRecordScreen() {
             <View style={[styles.qaIcon, { backgroundColor: Colors.emerald }]}><Ionicons name="calendar" size={20} color="#FFF" /></View>
             <Text style={styles.qaText}>Follow-up</Text>
           </TouchableOpacity>
-          {patient.phone && (
+          {!!patient.phone && (
             <TouchableOpacity style={styles.qaBtn} onPress={() => handleCall(patient.phone)}>
               <View style={[styles.qaIcon, { backgroundColor: Colors.amber }]}><Ionicons name="call" size={20} color="#FFF" /></View>
               <Text style={styles.qaText}>Call</Text>

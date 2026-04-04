@@ -31,24 +31,60 @@ class SmartClinicalInputDock extends StatelessWidget {
   List<String> get _smartChips {
     final region = bodyRegion.toLowerCase();
     if (region.contains('head')) {
-      return ['Throbbing', 'Dizziness', 'After screen', 'Nausea', 'Blurred vision'];
+      return [
+        'Throbbing',
+        'Dizziness',
+        'After screen',
+        'Nausea',
+        'Blurred vision',
+      ];
     }
     if (region.contains('chest')) {
-      return ['Sharp pain', 'Breathless', 'Palpitations', 'At rest', 'After exertion'];
+      return [
+        'Sharp pain',
+        'Breathless',
+        'Palpitations',
+        'At rest',
+        'After exertion',
+      ];
     }
     if (region.contains('back') || region.contains('spine')) {
-      return ['While sitting', 'Radiating', 'Numbness', 'After lifting', 'Morning stiffness'];
+      return [
+        'While sitting',
+        'Radiating',
+        'Numbness',
+        'After lifting',
+        'Morning stiffness',
+      ];
     }
     if (region.contains('knee') || region.contains('leg')) {
-      return ['While walking', 'Swelling', 'Locking', 'After stairs', 'At night'];
+      return [
+        'While walking',
+        'Swelling',
+        'Locking',
+        'After stairs',
+        'At night',
+      ];
     }
     if (region.contains('shoulder') || region.contains('arm')) {
-      return ['Raising arm', 'Numbness', 'After gym', 'While sleeping', 'Sharp pain'];
+      return [
+        'Raising arm',
+        'Numbness',
+        'After gym',
+        'While sleeping',
+        'Sharp pain',
+      ];
     }
     if (region.contains('stomach') || region.contains('abdomen')) {
       return ['After eating', 'Bloating', 'Cramping', 'Burning', 'Nausea'];
     }
-    return ['It aches constantly', 'Only when moving', 'Getting worse', 'Numbness', 'Burning'];
+    return [
+      'It aches constantly',
+      'Only when moving',
+      'Getting worse',
+      'Numbness',
+      'Burning',
+    ];
   }
 
   String get _dynamicHint {
@@ -75,10 +111,11 @@ class SmartClinicalInputDock extends StatelessWidget {
                 : Colors.white.withValues(alpha: 0.75),
             border: Border(
               top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.black.withValues(alpha: 0.06),
-                  width: 0.7),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.06),
+                width: 0.7,
+              ),
             ),
           ),
           child: SafeArea(
@@ -93,7 +130,7 @@ class SmartClinicalInputDock extends StatelessWidget {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
-                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      separatorBuilder: (_, _) => const SizedBox(width: 6),
                       itemCount: _smartChips.length,
                       itemBuilder: (_, i) {
                         final chip = _smartChips[i];
@@ -105,33 +142,38 @@ class SmartClinicalInputDock extends StatelessWidget {
                             } else {
                               controller.text = chip;
                               controller.selection = TextSelection.fromPosition(
-                                  TextPosition(offset: chip.length));
+                                TextPosition(offset: chip.length),
+                              );
                               onSend();
                             }
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.07)
                                   : AppColors.primary.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.12)
-                                      : AppColors.primary
-                                          .withValues(alpha: 0.15),
-                                  width: 0.7),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : AppColors.primary.withValues(alpha: 0.15),
+                                width: 0.7,
+                              ),
                             ),
-                            child: Text(chip,
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? Colors.white
-                                            .withValues(alpha: 0.70)
-                                        : AppColors.primary,
-                                    fontWeight: FontWeight.w600)),
+                            child: Text(
+                              chip,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.70)
+                                    : AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -176,27 +218,31 @@ class SmartClinicalInputDock extends StatelessWidget {
                                 : Colors.white.withValues(alpha: 0.90),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.12)
-                                    : Colors.black.withValues(alpha: 0.07),
-                                width: 0.7),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.black.withValues(alpha: 0.07),
+                              width: 0.7,
+                            ),
                           ),
                           child: TextField(
                             controller: controller,
                             focusNode: focusNode,
                             onSubmitted: (_) => onSend(),
                             textInputAction: TextInputAction.send,
-                            style: TextStyle(
-                                fontSize: 14, color: textPrimary),
+                            style: TextStyle(fontSize: 14, color: textPrimary),
                             maxLines: 3,
                             minLines: 1,
                             decoration: InputDecoration(
                               hintText: _dynamicHint,
-                              hintStyle:
-                                  TextStyle(fontSize: 13, color: textSub),
+                              hintStyle: TextStyle(
+                                fontSize: 13,
+                                color: textSub,
+                              ),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -213,22 +259,25 @@ class SmartClinicalInputDock extends StatelessWidget {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [
-                              Color(0xFF3B82F6),
-                              Color(0xFF2563EB)
-                            ]),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF3B82F6)
-                                    .withValues(alpha: 0.30),
+                                color: const Color(
+                                  0xFF3B82F6,
+                                ).withValues(alpha: 0.30),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.send_rounded,
-                              size: 18, color: Colors.white),
+                          child: const Icon(
+                            Icons.send_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -264,8 +313,7 @@ class _DockAction extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(10),
-          border:
-              Border.all(color: color.withValues(alpha: 0.22), width: 0.7),
+          border: Border.all(color: color.withValues(alpha: 0.22), width: 0.7),
         ),
         child: Icon(icon, size: 18, color: color),
       ),

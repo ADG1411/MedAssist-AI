@@ -56,9 +56,10 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
   void initState() {
     super.initState();
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _fadeAnim =
-        CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
@@ -78,16 +79,17 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
       ref.read(nutritionSearchProvider.notifier).clear();
       return;
     }
-    ref.read(nutritionSearchProvider.notifier)
+    ref
+        .read(nutritionSearchProvider.notifier)
         .search(query, indianOnly: _indianOnly);
   }
 
   void _openFoodDetail(MealEntity meal) {
     HapticFeedback.lightImpact();
-    context.push('/nutrition/food-detail', extra: {
-      'meal': meal,
-      'mealType': widget.initialMealType,
-    });
+    context.push(
+      '/nutrition/food-detail',
+      extra: {'meal': meal, 'mealType': widget.initialMealType},
+    );
   }
 
   @override
@@ -97,8 +99,9 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
     final mealColor = widget.initialMealType?.color ?? AppColors.primary;
     final mealLabel = widget.initialMealType?.label ?? 'Add Food';
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -121,10 +124,11 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                             ? Colors.black.withValues(alpha: 0.28)
                             : Colors.white.withValues(alpha: 0.55),
                         padding: EdgeInsets.fromLTRB(
-                            16,
-                            MediaQuery.paddingOf(context).top + 10,
-                            16,
-                            12),
+                          16,
+                          MediaQuery.paddingOf(context).top + 10,
+                          16,
+                          12,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -133,48 +137,69 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                                 GestureDetector(
                                   onTap: () => context.pop(),
                                   child: Container(
-                                    width: 36, height: 36,
+                                    width: 36,
+                                    height: 36,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: isDark
                                           ? Colors.white.withValues(alpha: 0.09)
-                                          : Colors.white.withValues(alpha: 0.72),
+                                          : Colors.white.withValues(
+                                              alpha: 0.72,
+                                            ),
                                       border: Border.all(
-                                          color: isDark
-                                              ? Colors.white.withValues(alpha: 0.12)
-                                              : Colors.white,
-                                          width: 0.8),
+                                        color: isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.12,
+                                              )
+                                            : Colors.white,
+                                        width: 0.8,
+                                      ),
                                     ),
-                                    child: Icon(Icons.arrow_back_ios_new_rounded,
-                                        size: 14,
-                                        color: isDark ? Colors.white : AppColors.textPrimary),
+                                    child: Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      size: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text('Add to $mealLabel',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                              color: textPrimary,
-                                              letterSpacing: -0.3)),
-                                      Text('Search food, scan barcode or photo',
-                                          style: TextStyle(fontSize: 11, color: textSub)),
+                                      Text(
+                                        'Add to $mealLabel',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: textPrimary,
+                                          letterSpacing: -0.3,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Search food, scan barcode or photo',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: textSub,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
                                 // Meal color dot
                                 Container(
-                                  width: 34, height: 34,
+                                  width: 34,
+                                  height: 34,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: mealColor.withValues(alpha: 0.18),
                                     border: Border.all(
-                                        color: mealColor.withValues(alpha: 0.35),
-                                        width: 1.2),
+                                      color: mealColor.withValues(alpha: 0.35),
+                                      width: 1.2,
+                                    ),
                                   ),
                                   child: Center(
                                     child: Text(
@@ -195,19 +220,31 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                                     decoration: BoxDecoration(
                                       color: isDark
                                           ? Colors.white.withValues(alpha: 0.09)
-                                          : Colors.white.withValues(alpha: 0.88),
+                                          : Colors.white.withValues(
+                                              alpha: 0.88,
+                                            ),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                          color: _isFocused
-                                              ? mealColor.withValues(alpha: 0.45)
-                                              : (isDark
-                                                  ? Colors.white.withValues(alpha: 0.12)
-                                                  : Colors.black.withValues(alpha: 0.07)),
-                                          width: _isFocused ? 1.2 : 0.7),
+                                        color: _isFocused
+                                            ? mealColor.withValues(alpha: 0.45)
+                                            : (isDark
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.12,
+                                                    )
+                                                  : Colors.black.withValues(
+                                                      alpha: 0.07,
+                                                    )),
+                                        width: _isFocused ? 1.2 : 0.7,
+                                      ),
                                       boxShadow: _isFocused
-                                          ? [BoxShadow(
-                                              color: mealColor.withValues(alpha: 0.15),
-                                              blurRadius: 12)]
+                                          ? [
+                                              BoxShadow(
+                                                color: mealColor.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                                blurRadius: 12,
+                                              ),
+                                            ]
                                           : null,
                                     ),
                                     child: TextField(
@@ -219,29 +256,47 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                                       },
                                       onSubmitted: _onSearch,
                                       style: TextStyle(
-                                          fontSize: 14, color: textPrimary),
+                                        fontSize: 14,
+                                        color: textPrimary,
+                                      ),
                                       decoration: InputDecoration(
                                         hintText: _indianOnly
                                             ? 'dal, roti, biryani, idli...'
                                             : 'food, brand, safe food for...',
                                         hintStyle: TextStyle(
-                                            fontSize: 13, color: textSub),
-                                        prefixIcon: Icon(Icons.search_rounded,
-                                            size: 20, color: mealColor),
+                                          fontSize: 13,
+                                          color: textSub,
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search_rounded,
+                                          size: 20,
+                                          color: mealColor,
+                                        ),
                                         suffixIcon: _searchCtrl.text.isNotEmpty
                                             ? IconButton(
-                                                icon: Icon(Icons.clear_rounded,
-                                                    size: 16, color: textSub),
+                                                icon: Icon(
+                                                  Icons.clear_rounded,
+                                                  size: 16,
+                                                  color: textSub,
+                                                ),
                                                 onPressed: () {
                                                   _searchCtrl.clear();
-                                                  ref.read(nutritionSearchProvider.notifier).clear();
+                                                  ref
+                                                      .read(
+                                                        nutritionSearchProvider
+                                                            .notifier,
+                                                      )
+                                                      .clear();
                                                   setState(() {});
                                                 },
                                               )
                                             : null,
                                         border: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                            vertical: 13, horizontal: 4),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 13,
+                                              horizontal: 4,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -251,16 +306,20 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                                 _ScanButton(
                                   icon: Icons.camera_alt_rounded,
                                   color: const Color(0xFF10B981),
-                                  onTap: () => context.push('/nutrition/image-scan',
-                                      extra: widget.initialMealType),
+                                  onTap: () => context.push(
+                                    '/nutrition/image-scan',
+                                    extra: widget.initialMealType,
+                                  ),
                                 ),
                                 const SizedBox(width: 6),
                                 // Barcode
                                 _ScanButton(
                                   icon: Icons.qr_code_scanner_rounded,
                                   color: AppColors.primary,
-                                  onTap: () => context.push('/nutrition/barcode',
-                                      extra: widget.initialMealType),
+                                  onTap: () => context.push(
+                                    '/nutrition/barcode',
+                                    extra: widget.initialMealType,
+                                  ),
                                 ),
                               ],
                             ),
@@ -278,32 +337,49 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 180),
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: _indianOnly
-                                          ? const Color(0xFFF97316).withValues(alpha: 0.15)
+                                          ? const Color(
+                                              0xFFF97316,
+                                            ).withValues(alpha: 0.15)
                                           : (isDark
-                                              ? Colors.white.withValues(alpha: 0.07)
-                                              : Colors.black.withValues(alpha: 0.04)),
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.07,
+                                                  )
+                                                : Colors.black.withValues(
+                                                    alpha: 0.04,
+                                                  )),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                          color: _indianOnly
-                                              ? const Color(0xFFF97316).withValues(alpha: 0.40)
-                                              : Colors.transparent,
-                                          width: 0.8),
+                                        color: _indianOnly
+                                            ? const Color(
+                                                0xFFF97316,
+                                              ).withValues(alpha: 0.40)
+                                            : Colors.transparent,
+                                        width: 0.8,
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text('🇮🇳', style: TextStyle(fontSize: 12)),
+                                        const Text(
+                                          '🇮🇳',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text('Indian Only',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: _indianOnly
-                                                    ? const Color(0xFFF97316)
-                                                    : textSub,
-                                                fontWeight: FontWeight.w600)),
+                                        Text(
+                                          'Indian Only',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: _indianOnly
+                                                ? const Color(0xFFF97316)
+                                                : textSub,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -322,8 +398,8 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
                   child: search.isLoading
                       ? _buildLoading(isDark)
                       : search.query.isNotEmpty
-                          ? _buildResults(search, isDark, textPrimary, textSub)
-                          : _buildDiscovery(isDark, search, textPrimary, textSub),
+                      ? _buildResults(search, isDark, textPrimary, textSub)
+                      : _buildDiscovery(isDark, search, textPrimary, textSub),
                 ),
               ],
             ),
@@ -333,22 +409,33 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
     );
   }
 
-  Widget _buildResults(NutritionSearchState search, bool isDark,
-      Color textPrimary, Color textSub) {
+  Widget _buildResults(
+    NutritionSearchState search,
+    bool isDark,
+    Color textPrimary,
+    Color textSub,
+  ) {
     if (search.results.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(40),
         child: Center(
           child: Column(
             children: [
-              const Icon(Icons.search_off_rounded,
-                  size: 48, color: AppColors.primary),
+              const Icon(
+                Icons.search_off_rounded,
+                size: 48,
+                color: AppColors.primary,
+              ),
               const SizedBox(height: 12),
-              Text('No results for "${search.query}"',
-                  style: TextStyle(fontSize: 14, color: textSub)),
+              Text(
+                'No results for "${search.query}"',
+                style: TextStyle(fontSize: 14, color: textSub),
+              ),
               const SizedBox(height: 8),
-              Text('Try: dal, paneer, roti, chicken',
-                  style: TextStyle(fontSize: 12, color: textSub)),
+              Text(
+                'Try: dal, paneer, roti, chicken',
+                style: TextStyle(fontSize: 12, color: textSub),
+              ),
             ],
           ),
         ),
@@ -363,41 +450,55 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Text('${search.results.length} results',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: textSub,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  '${search.results.length} results',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSub,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 if (_indianOnly)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF97316).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('🇮🇳 Indian DB',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFFF97316),
-                            fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      '🇮🇳 Indian DB',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFFF97316),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
-          ...search.results.map((m) => _PremiumFoodCard(
-                meal: m,
-                isDark: isDark,
-                onTap: () => _openFoodDetail(m),
-              )),
+          ...search.results.map(
+            (m) => _PremiumFoodCard(
+              meal: m,
+              isDark: isDark,
+              onTap: () => _openFoodDetail(m),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDiscovery(bool isDark, NutritionSearchState search,
-      Color textPrimary, Color textSub) {
+  Widget _buildDiscovery(
+    bool isDark,
+    NutritionSearchState search,
+    Color textPrimary,
+    Color textSub,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
       child: Column(
@@ -407,34 +508,48 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
           _SectionLabel('🤖 AI Smart Search', textPrimary),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 8, runSpacing: 8,
-            children: _aiSuggestions.map((s) => GestureDetector(
-              onTap: () {
-                _searchCtrl.text = s.$2;
-                setState(() {});
-                _onSearch(s.$2);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF6366F1).withValues(alpha: 0.12),
-                      const Color(0xFF8B5CF6).withValues(alpha: 0.06),
-                    ],
+            spacing: 8,
+            runSpacing: 8,
+            children: _aiSuggestions
+                .map(
+                  (s) => GestureDetector(
+                    onTap: () {
+                      _searchCtrl.text = s.$2;
+                      setState(() {});
+                      _onSearch(s.$2);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF6366F1).withValues(alpha: 0.12),
+                            const Color(0xFF8B5CF6).withValues(alpha: 0.06),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(
+                            0xFF6366F1,
+                          ).withValues(alpha: 0.25),
+                          width: 0.7,
+                        ),
+                      ),
+                      child: Text(
+                        s.$1,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6366F1),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.25),
-                      width: 0.7),
-                ),
-                child: Text(s.$1,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6366F1),
-                        fontWeight: FontWeight.w600)),
-              ),
-            )).toList(),
+                )
+                .toList(),
           ),
           const SizedBox(height: 18),
 
@@ -446,12 +561,16 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
               height: 88,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                children: search.recentFoods.take(8).map((e) =>
-                    _RecentFoodChip(
-                      entry: e,
-                      isDark: isDark,
-                      onTap: () => _openFoodDetail(e.meal),
-                    )).toList(),
+                children: search.recentFoods
+                    .take(8)
+                    .map(
+                      (e) => _RecentFoodChip(
+                        entry: e,
+                        isDark: isDark,
+                        onTap: () => _openFoodDetail(e.meal),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
             const SizedBox(height: 18),
@@ -461,29 +580,43 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
           _SectionLabel('🇮🇳 Indian Staples', textPrimary),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 8, runSpacing: 8,
-            children: _indianQuickPicks.map((p) => GestureDetector(
-              onTap: () {
-                _searchCtrl.text = p.$2;
-                setState(() => _indianOnly = true);
-                _onSearch(p.$2);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF97316).withValues(alpha: 0.09),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                      color: const Color(0xFFF97316).withValues(alpha: 0.22),
-                      width: 0.7),
-                ),
-                child: Text(p.$1,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFF97316),
-                        fontWeight: FontWeight.w600)),
-              ),
-            )).toList(),
+            spacing: 8,
+            runSpacing: 8,
+            children: _indianQuickPicks
+                .map(
+                  (p) => GestureDetector(
+                    onTap: () {
+                      _searchCtrl.text = p.$2;
+                      setState(() => _indianOnly = true);
+                      _onSearch(p.$2);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF97316).withValues(alpha: 0.09),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: const Color(
+                            0xFFF97316,
+                          ).withValues(alpha: 0.22),
+                          width: 0.7,
+                        ),
+                      ),
+                      child: Text(
+                        p.$1,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFF97316),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 18),
 
@@ -491,72 +624,104 @@ class _NutritionSearchScreenState extends ConsumerState<NutritionSearchScreen>
           _SectionLabel('🏥 Disease-Safe Foods', textPrimary),
           const SizedBox(height: 8),
           ...[
-            ('Gastritis Safe', 'safe foods for gastritis', const Color(0xFF10B981), '🫁'),
-            ('Diabetic Friendly', 'low glycemic Indian foods', const Color(0xFF0EA5E9), '🩸'),
-            ('Heart Healthy', 'heart healthy low sodium foods', const Color(0xFFEF4444), '🫀'),
-            ('Kidney Safe', 'low potassium low protein foods', const Color(0xFF8B5CF6), '🔬'),
-          ].map((item) => GestureDetector(
-            onTap: () {
-              _searchCtrl.text = item.$2;
-              setState(() {});
-              _onSearch(item.$2);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: item.$3.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: item.$3.withValues(alpha: 0.22), width: 0.7),
-              ),
-              child: Row(
-                children: [
-                  Text(item.$4, style: const TextStyle(fontSize: 20)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.$1,
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary)),
-                        Text(item.$2,
-                            style: TextStyle(fontSize: 11, color: textSub)),
-                      ],
-                    ),
+            (
+              'Gastritis Safe',
+              'safe foods for gastritis',
+              const Color(0xFF10B981),
+              '🫁',
+            ),
+            (
+              'Diabetic Friendly',
+              'low glycemic Indian foods',
+              const Color(0xFF0EA5E9),
+              '🩸',
+            ),
+            (
+              'Heart Healthy',
+              'heart healthy low sodium foods',
+              const Color(0xFFEF4444),
+              '🫀',
+            ),
+            (
+              'Kidney Safe',
+              'low potassium low protein foods',
+              const Color(0xFF8B5CF6),
+              '🔬',
+            ),
+          ].map(
+            (item) => GestureDetector(
+              onTap: () {
+                _searchCtrl.text = item.$2;
+                setState(() {});
+                _onSearch(item.$2);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: item.$3.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: item.$3.withValues(alpha: 0.22),
+                    width: 0.7,
                   ),
-                  Icon(Icons.arrow_forward_ios_rounded,
-                      size: 12, color: item.$3),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Text(item.$4, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.$1,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Text(
+                            item.$2,
+                            style: TextStyle(fontSize: 11, color: textSub),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: item.$3,
+                    ),
+                  ],
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildLoading(bool isDark) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: List.generate(
-            4,
-            (i) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              height: 72,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white.withValues(alpha: 0.50),
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: List.generate(
+        4,
+        (i) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          height: 72,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.50),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 // ── Section label ─────────────────────────────────────────────────────────────
@@ -566,9 +731,10 @@ class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text, this.color);
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w700, color: color));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+  );
 }
 
 // ── Scan button ───────────────────────────────────────────────────────────────
@@ -576,20 +742,25 @@ class _ScanButton extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _ScanButton({required this.icon, required this.color, required this.onTap});
+  const _ScanButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 42, height: 42,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: Colors.white, size: 20),
-        ),
-      );
+    onTap: onTap,
+    child: Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: Colors.white, size: 20),
+    ),
+  );
 }
 
 // ── Recent food chip ──────────────────────────────────────────────────────────
@@ -597,15 +768,19 @@ class _RecentFoodChip extends StatelessWidget {
   final IntakeEntry entry;
   final bool isDark;
   final VoidCallback onTap;
-  const _RecentFoodChip(
-      {required this.entry, required this.isDark, required this.onTap});
+  const _RecentFoodChip({
+    required this.entry,
+    required this.isDark,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final name = entry.meal.name ?? 'Food';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'F';
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.45) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.45)
+        : AppColors.textSecondary;
 
     return GestureDetector(
       onTap: onTap,
@@ -619,34 +794,41 @@ class _RecentFoodChip extends StatelessWidget {
               : Colors.white.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.black.withValues(alpha: 0.06),
-              width: 0.7),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.black.withValues(alpha: 0.06),
+            width: 0.7,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.primary.withValues(alpha: 0.12),
               ),
               child: Center(
-                child: Text(initial,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary)),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 4),
-            Text(name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 9, color: textSub)),
+            Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 9, color: textSub),
+            ),
           ],
         ),
       ),
@@ -659,24 +841,35 @@ class _PremiumFoodCard extends StatelessWidget {
   final MealEntity meal;
   final bool isDark;
   final VoidCallback onTap;
-  const _PremiumFoodCard(
-      {required this.meal, required this.isDark, required this.onTap});
+  const _PremiumFoodCard({
+    required this.meal,
+    required this.isDark,
+    required this.onTap,
+  });
 
   Color get _sourceColor {
     switch (meal.source) {
-      case MealSource.indian: return const Color(0xFFF97316);
-      case MealSource.off: return const Color(0xFF10B981);
-      case MealSource.fdc: return AppColors.primary;
-      default: return AppColors.textSecondary;
+      case MealSource.indian:
+        return const Color(0xFFF97316);
+      case MealSource.off:
+        return const Color(0xFF10B981);
+      case MealSource.fdc:
+        return AppColors.primary;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   String get _sourceLabel {
     switch (meal.source) {
-      case MealSource.indian: return '🇮🇳 IFCT';
-      case MealSource.off: return '🌍 OFF';
-      case MealSource.fdc: return '🇺🇸 USDA';
-      default: return '📝 Custom';
+      case MealSource.indian:
+        return '🇮🇳 IFCT';
+      case MealSource.off:
+        return '🌍 OFF';
+      case MealSource.fdc:
+        return '🇺🇸 USDA';
+      default:
+        return '📝 Custom';
     }
   }
 
@@ -687,8 +880,9 @@ class _PremiumFoodCard extends StatelessWidget {
     final carbs = meal.nutriments.carbohydrates100?.toStringAsFixed(1) ?? '–';
     final fat = meal.nutriments.fat100?.toStringAsFixed(1) ?? '–';
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.45) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.45)
+        : AppColors.textSecondary;
     final name = meal.name ?? 'Unknown food';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'F';
 
@@ -703,16 +897,18 @@ class _PremiumFoodCard extends StatelessWidget {
               : Colors.white.withValues(alpha: 0.80),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.09)
-                  : Colors.black.withValues(alpha: 0.06),
-              width: 0.7),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.09)
+                : Colors.black.withValues(alpha: 0.06),
+            width: 0.7,
+          ),
         ),
         child: Row(
           children: [
             // Food image / initial
             Container(
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
@@ -723,21 +919,27 @@ class _PremiumFoodCard extends StatelessWidget {
                       child: Image.network(
                         meal.thumbnailImageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Center(
-                          child: Text(initial,
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary)),
+                        errorBuilder: (_, _, _) => Center(
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
                       ),
                     )
                   : Center(
-                      child: Text(initial,
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary)),
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
             ),
             const SizedBox(width: 10),
@@ -748,33 +950,43 @@ class _PremiumFoodCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(name,
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: _sourceColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(_sourceLabel,
-                            style: TextStyle(
-                                fontSize: 9,
-                                color: _sourceColor,
-                                fontWeight: FontWeight.w700)),
+                        child: Text(
+                          _sourceLabel,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: _sourceColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   if (meal.brands != null) ...[
                     const SizedBox(height: 1),
-                    Text(meal.brands!,
-                        style: TextStyle(fontSize: 10, color: textSub)),
+                    Text(
+                      meal.brands!,
+                      style: TextStyle(fontSize: 10, color: textSub),
+                    ),
                   ],
                   const SizedBox(height: 5),
                   Row(
@@ -807,14 +1019,14 @@ class _MiniChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 9, color: color, fontWeight: FontWeight.w700)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w700),
+    ),
+  );
 }
-

@@ -54,9 +54,13 @@ class HealthDetailScreen extends ConsumerWidget {
                                   : Colors.white.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.arrow_back_ios_new_rounded,
-                                size: 18,
-                                color: isDark ? Colors.white : AppColors.textPrimary),
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 18,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -68,7 +72,9 @@ class HealthDetailScreen extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             Text(
@@ -128,7 +134,9 @@ class HealthDetailScreen extends ConsumerWidget {
                                       style: TextStyle(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w900,
-                                        color: isDark ? Colors.white : AppColors.textPrimary,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
                                       ),
                                     ),
                                     TextSpan(
@@ -136,7 +144,9 @@ class HealthDetailScreen extends ConsumerWidget {
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: isDark
-                                            ? Colors.white.withValues(alpha: 0.5)
+                                            ? Colors.white.withValues(
+                                                alpha: 0.5,
+                                              )
                                             : AppColors.textSecondary,
                                       ),
                                     ),
@@ -162,11 +172,15 @@ class HealthDetailScreen extends ConsumerWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                       data: (history) {
                         final data = _extractData(history);
                         final dayLabels = history.dailyData
-                            .map((d) => DateFormat('E').format(d.date).substring(0, 2))
+                            .map(
+                              (d) => DateFormat(
+                                'E',
+                              ).format(d.date).substring(0, 2),
+                            )
                             .toList();
 
                         return GlassCard(
@@ -181,7 +195,9 @@ class HealthDetailScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : AppColors.textPrimary,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -191,27 +207,46 @@ class HealthDetailScreen extends ConsumerWidget {
                                   LineChartData(
                                     lineTouchData: LineTouchData(
                                       touchTooltipData: LineTouchTooltipData(
-                                        getTooltipItems: (spots) => spots.map(
-                                          (spot) => LineTooltipItem(
-                                            '${spot.y.toStringAsFixed(1)} $unit',
-                                            TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 11),
-                                          ),
-                                        ).toList(),
+                                        getTooltipItems: (spots) => spots
+                                            .map(
+                                              (spot) => LineTooltipItem(
+                                                '${spot.y.toStringAsFixed(1)} $unit',
+                                                TextStyle(
+                                                  color: color,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
                                       ),
                                     ),
                                     gridData: FlGridData(
                                       show: true,
-                                      getDrawingHorizontalLine: (value) => FlLine(
-                                        color: isDark
-                                            ? Colors.white.withValues(alpha: 0.06)
-                                            : Colors.black.withValues(alpha: 0.05),
-                                        strokeWidth: 1,
-                                      ),
+                                      getDrawingHorizontalLine: (value) =>
+                                          FlLine(
+                                            color: isDark
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.06,
+                                                  )
+                                                : Colors.black.withValues(
+                                                    alpha: 0.05,
+                                                  ),
+                                            strokeWidth: 1,
+                                          ),
                                       drawVerticalLine: false,
                                     ),
                                     titlesData: FlTitlesData(
-                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      topTitles: const AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: false,
+                                        ),
+                                      ),
+                                      rightTitles: const AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: false,
+                                        ),
+                                      ),
                                       leftTitles: AxisTitles(
                                         sideTitles: SideTitles(
                                           showTitles: true,
@@ -221,7 +256,9 @@ class HealthDetailScreen extends ConsumerWidget {
                                             style: TextStyle(
                                               fontSize: 9,
                                               color: isDark
-                                                  ? Colors.white.withValues(alpha: 0.3)
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.3,
+                                                    )
                                                   : AppColors.textSecondary,
                                             ),
                                           ),
@@ -232,15 +269,21 @@ class HealthDetailScreen extends ConsumerWidget {
                                           showTitles: true,
                                           getTitlesWidget: (val, meta) {
                                             final idx = val.toInt();
-                                            if (idx < 0 || idx >= dayLabels.length) return const SizedBox.shrink();
+                                            if (idx < 0 ||
+                                                idx >= dayLabels.length)
+                                              return const SizedBox.shrink();
                                             return Padding(
-                                              padding: const EdgeInsets.only(top: 6),
+                                              padding: const EdgeInsets.only(
+                                                top: 6,
+                                              ),
                                               child: Text(
                                                 dayLabels[idx],
                                                 style: TextStyle(
                                                   fontSize: 9,
                                                   color: isDark
-                                                      ? Colors.white.withValues(alpha: 0.4)
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.4,
+                                                        )
                                                       : AppColors.textSecondary,
                                                 ),
                                               ),
@@ -252,20 +295,23 @@ class HealthDetailScreen extends ConsumerWidget {
                                     borderData: FlBorderData(show: false),
                                     lineBarsData: [
                                       LineChartBarData(
-                                        spots: List.generate(data.length,
-                                            (i) => FlSpot(i.toDouble(), data[i])),
+                                        spots: List.generate(
+                                          data.length,
+                                          (i) => FlSpot(i.toDouble(), data[i]),
+                                        ),
                                         color: color,
                                         barWidth: 2.5,
                                         isStrokeCapRound: true,
                                         dotData: FlDotData(
                                           show: true,
-                                          getDotPainter: (spot, percent, barData, index) =>
-                                              FlDotCirclePainter(
-                                            radius: 3,
-                                            color: color,
-                                            strokeWidth: 1.5,
-                                            strokeColor: Colors.white,
-                                          ),
+                                          getDotPainter:
+                                              (spot, percent, barData, index) =>
+                                                  FlDotCirclePainter(
+                                                    radius: 3,
+                                                    color: color,
+                                                    strokeWidth: 1.5,
+                                                    strokeColor: Colors.white,
+                                                  ),
                                         ),
                                         belowBarData: BarAreaData(
                                           show: true,

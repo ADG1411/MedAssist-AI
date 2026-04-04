@@ -5,7 +5,7 @@ import '../services/supabase_service.dart';
 final monitoringRepositoryProvider = Provider((ref) => MonitoringRepository());
 
 class MonitoringRepository {
-  bool get useMock => dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
 
   Future<bool> saveDailyLog({
     required int sleepHours,

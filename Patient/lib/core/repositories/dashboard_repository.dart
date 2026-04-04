@@ -5,7 +5,7 @@ import '../services/supabase_service.dart';
 final dashboardRepositoryProvider = Provider((ref) => DashboardRepository());
 
 class DashboardRepository {
-  bool get useMock => dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
 
   /// Aggregates all dashboard data in parallel
   Future<Map<String, dynamic>> getDashboardData() async {

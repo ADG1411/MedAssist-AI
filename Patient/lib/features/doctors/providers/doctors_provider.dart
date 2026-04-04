@@ -59,10 +59,7 @@ class DoctorsNotifier extends Notifier<DoctorsState> {
       final liveDoctors = List<Map<String, dynamic>>.from(liveData);
       
       if (liveDoctors.isNotEmpty) {
-        // Merge live doctors with fallback (live first, deduped)
-        final liveNames = liveDoctors.map((d) => d['name']).toSet();
-        final uniqueFallback = _fallback.where((d) => !liveNames.contains(d['name'])).toList();
-        state = state.copyWith(allDoctors: [...liveDoctors, ...uniqueFallback]);
+        state = state.copyWith(allDoctors: liveDoctors);
         return;
       }
       
@@ -75,11 +72,11 @@ class DoctorsNotifier extends Notifier<DoctorsState> {
         return;
       }
       
-      // Fallback
-      state = state.copyWith(allDoctors: _fallback);
+      // Return empty if no doctors
+      state = state.copyWith(allDoctors: []);
     } catch (e) {
-      // Fallback if DB not ready
-      state = state.copyWith(allDoctors: _fallback);
+      // Return empty if DB not ready
+      state = state.copyWith(allDoctors: []);
     }
   }
 

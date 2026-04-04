@@ -2,7 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/supabase_service.dart';
 
 class AuthRepository {
-  bool get useMock => dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
 
   Future<bool> signInWithEmail(String email, String password) async {
     if (useMock) {

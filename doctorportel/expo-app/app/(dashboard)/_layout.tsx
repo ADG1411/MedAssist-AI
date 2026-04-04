@@ -52,11 +52,11 @@ export default function DashboardLayout() {
         }}
       />
       <Tabs.Screen
-        name="bookings"
+        name="case"
         options={{
-          title: 'Bookings',
+          title: 'Cases',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -105,10 +105,13 @@ export default function DashboardLayout() {
       <Tabs.Screen name="schedule" options={{ href: null }} />
       <Tabs.Screen name="profile-setup" options={{ href: null }} />
       <Tabs.Screen name="emergency" options={{ href: null }} />
-      <Tabs.Screen name="case" options={{ href: null }} />
+      <Tabs.Screen name="bookings" options={{ href: null }} />
       <Tabs.Screen name="referral" options={{ href: null }} />
       <Tabs.Screen name="consultation" options={{ href: null }} />
       <Tabs.Screen name="patient-record" options={{ href: null }} />
+      <Tabs.Screen name="patient-referral" options={{ href: null }} />
+      <Tabs.Screen name="ticket" options={{ href: null }} />
+      <Tabs.Screen name="provider-ticket" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -6,7 +6,7 @@ import '../services/edge_function_service.dart';
 final nutritionRepositoryProvider = Provider((ref) => NutritionRepository());
 
 class NutritionRepository {
-  bool get useMock => dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
 
   /// Calls the nutrition-vision Edge Function with a base64 image
   Future<Map<String, dynamic>> scanFoodImage(String base64Image) async {

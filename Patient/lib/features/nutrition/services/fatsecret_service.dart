@@ -1,6 +1,8 @@
 /// FatSecret Image Recognition API Service
 /// Handles OAuth2 token flow + food image recognition
 /// Completely separate from existing OpenFoodFacts / barcode / USDA flows
+library;
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -11,7 +13,8 @@ import 'package:medassist_ai/features/nutrition/models/meal_nutriments.dart';
 
 class FatSecretService {
   static const _tokenUrl = 'https://oauth.fatsecret.com/connect/token';
-  static const _apiBase = 'https://platform.fatsecret.com/rest/image-recognition/v2';
+  static const _apiBase =
+      'https://platform.fatsecret.com/rest/image-recognition/v2';
 
   final _client = http.Client();
 
@@ -27,7 +30,9 @@ class FatSecretService {
     // Return cached token if still valid (with 5 min buffer)
     if (_accessToken != null &&
         _tokenExpiry != null &&
-        DateTime.now().isBefore(_tokenExpiry!.subtract(const Duration(minutes: 5)))) {
+        DateTime.now().isBefore(
+          _tokenExpiry!.subtract(const Duration(minutes: 5)),
+        )) {
       return _accessToken!;
     }
 
@@ -36,18 +41,22 @@ class FatSecretService {
 
     final credentials = base64Encode(utf8.encode('$_clientId:$_clientSecret'));
 
-    final response = await _client.post(
-      Uri.parse(_tokenUrl),
-      headers: {
-        'Authorization': 'Basic $credentials',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: 'grant_type=client_credentials',
-    ).timeout(const Duration(seconds: 20));
+    final response = await _client
+        .post(
+          Uri.parse(_tokenUrl),
+          headers: {
+            'Authorization': 'Basic $credentials',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'grant_type=client_credentials',
+        )
+        .timeout(const Duration(seconds: 20));
 
     if (response.statusCode != 200) {
       debugPrint('❌ Token error: ${response.statusCode} - ${response.body}');
-      throw Exception('Failed to get FatSecret access token: ${response.statusCode}');
+      throw Exception(
+        'Failed to get FatSecret access token: ${response.statusCode}',
+      );
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -68,12 +77,16 @@ class FatSecretService {
     // Base64 will increase size by ~33%, so limit raw bytes to ~800KB
     Uint8List processedBytes = imageBytes;
     if (imageBytes.length > 800000) {
-      debugPrint('⚠️ Image too large (${imageBytes.length} bytes), may need compression');
+      debugPrint(
+        '⚠️ Image too large (${imageBytes.length} bytes), may need compression',
+      );
     }
 
     final base64Image = base64Encode(processedBytes);
 
-    debugPrint('📸 Sending image to FatSecret (${(base64Image.length / 1024).toStringAsFixed(0)}KB base64)...');
+    debugPrint(
+      '📸 Sending image to FatSecret (${(base64Image.length / 1024).toStringAsFixed(0)}KB base64)...',
+    );
 
     try {
       final requestBody = jsonEncode({
@@ -83,14 +96,16 @@ class FatSecretService {
         'language': 'en',
       });
 
-      final response = await _client.post(
-        Uri.parse(_apiBase),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: requestBody,
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .post(
+            Uri.parse(_apiBase),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: requestBody,
+          )
+          .timeout(const Duration(seconds: 15));
 
       debugPrint('📡 FatSecret response: ${response.statusCode}');
       debugPrint('📡 JSON: ${response.body}');
@@ -110,12 +125,17 @@ class FatSecretService {
         final errorInfo = data['error'] as Map<String, dynamic>;
         final msg = errorInfo['message'] ?? 'Unknown API error';
         debugPrint('❌ FatSecret API error (200 OK body): $msg');
-        throw FatSecretException(msg, int.tryParse(errorInfo['code'].toString()) ?? 400);
+        throw FatSecretException(
+          msg,
+          int.tryParse(errorInfo['code'].toString()) ?? 400,
+        );
       }
 
       return FoodRecognitionResult.fromJson(data);
     } catch (e) {
-      debugPrint('⚠️ FatSecret Failed, starting GEMINI 1.5 FALLBACK. Error: $e');
+      debugPrint(
+        '⚠️ FatSecret Failed, starting GEMINI 1.5 FALLBACK. Error: $e',
+      );
       return _fallbackToGemini(base64Image);
     }
   }
@@ -124,7 +144,8 @@ class FatSecretService {
   Future<FoodRecognitionResult> _fallbackToGemini(String base64Image) async {
     debugPrint('🤖 Connecting to Gemini 2.5 Flash...');
     const apiKey = 'AIzaSyCoFUFuV75g4YDegDt-IS6BEU16L5Ui9Tg';
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey';
+    const url =
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey';
 
     final prompt = '''
 Analyze this food image. Provide a JSON response describing the detected food properties.
@@ -150,32 +171,34 @@ Return raw JSON only, no markdown markdown blockquotes.
           "parts": [
             {"text": prompt},
             {
-              "inline_data": {
-                "mime_type": "image/jpeg",
-                "data": base64Image
-              }
-            }
-          ]
-        }
-      ]
+              "inline_data": {"mime_type": "image/jpeg", "data": base64Image},
+            },
+          ],
+        },
+      ],
     });
 
-    final response = await _client.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: requestBody,
-    ).timeout(const Duration(seconds: 25));
+    final response = await _client
+        .post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: requestBody,
+        )
+        .timeout(const Duration(seconds: 25));
 
     if (response.statusCode != 200) {
-       debugPrint('❌ Gemini failed: ${response.body}');
-       throw Exception('Both FatSecret and Gemini failed to recognize food.');
+      debugPrint('❌ Gemini failed: ${response.body}');
+      throw Exception('Both FatSecret and Gemini failed to recognize food.');
     }
 
     final data = jsonDecode(response.body);
     final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
-    
+
     // Clean markdown syntax
-    final cleanJson = text.replaceAll('```json', '').replaceAll('```', '').trim();
+    final cleanJson = text
+        .replaceAll('```json', '')
+        .replaceAll('```', '')
+        .trim();
     final parsed = jsonDecode(cleanJson);
     final foodsList = parsed['foods'] as List<dynamic>? ?? [];
 
@@ -204,7 +227,9 @@ Return raw JSON only, no markdown markdown blockquotes.
       );
     }).toList();
 
-    final totalCalories = foods.fold<double>(0, (sum, f) => sum + f.calories).toInt();
+    final totalCalories = foods
+        .fold<double>(0, (sum, f) => sum + f.calories)
+        .toInt();
     final totalProtein = foods.fold<double>(0, (sum, f) => sum + f.protein);
     final totalCarbs = foods.fold<double>(0, (sum, f) => sum + f.carbs);
     final totalFat = foods.fold<double>(0, (sum, f) => sum + f.fat);
@@ -251,9 +276,13 @@ class FoodRecognitionResult {
   factory FoodRecognitionResult.fromJson(Map<String, dynamic> json) {
     final foodResponses = (json['food_response'] as List<dynamic>?) ?? [];
 
-    final foods = foodResponses.map((f) => RecognizedFood.fromJson(f as Map<String, dynamic>)).toList();
+    final foods = foodResponses
+        .map((f) => RecognizedFood.fromJson(f as Map<String, dynamic>))
+        .toList();
 
-    final totalCalories = foods.fold<double>(0, (sum, f) => sum + f.calories).toInt();
+    final totalCalories = foods
+        .fold<double>(0, (sum, f) => sum + f.calories)
+        .toInt();
     final totalProtein = foods.fold<double>(0, (sum, f) => sum + f.protein);
     final totalCarbs = foods.fold<double>(0, (sum, f) => sum + f.carbs);
     final totalFat = foods.fold<double>(0, (sum, f) => sum + f.fat);
@@ -312,19 +341,21 @@ class RecognizedFood {
 
   factory RecognizedFood.fromJson(Map<String, dynamic> json) {
     final eaten = json['eaten'] as Map<String, dynamic>? ?? {};
-    
-    Map<String, dynamic> nutrition = eaten['total_nutritional_content'] as Map<String, dynamic>? ?? {};
-    
+
+    Map<String, dynamic> nutrition =
+        eaten['total_nutritional_content'] as Map<String, dynamic>? ?? {};
+
     if (nutrition.isEmpty) {
       try {
         // Fallback: FatSecret sometimes puts the nutrition directly in food -> servings -> serving
         final sugg = json['suggested_serving'] as Map<String, dynamic>? ?? {};
         final defaultFoodInfo = json['food'] as Map<String, dynamic>? ?? {};
-        final foodInfo = sugg['food'] as Map<String, dynamic>? ?? defaultFoodInfo;
-        
+        final foodInfo =
+            sugg['food'] as Map<String, dynamic>? ?? defaultFoodInfo;
+
         final servings = foodInfo['servings'] as Map<String, dynamic>? ?? {};
         final servingData = servings['serving'];
-        
+
         if (servingData is List && servingData.isNotEmpty) {
           nutrition = servingData.first as Map<String, dynamic>;
         } else if (servingData is Map<String, dynamic>) {
@@ -415,7 +446,6 @@ class RecognizedFood {
     );
   }
 }
-
 
 class FatSecretException implements Exception {
   final String message;

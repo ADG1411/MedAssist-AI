@@ -21,11 +21,7 @@ class FoodDetailScreen extends ConsumerStatefulWidget {
   final MealEntity meal;
   final MealType? initialMealType;
 
-  const FoodDetailScreen({
-    super.key,
-    required this.meal,
-    this.initialMealType,
-  });
+  const FoodDetailScreen({super.key, required this.meal, this.initialMealType});
 
   @override
   ConsumerState<FoodDetailScreen> createState() => _FoodDetailScreenState();
@@ -45,7 +41,9 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
     _amountG = widget.meal.servingQuantity ?? 100.0;
     _selectedMealType = widget.initialMealType ?? MealType.lunch;
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 450));
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
   }
@@ -56,12 +54,10 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
     super.dispose();
   }
 
-  double get _kcal =>
-      _amountG * (widget.meal.nutriments.energyPerUnit ?? 0);
+  double get _kcal => _amountG * (widget.meal.nutriments.energyPerUnit ?? 0);
   double get _carbs =>
       _amountG * (widget.meal.nutriments.carbohydratesPerUnit ?? 0);
-  double get _fat =>
-      _amountG * (widget.meal.nutriments.fatPerUnit ?? 0);
+  double get _fat => _amountG * (widget.meal.nutriments.fatPerUnit ?? 0);
   double get _protein =>
       _amountG * (widget.meal.nutriments.proteinsPerUnit ?? 0);
   double get _fiber =>
@@ -70,22 +66,26 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
   Future<void> _addToDiary() async {
     HapticFeedback.lightImpact();
     setState(() => _isAdding = true);
-    await ref.read(nutritionDiaryProvider.notifier).logFood(
-      meal: widget.meal,
-      mealType: _selectedMealType,
-      amountG: _amountG,
-      unit: 'g',
-    );
+    await ref
+        .read(nutritionDiaryProvider.notifier)
+        .logFood(
+          meal: widget.meal,
+          mealType: _selectedMealType,
+          amountG: _amountG,
+          unit: 'g',
+        );
     setState(() => _isAdding = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '✅ Added ${widget.meal.name} to ${_selectedMealType.label}'),
+            '✅ Added ${widget.meal.name} to ${_selectedMealType.label}',
+          ),
           backgroundColor: const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       context.pop();
@@ -98,8 +98,9 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
     final meal = widget.meal;
     final mealColor = _selectedMealType.color;
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -124,9 +125,9 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                           CachedNetworkImage(
                             imageUrl: meal.mainImageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
+                            placeholder: (_, _) =>
                                 _FoodHeroPlaceholder(color: mealColor),
-                            errorWidget: (_, __, ___) =>
+                            errorWidget: (_, _, _) =>
                                 _FoodHeroPlaceholder(color: mealColor),
                           )
                         else
@@ -151,18 +152,21 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                           child: GestureDetector(
                             onTap: () => context.pop(),
                             child: Container(
-                              width: 36, height: 36,
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.black.withValues(alpha: 0.35),
                                 border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    width: 0.7),
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  width: 0.7,
+                                ),
                               ),
                               child: const Icon(
-                                  Icons.arrow_back_ios_new_rounded,
-                                  size: 14,
-                                  color: Colors.white),
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -172,53 +176,69 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                           right: 16,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [
-                                Color(0xFF6366F1),
-                                Color(0xFF8B5CF6)
-                              ]),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                              ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.auto_awesome,
-                                    size: 10, color: Colors.white),
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 10,
+                                  color: Colors.white,
+                                ),
                                 SizedBox(width: 4),
-                                Text('AI Intelligence',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700)),
+                                Text(
+                                  'AI Intelligence',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
                         // Food name overlay
                         Positioned(
-                          left: 16, right: 16, bottom: 16,
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 meal.name ?? 'Unknown Food',
                                 style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                    shadows: [
-                                      Shadow(blurRadius: 8,
-                                          color: Colors.black54)
-                                    ]),
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.4,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 8,
+                                      color: Colors.black54,
+                                    ),
+                                  ],
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               if (meal.brands != null)
-                                Text(meal.brands!,
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 12)),
+                                Text(
+                                  meal.brands!,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -242,18 +262,23 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? Colors.white.withValues(alpha: 0.07)
                                       : Colors.black.withValues(alpha: 0.04),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(meal.category!,
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: textSub,
-                                        fontWeight: FontWeight.w500)),
+                                child: Text(
+                                  meal.category!,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: textSub,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
                             ],
                           ],
@@ -280,36 +305,58 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                                     Text(
                                       '${_kcal.toInt()}',
                                       style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w900,
-                                          color: textPrimary),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: textPrimary,
+                                      ),
                                     ),
-                                    Text('kcal',
-                                        style: TextStyle(
-                                            fontSize: 9, color: textSub)),
+                                    Text(
+                                      'kcal',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: textSub,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _MacroRow('Carbs', _carbs,
-                                        const Color(0xFFF59E0B), isDark),
-                                    _MacroRow('Protein', _protein,
-                                        const Color(0xFF10B981), isDark),
-                                    _MacroRow('Fat', _fat,
-                                        const Color(0xFFEF4444), isDark),
+                                    _MacroRow(
+                                      'Carbs',
+                                      _carbs,
+                                      const Color(0xFFF59E0B),
+                                      isDark,
+                                    ),
+                                    _MacroRow(
+                                      'Protein',
+                                      _protein,
+                                      const Color(0xFF10B981),
+                                      isDark,
+                                    ),
+                                    _MacroRow(
+                                      'Fat',
+                                      _fat,
+                                      const Color(0xFFEF4444),
+                                      isDark,
+                                    ),
                                     if (_fiber > 0)
-                                      _MacroRow('Fiber', _fiber,
-                                          const Color(0xFF6366F1), isDark),
+                                      _MacroRow(
+                                        'Fiber',
+                                        _fiber,
+                                        const Color(0xFF6366F1),
+                                        isDark,
+                                      ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'per ${_amountG.toInt()}g',
                                       style: TextStyle(
-                                          fontSize: 10, color: textSub),
+                                        fontSize: 10,
+                                        color: textSub,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -337,20 +384,26 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.restaurant_menu_rounded,
-                                      size: 15,
-                                      color: AppColors.primary),
+                                  const Icon(
+                                    Icons.restaurant_menu_rounded,
+                                    size: 15,
+                                    color: AppColors.primary,
+                                  ),
                                   const SizedBox(width: 6),
-                                  Text('Add to Meal',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: textPrimary)),
+                                  Text(
+                                    'Add to Meal',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: textPrimary,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 10),
                               Wrap(
-                                spacing: 8, runSpacing: 8,
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: MealType.values.map((t) {
                                   final sel = t == _selectedMealType;
                                   return GestureDetector(
@@ -360,39 +413,56 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                                     },
                                     child: AnimatedContainer(
                                       duration: const Duration(
-                                          milliseconds: 160),
+                                        milliseconds: 160,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 7),
+                                        horizontal: 12,
+                                        vertical: 7,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: sel
                                             ? t.color
                                             : (isDark
-                                                ? Colors.white.withValues(alpha: 0.06)
-                                                : Colors.white.withValues(alpha: 0.70)),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.06,
+                                                    )
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.70,
+                                                    )),
+                                        borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                            color: sel
-                                                ? t.color
-                                                : (isDark
-                                                    ? Colors.white.withValues(alpha: 0.10)
-                                                    : Colors.black.withValues(alpha: 0.07)),
-                                            width: 0.7),
+                                          color: sel
+                                              ? t.color
+                                              : (isDark
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.10,
+                                                      )
+                                                    : Colors.black.withValues(
+                                                        alpha: 0.07,
+                                                      )),
+                                          width: 0.7,
+                                        ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(t.emoji,
-                                              style: const TextStyle(
-                                                  fontSize: 13)),
+                                          Text(
+                                            t.emoji,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                            ),
+                                          ),
                                           const SizedBox(width: 4),
-                                          Text(t.label,
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: sel
-                                                      ? Colors.white
-                                                      : textPrimary)),
+                                          Text(
+                                            t.label,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: sel
+                                                  ? Colors.white
+                                                  : textPrimary,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -417,8 +487,11 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                         // ── Full nutrition table ──────────────────────────
                         _SectionLabel('📊 Nutrition Facts', textPrimary),
                         const SizedBox(height: 8),
-                        _NutritionTable(meal: meal, amountG: _amountG,
-                            isDark: isDark),
+                        _NutritionTable(
+                          meal: meal,
+                          amountG: _amountG,
+                          isDark: isDark,
+                        ),
 
                         const SizedBox(height: 110),
                       ],
@@ -431,7 +504,8 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
 
           // ── Sticky Add CTA ────────────────────────────────────────────
           Positioned(
-            left: 0, right: 0,
+            left: 0,
+            right: 0,
             bottom: 0,
             child: ClipRect(
               child: BackdropFilter(
@@ -441,8 +515,11 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                       ? Colors.black.withValues(alpha: 0.50)
                       : Colors.white.withValues(alpha: 0.72),
                   padding: EdgeInsets.fromLTRB(
-                      16, 12, 16,
-                      16 + MediaQuery.paddingOf(context).bottom),
+                    16,
+                    12,
+                    16,
+                    16 + MediaQuery.paddingOf(context).bottom,
+                  ),
                   child: GestureDetector(
                     onTap: _isAdding ? null : _addToDiary,
                     child: AnimatedContainer(
@@ -451,42 +528,50 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen>
                       decoration: BoxDecoration(
                         gradient: _isAdding
                             ? null
-                            : LinearGradient(colors: [
-                                mealColor,
-                                mealColor.withValues(alpha: 0.75),
-                              ]),
+                            : LinearGradient(
+                                colors: [
+                                  mealColor,
+                                  mealColor.withValues(alpha: 0.75),
+                                ],
+                              ),
                         color: _isAdding ? Colors.grey : null,
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: _isAdding
                             ? null
                             : [
                                 BoxShadow(
-                                    color: mealColor.withValues(alpha: 0.40),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 4)),
+                                  color: mealColor.withValues(alpha: 0.40),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
                       ),
                       child: _isAdding
                           ? const Center(
                               child: SizedBox(
-                                width: 20, height: 20,
+                                width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2),
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               ),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(_selectedMealType.emoji,
-                                    style:
-                                        const TextStyle(fontSize: 16)),
+                                Text(
+                                  _selectedMealType.emoji,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Add ${_amountG.toInt()}g · ${_kcal.toInt()} kcal → ${_selectedMealType.label}',
                                   style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700),
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -509,9 +594,10 @@ class _SectionLabel extends StatelessWidget {
   final Color color;
   const _SectionLabel(this.text, this.color);
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w700, color: color));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+  );
 }
 
 class _MacroRow extends StatelessWidget {
@@ -530,14 +616,22 @@ class _MacroRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
-          Container(width: 8, height: 8,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+          ),
           const SizedBox(width: 6),
           Text(label, style: TextStyle(fontSize: 11, color: textSub)),
           const Spacer(),
-          Text('${value.toStringAsFixed(1)}g',
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+          Text(
+            '${value.toStringAsFixed(1)}g',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -550,36 +644,43 @@ class _SourceBadge extends StatelessWidget {
 
   String get label {
     switch (source) {
-      case MealSource.indian: return '🇮🇳 IFCT';
-      case MealSource.off:    return '🌍 OpenFoodFacts';
-      case MealSource.fdc:    return '🇺🇸 USDA FDC';
-      default:                return '📝 Custom';
+      case MealSource.indian:
+        return '🇮🇳 IFCT';
+      case MealSource.off:
+        return '🌍 OpenFoodFacts';
+      case MealSource.fdc:
+        return '🇺🇸 USDA FDC';
+      default:
+        return '📝 Custom';
     }
   }
 
   Color get color {
     switch (source) {
-      case MealSource.indian: return const Color(0xFFF97316);
-      case MealSource.off:    return const Color(0xFF10B981);
-      case MealSource.fdc:    return AppColors.primary;
-      default:                return AppColors.textSecondary;
+      case MealSource.indian:
+        return const Color(0xFFF97316);
+      case MealSource.off:
+        return const Color(0xFF10B981);
+      case MealSource.fdc:
+        return AppColors.primary;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.25), width: 0.7),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w700)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: color.withValues(alpha: 0.25), width: 0.7),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w700),
+    ),
+  );
 }
 
 class _FoodHeroPlaceholder extends StatelessWidget {
@@ -588,17 +689,21 @@ class _FoodHeroPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.10)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Icon(Icons.restaurant_rounded, size: 72,
-              color: color.withValues(alpha: 0.50)),
-        ),
-      );
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.10)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: Center(
+      child: Icon(
+        Icons.restaurant_rounded,
+        size: 72,
+        color: color.withValues(alpha: 0.50),
+      ),
+    ),
+  );
 }
 
 class _NutritionTable extends StatelessWidget {
@@ -606,8 +711,11 @@ class _NutritionTable extends StatelessWidget {
   final double amountG;
   final bool isDark;
 
-  const _NutritionTable(
-      {required this.meal, required this.amountG, required this.isDark});
+  const _NutritionTable({
+    required this.meal,
+    required this.amountG,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -620,41 +728,86 @@ class _NutritionTable extends StatelessWidget {
         : Colors.black.withValues(alpha: 0.05);
 
     return GlassCard(
-      radius: 18, blur: 14, padding: EdgeInsets.zero,
+      radius: 18,
+      blur: 14,
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-            child: Text('Nutrition Facts per ${amountG.toInt()}g',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: textPrimary)),
+            child: Text(
+              'Nutrition Facts per ${amountG.toInt()}g',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: textPrimary,
+              ),
+            ),
           ),
           Divider(height: 1, color: divColor),
-          _Row('Calories', factor(n.energyKcal100), 'kcal',
-              bold: true, color: AppColors.primary, isDark: isDark),
+          _Row(
+            'Calories',
+            factor(n.energyKcal100),
+            'kcal',
+            bold: true,
+            color: AppColors.primary,
+            isDark: isDark,
+          ),
           Divider(height: 0.5, indent: 14, color: divColor),
-          _Row('Carbohydrates', factor(n.carbohydrates100), 'g',
-              color: const Color(0xFFF59E0B), isDark: isDark),
-          _Row('  ↳ Sugars', factor(n.sugars100), 'g',
-              indent: true, isDark: isDark),
+          _Row(
+            'Carbohydrates',
+            factor(n.carbohydrates100),
+            'g',
+            color: const Color(0xFFF59E0B),
+            isDark: isDark,
+          ),
+          _Row(
+            '  ↳ Sugars',
+            factor(n.sugars100),
+            'g',
+            indent: true,
+            isDark: isDark,
+          ),
           Divider(height: 0.5, indent: 14, color: divColor),
-          _Row('Fat', factor(n.fat100), 'g',
-              color: const Color(0xFFEF4444), isDark: isDark),
-          _Row('  ↳ Saturated Fat', factor(n.saturatedFat100), 'g',
-              indent: true, isDark: isDark),
+          _Row(
+            'Fat',
+            factor(n.fat100),
+            'g',
+            color: const Color(0xFFEF4444),
+            isDark: isDark,
+          ),
+          _Row(
+            '  ↳ Saturated Fat',
+            factor(n.saturatedFat100),
+            'g',
+            indent: true,
+            isDark: isDark,
+          ),
           Divider(height: 0.5, indent: 14, color: divColor),
-          _Row('Protein', factor(n.proteins100), 'g',
-              color: const Color(0xFF10B981), isDark: isDark),
-          _Row('Fiber', factor(n.fiber100), 'g',
-              color: const Color(0xFF6366F1), isDark: isDark),
+          _Row(
+            'Protein',
+            factor(n.proteins100),
+            'g',
+            color: const Color(0xFF10B981),
+            isDark: isDark,
+          ),
+          _Row(
+            'Fiber',
+            factor(n.fiber100),
+            'g',
+            color: const Color(0xFF6366F1),
+            isDark: isDark,
+          ),
           if (n.sodium100 != null) ...[
             Divider(height: 0.5, indent: 14, color: divColor),
-            _Row('Sodium', factor(n.sodium100 != null
-                ? n.sodium100! * 1000 : null), 'mg',
-                color: const Color(0xFF8B5CF6), isDark: isDark),
+            _Row(
+              'Sodium',
+              factor(n.sodium100 != null ? n.sodium100! * 1000 : null),
+              'mg',
+              color: const Color(0xFF8B5CF6),
+              isDark: isDark,
+            ),
           ],
           if (n.calcium100 != null)
             _Row('Calcium', factor(n.calcium100), 'mg', isDark: isDark),
@@ -678,38 +831,46 @@ class _Row extends StatelessWidget {
   final Color? color;
   final bool isDark;
 
-  const _Row(this.label, this.value, this.unit,
-      {this.bold = false, this.indent = false, this.color, required this.isDark});
+  const _Row(
+    this.label,
+    this.value,
+    this.unit, {
+    this.bold = false,
+    this.indent = false,
+    this.color,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.45) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.45)
+        : AppColors.textSecondary;
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-          horizontal: indent ? 22 : 14, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: indent ? 22 : 14, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 13,
-                  color: indent ? textSub : textPrimary,
-                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
           Text(
-            value != null
-                ? '${value!.toStringAsFixed(1)} $unit'
-                : '– $unit',
+            label,
             style: TextStyle(
-                fontSize: 13,
-                fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-                color: color ?? textPrimary),
+              fontSize: 13,
+              color: indent ? textSub : textPrimary,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            ),
+          ),
+          Text(
+            value != null ? '${value!.toStringAsFixed(1)} $unit' : '– $unit',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+              color: color ?? textPrimary,
+            ),
           ),
         ],
       ),
     );
   }
 }
-

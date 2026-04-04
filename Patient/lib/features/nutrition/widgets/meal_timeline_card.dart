@@ -17,12 +17,9 @@ class MealTimelineCard extends StatelessWidget {
     this.onDeleteEntry,
   });
 
-  double get _totalKcal =>
-      entries.fold(0, (sum, e) => sum + e.totalKcal);
-  double get _totalCarbs =>
-      entries.fold(0, (sum, e) => sum + e.totalCarbsG);
-  double get _totalFat =>
-      entries.fold(0, (sum, e) => sum + e.totalFatG);
+  double get _totalKcal => entries.fold(0, (sum, e) => sum + e.totalKcal);
+  double get _totalCarbs => entries.fold(0, (sum, e) => sum + e.totalCarbsG);
+  double get _totalFat => entries.fold(0, (sum, e) => sum + e.totalFatG);
   double get _totalProtein =>
       entries.fold(0, (sum, e) => sum + e.totalProteinG);
 
@@ -39,10 +36,14 @@ class MealTimelineCard extends StatelessWidget {
   Color _mealQualityColor() {
     final label = _mealQualityLabel();
     switch (label) {
-      case 'Excellent': return const Color(0xFF10B981);
-      case 'High Cal':  return const Color(0xFFEF4444);
-      case 'Low Protein': return const Color(0xFFF59E0B);
-      default:          return AppColors.primary;
+      case 'Excellent':
+        return const Color(0xFF10B981);
+      case 'High Cal':
+        return const Color(0xFFEF4444);
+      case 'Low Protein':
+        return const Color(0xFFF59E0B);
+      default:
+        return AppColors.primary;
     }
   }
 
@@ -60,8 +61,9 @@ class MealTimelineCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = mealType.color;
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
     final qualityColor = _mealQualityColor();
     final recoveryText = _recoveryImpact();
 
@@ -77,8 +79,9 @@ class MealTimelineCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.10),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
@@ -89,11 +92,15 @@ class MealTimelineCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: color.withValues(alpha: 0.18),
                     border: Border.all(
-                        color: color.withValues(alpha: 0.35), width: 1.2),
+                      color: color.withValues(alpha: 0.35),
+                      width: 1.2,
+                    ),
                   ),
                   child: Center(
-                    child: Text(mealType.emoji,
-                        style: const TextStyle(fontSize: 16)),
+                    child: Text(
+                      mealType.emoji,
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -101,14 +108,18 @@ class MealTimelineCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(mealType.label,
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: textPrimary)),
-                      Text(mealType.timeRange,
-                          style:
-                              TextStyle(fontSize: 10, color: textSub)),
+                      Text(
+                        mealType.label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary,
+                        ),
+                      ),
+                      Text(
+                        mealType.timeRange,
+                        style: TextStyle(fontSize: 10, color: textSub),
+                      ),
                     ],
                   ),
                 ),
@@ -119,27 +130,30 @@ class MealTimelineCard extends StatelessWidget {
                     Text(
                       '${_totalKcal.toInt()} kcal',
                       style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: color),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
                     ),
                     Row(
                       children: [
                         // Quality badge
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color:
-                                qualityColor.withValues(alpha: 0.14),
+                            color: qualityColor.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             _mealQualityLabel(),
                             style: TextStyle(
-                                fontSize: 9,
-                                color: qualityColor,
-                                fontWeight: FontWeight.w700),
+                              fontSize: 9,
+                              color: qualityColor,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
@@ -153,15 +167,19 @@ class MealTimelineCard extends StatelessWidget {
           // ── Food entries ──────────────────────────────────────────────
           if (entries.isEmpty)
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  Icon(Icons.add_circle_outline_rounded,
-                      size: 16, color: textSub),
+                  Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 16,
+                    color: textSub,
+                  ),
                   const SizedBox(width: 8),
-                  Text('No food logged yet',
-                      style: TextStyle(fontSize: 12, color: textSub)),
+                  Text(
+                    'No food logged yet',
+                    style: TextStyle(fontSize: 12, color: textSub),
+                  ),
                 ],
               ),
             )
@@ -169,7 +187,9 @@ class MealTimelineCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
               child: Column(
-                children: entries.map((e) => _FoodRow(entry: e, isDark: isDark)).toList(),
+                children: entries
+                    .map((e) => _FoodRow(entry: e, isDark: isDark))
+                    .toList(),
               ),
             ),
 
@@ -179,20 +199,34 @@ class MealTimelineCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
               child: Row(
                 children: [
-                  _MacroChip('C', '${_totalCarbs.toInt()}g',
-                      const Color(0xFFF59E0B), isDark),
+                  _MacroChip(
+                    'C',
+                    '${_totalCarbs.toInt()}g',
+                    const Color(0xFFF59E0B),
+                    isDark,
+                  ),
                   const SizedBox(width: 6),
-                  _MacroChip('F', '${_totalFat.toInt()}g',
-                      const Color(0xFFEF4444), isDark),
+                  _MacroChip(
+                    'F',
+                    '${_totalFat.toInt()}g',
+                    const Color(0xFFEF4444),
+                    isDark,
+                  ),
                   const SizedBox(width: 6),
-                  _MacroChip('P', '${_totalProtein.toInt()}g',
-                      const Color(0xFF10B981), isDark),
+                  _MacroChip(
+                    'P',
+                    '${_totalProtein.toInt()}g',
+                    const Color(0xFF10B981),
+                    isDark,
+                  ),
                   const Spacer(),
                   // Recovery impact
                   if (recoveryText.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 3),
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: recoveryText.startsWith('+')
                             ? const Color(0xFF10B981).withValues(alpha: 0.10)
@@ -202,11 +236,12 @@ class MealTimelineCard extends StatelessWidget {
                       child: Text(
                         recoveryText,
                         style: TextStyle(
-                            fontSize: 10,
-                            color: recoveryText.startsWith('+')
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444),
-                            fontWeight: FontWeight.w600),
+                          fontSize: 10,
+                          color: recoveryText.startsWith('+')
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -224,18 +259,23 @@ class MealTimelineCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: color.withValues(alpha: 0.20), width: 0.7),
+                    color: color.withValues(alpha: 0.20),
+                    width: 0.7,
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_rounded, size: 14, color: color),
                     const SizedBox(width: 5),
-                    Text('Add food to ${mealType.label}',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: color,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'Add food to ${mealType.label}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -255,8 +295,9 @@ class _FoodRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.45) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.45)
+        : AppColors.textSecondary;
     final name = entry.meal.name ?? 'Unknown food';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'F';
 
@@ -278,21 +319,27 @@ class _FoodRow extends StatelessWidget {
                     child: Image.network(
                       entry.meal.thumbnailImageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Center(
-                        child: Text(initial,
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: entry.mealType.color)),
+                      errorBuilder: (_, _, _) => Center(
+                        child: Text(
+                          initial,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: entry.mealType.color,
+                          ),
+                        ),
                       ),
                     ),
                   )
                 : Center(
-                    child: Text(initial,
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: entry.mealType.color)),
+                    child: Text(
+                      initial,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: entry.mealType.color,
+                      ),
+                    ),
                   ),
           ),
           const SizedBox(width: 9),
@@ -300,25 +347,30 @@ class _FoodRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
                 Text(
-                    '${entry.amountG.toInt()}${entry.unit} · ${entry.totalProteinG.toInt()}g P',
-                    style: TextStyle(fontSize: 10, color: textSub)),
+                  name,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${entry.amountG.toInt()}${entry.unit} · ${entry.totalProteinG.toInt()}g P',
+                  style: TextStyle(fontSize: 10, color: textSub),
+                ),
               ],
             ),
           ),
           Text(
             '${entry.totalKcal.toInt()} kcal',
             style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: textPrimary),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+            ),
           ),
         ],
       ),
@@ -335,16 +387,14 @@ class _MacroChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text('$label $value',
-            style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      '$label $value',
+      style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
+    ),
+  );
 }

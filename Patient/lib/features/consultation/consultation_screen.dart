@@ -1,11 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/app_button.dart';
 
 // Web-specific imports handled via conditional compilation
-import 'consultation_web.dart' if (dart.library.io) 'consultation_native.dart' as platform;
+import 'consultation_web.dart'
+    if (dart.library.io) 'consultation_native.dart'
+    as platform;
 
 class ConsultationScreen extends StatefulWidget {
   final String bookingId;
@@ -64,7 +65,11 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               bottom: false,
               child: Row(
                 children: [
-                  const Icon(Icons.videocam, color: AppColors.success, size: 20),
+                  const Icon(
+                    Icons.videocam,
+                    color: AppColors.success,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -72,17 +77,27 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                       children: [
                         Text(
                           'Video Consultation with ${widget.doctorName}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         Text(
                           'Room: ${widget.jitsiRoom}',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.success.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -90,9 +105,20 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.fiber_manual_record, color: AppColors.success, size: 8),
+                        Icon(
+                          Icons.fiber_manual_record,
+                          color: AppColors.success,
+                          size: 8,
+                        ),
                         SizedBox(width: 4),
-                        Text('LIVE', style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text(
+                          'LIVE',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -102,9 +128,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
           ),
 
           // Jitsi video area
-          Expanded(
-            child: platform.buildJitsiView(widget.jitsiRoom),
-          ),
+          Expanded(child: platform.buildJitsiView(widget.jitsiRoom)),
 
           // Bottom controls
           Container(
@@ -162,12 +186,20 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               shape: BoxShape.circle,
               color: isDestructive
                   ? AppColors.danger
-                  : (isActive ? Colors.white.withValues(alpha: 0.15) : AppColors.danger.withValues(alpha: 0.5)),
+                  : (isActive
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : AppColors.danger.withValues(alpha: 0.5)),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
           const SizedBox(height: 6),
-          Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );
@@ -188,19 +220,41 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                 backgroundColor: AppColors.softBlue,
                 child: Text(
                   widget.doctorName.replaceAll('Dr. ', '').isNotEmpty
-                      ? widget.doctorName.replaceAll('Dr. ', '').substring(0, 1).toUpperCase()
+                      ? widget.doctorName
+                            .replaceAll('Dr. ', '')
+                            .substring(0, 1)
+                            .toUpperCase()
                       : 'D',
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(widget.doctorName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                widget.doctorName,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text('Room: ${widget.jitsiRoom}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-              
+              Text(
+                'Room: ${widget.jitsiRoom}',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -210,7 +264,14 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                   children: [
                     Icon(Icons.lock, size: 14, color: AppColors.success),
                     SizedBox(width: 4),
-                    Text('End-to-end encrypted', style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w500)),
+                    Text(
+                      'End-to-end encrypted',
+                      style: TextStyle(
+                        color: AppColors.success,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -238,7 +299,10 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _isVideoOff ? 'Camera Off' : 'Camera Preview',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -252,16 +316,26 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                 children: [
                   FloatingActionButton(
                     heroTag: 'mic_lobby',
-                    backgroundColor: _isMuted ? AppColors.danger : AppColors.surface,
+                    backgroundColor: _isMuted
+                        ? AppColors.danger
+                        : AppColors.surface,
                     onPressed: () => setState(() => _isMuted = !_isMuted),
-                    child: Icon(_isMuted ? Icons.mic_off : Icons.mic, color: _isMuted ? Colors.white : AppColors.textPrimary),
+                    child: Icon(
+                      _isMuted ? Icons.mic_off : Icons.mic,
+                      color: _isMuted ? Colors.white : AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(width: 24),
                   FloatingActionButton(
                     heroTag: 'cam_lobby',
-                    backgroundColor: _isVideoOff ? AppColors.danger : AppColors.surface,
+                    backgroundColor: _isVideoOff
+                        ? AppColors.danger
+                        : AppColors.surface,
                     onPressed: () => setState(() => _isVideoOff = !_isVideoOff),
-                    child: Icon(_isVideoOff ? Icons.videocam_off : Icons.videocam, color: _isVideoOff ? Colors.white : AppColors.textPrimary),
+                    child: Icon(
+                      _isVideoOff ? Icons.videocam_off : Icons.videocam,
+                      color: _isVideoOff ? Colors.white : AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),

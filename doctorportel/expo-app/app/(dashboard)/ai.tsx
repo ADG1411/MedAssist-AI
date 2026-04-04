@@ -9,7 +9,17 @@ import type { ChatMessage } from '../../types/chat';
 const NIM_API_KEY = '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';
 const MODEL = 'stepfun-ai/step-3.5-flash';
 
-const SYSTEM_PROMPT = `You are Dr. AI Co-Pilot, the intelligent clinical assistant integrated into the MedAssist Doctor Portal.
+const SYSTEM_PROMPT = `You are MedAssist AI.
+
+STRICT RULES:
+- Only answer medical/health questions
+- If question is not medical → REFUSE
+
+Refusal format:
+"I'm a medical assistant. I can only answer health-related questions."
+
+DO NOT answer anything outside healthcare.
+
 You are talking to a DOCTOR (not a patient). Use professional medical language.
 For clinical questions, provide evidence-based differentials with probability estimates.
 For prescriptions, flag drug interactions and contraindications.
@@ -31,9 +41,48 @@ export default function AIScreen() {
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
+  const performFetch = async (messagesPayload: any[], temp: number, tokens: number) => {
+    const endpoints = Platform.OS === 'web' 
+      ? [
+          'https://cors-anywhere.herokuapp.com/https://integrate.api.nvidia.com/v1/chat/completions',
+          'https://integrate.api.nvidia.com/v1/chat/completions'
+        ]
+      : ['https://integrate.api.nvidia.com/v1/chat/completions'];
+
+    let response;
+    for (const endpoint of endpoints) {
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${NIM_API_KEY}` },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: messagesPayload,
+            temperature: temp,
+            max_tokens: tokens,
+          }),
+        });
+        if (response.ok) break;
+      } catch (e) {
+        // keep trying
+      }
+    }
+    
+    if (!response || !response.ok) throw new Error(`Network failed or blocked by CORS`);
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+  };
+
   const sendMessage = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
+
+    if (msg.length < 5) {
+      const errMsg: ChatMessage = { id: Date.now().toString(), role: 'assistant', content: 'Please ask a complete medical question.', timestamp: new Date().toISOString() };
+      setMessages(prev => [...prev, { id: Date.now().toString() + 'u', role: 'user', content: msg, timestamp: new Date().toISOString() }, errMsg]);
+      setInput('');
+      return;
+    }
 
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: msg, timestamp: new Date().toISOString() };
     setMessages(prev => [...prev, userMsg]);
@@ -41,25 +90,55 @@ export default function AIScreen() {
     setLoading(true);
 
     try {
-      const historyMsgs = messages.slice(-8).map(m => ({ role: m.role, content: m.content }));
-      const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${NIM_API_KEY}` },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...historyMsgs,
-            { role: 'user', content: msg },
-          ],
-          temperature: 0.7,
-          max_tokens: 2048,
-        }),
-      });
+      // 🚀 STEP 1: AI CLASSIFIER (STRICT)
+      const classifierPrompt = `You are a strict classifier. ONLY answer: YES → if question is medical/health related. NO → if not. No explanation.`;
+      const classifierMessages = [
+        { role: 'system', content: classifierPrompt },
+        { role: 'user', content: msg }
+      ];
+      
+      const classifierRaw = await performFetch(classifierMessages, 0.1, 10);
+      const isMedical = classifierRaw.trim().toUpperCase().replace(/[^A-Z]/g, ''); // Extract only letters
 
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || 'I couldn\'t generate a response. Please try again.';
+      if (!isMedical.includes("YES") && !msg.toLowerCase().includes('summarize')) {
+        const blockMsg: ChatMessage = { id: Date.now().toString() + 'a', role: 'assistant', content: "⚠ I am a medical AI. Please ask health-related questions only.", timestamp: new Date().toISOString() };
+        setMessages(prev => [...prev, blockMsg]);
+        setLoading(false);
+        return;
+      }
+
+      // ── Proceed to Step 2 ──
+
+      // 1. Gather Supabase Context
+      let dbContext = '';
+      try {
+        const { supabase } = require('../../services/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const [{ data: patients }, { data: bookings }] = await Promise.all([
+            supabase.from('doctor_patient_access').select('patient_id, is_active').eq('doctor_id', user.id).eq('is_active', true),
+            supabase.from('bookings').select('id, slot_time, status').eq('doctor_id', user.id)
+          ]);
+          dbContext = `Context Update: You have ${patients?.length || 0} active patient accesses right now. You have ${bookings?.length || 0} total bookings registered. Use this to summarize patient loads.`;
+        }
+      } catch (dbErr) {
+        console.warn("Context fetch failed", dbErr);
+      }
+
+      // Filter out the initial welcome message
+      const historyMsgs = messages
+        .filter((m) => m.id !== '0')
+        .slice(-6)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      // 🚀 STEP 2: MAIN AI WITH HARD RESTRICTION
+      const finalMessages = [
+        { role: 'system', content: SYSTEM_PROMPT + '\n' + dbContext },
+        ...historyMsgs,
+        { role: 'user', content: msg }
+      ];
+
+      const content = await performFetch(finalMessages, 0.7, 1500) || 'I couldn\'t generate a response. Please try again.';
 
       const assistantMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toISOString() };
       setMessages(prev => [...prev, assistantMsg]);
