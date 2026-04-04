@@ -14,15 +14,15 @@ class AppTheme {
         surface: AppColors.surface,
         error: AppColors.danger,
       ),
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: const Color(0xFFF0F5FF),
       textTheme: GoogleFonts.interTextTheme(),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: Colors.white,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppColors.radius),
-          side: const BorderSide(color: AppColors.border, width: 1),
+          side: BorderSide(color: AppColors.border.withValues(alpha: 0.6), width: 0.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -70,16 +70,19 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
-        primary: AppColors.primary,
+        primary: AppColors.primaryLight,
         error: AppColors.danger,
+        surface: const Color(0xFF0F1923),
       ),
+      scaffoldBackgroundColor: const Color(0xFF0A1628),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       cardTheme: CardThemeData(
+        color: const Color(0xFF1A2332),
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppColors.radius),
-          side: const BorderSide(color: Colors.white12, width: 1),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 0.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

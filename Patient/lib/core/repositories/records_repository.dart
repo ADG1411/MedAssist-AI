@@ -18,11 +18,19 @@ class RecordsRepository {
     if (userId == null) return [];
 
     final data = await SupabaseService.client
-        .from('medical_records')
+        .from('health_records')
         .select()
         .eq('user_id', userId)
         .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
+
+    // Map the database columns to the UI's expected fields in the frontend
+    return List<Map<String, dynamic>>.from(data).map((r) {
+      return {
+        ...r,
+        'type': r['record_type'] ?? 'Document',
+        'doctorName': 'Uploaded Record',
+      };
+    }).toList();
   }
 
   Future<String?> createArchivedRecord({
@@ -53,13 +61,13 @@ class RecordsRepository {
           .from('medical-records')
           .getPublicUrl(storagePath);
 
-      // 2. Create the DB record
-      final res = await SupabaseService.client.from('medical_records').insert({
+      // 2. Create the DB record in the correct table 'health_records'
+      final res = await SupabaseService.client.from('health_records').insert({
         'user_id': userId,
+        'title': fileName,
+        'record_type': category == 'Other' ? 'Imaging' : category, // Maps to valid enum ('AI Result', 'Prescription', 'Lab Report', 'Imaging')
         'file_url': fileUrl,
-        'file_type': fileType,
-        'category': category,
-        'source_type': 'patient',
+        'metadata': {'file_type': fileType},
       }).select('id').single();
 
       return res['id'] as String;

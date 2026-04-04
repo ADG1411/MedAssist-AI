@@ -1,5 +1,4 @@
-// Nutrition Diary Screen — AI Nutrition Timeline Dashboard
-// Upgraded: PremiumCalorieHero, MealTimelineCards, AiNextMealSuggestions
+// Nutrition Diary Screen — Clean Blue Theme
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,46 +13,14 @@ import 'widgets/premium_calorie_hero.dart';
 import 'widgets/meal_timeline_card.dart';
 import 'widgets/ai_next_meal_suggestions.dart';
 
-class NutritionDiaryScreen extends ConsumerStatefulWidget {
+class NutritionDiaryScreen extends ConsumerWidget {
   const NutritionDiaryScreen({super.key});
-
-  @override
-  ConsumerState<NutritionDiaryScreen> createState() =>
-      _NutritionDiaryScreenState();
-}
-
-class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeCtrl;
-  late Animation<double> _fadeAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 550));
-    _fadeAnim =
-        CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
-    _fadeCtrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeCtrl.dispose();
-    super.dispose();
-  }
 
   String _formatDate(DateTime d) {
     final now = DateTime.now();
-    if (d.year == now.year && d.month == now.month && d.day == now.day) {
-      return 'Today';
-    }
-    final yesterday = now.subtract(const Duration(days: 1));
-    if (d.year == yesterday.year &&
-        d.month == yesterday.month &&
-        d.day == yesterday.day) {
-      return 'Yesterday';
-    }
+    if (d.year == now.year && d.month == now.month && d.day == now.day) return 'Today';
+    final y = now.subtract(const Duration(days: 1));
+    if (d.year == y.year && d.month == y.month && d.day == y.day) return 'Yesterday';
     return DateFormat('EEE, MMM d').format(d);
   }
 
@@ -61,104 +28,87 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
     final s = state.summary;
     if (s.caloriesLogged == 0) return 0;
     double score = 60;
-    final proteinRatio = s.proteinGoal > 0 ? s.proteinLogged / s.proteinGoal : 0;
-    final carbRatio = s.carbsGoal > 0 ? s.carbsLogged / s.carbsGoal : 0;
-    final calRatio = s.calorieGoal > 0 ? s.caloriesLogged / s.calorieGoal : 0;
-    if (proteinRatio >= 0.7 && proteinRatio <= 1.1) score += 15;
-    if (carbRatio >= 0.5 && carbRatio <= 1.1) score += 10;
-    if (calRatio >= 0.8 && calRatio <= 1.05) score += 15;
+    final pR = s.proteinGoal > 0 ? s.proteinLogged / s.proteinGoal : 0;
+    final cR = s.carbsGoal > 0 ? s.carbsLogged / s.carbsGoal : 0;
+    final kR = s.calorieGoal > 0 ? s.caloriesLogged / s.calorieGoal : 0;
+    if (pR >= 0.7 && pR <= 1.1) score += 15;
+    if (cR >= 0.5 && cR <= 1.1) score += 10;
+    if (kR >= 0.8 && kR <= 1.05) score += 15;
     return score.toInt().clamp(0, 100);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(nutritionDiaryProvider);
     final notifier = ref.read(nutritionDiaryProvider.notifier);
-    final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final tp = isDark ? Colors.white : AppColors.textPrimary;
+    final ts = isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
       extendBody: true,
       body: Stack(
         children: [
           AppBackground(isDark: isDark),
-          FadeTransition(
-            opacity: _fadeAnim,
+          SafeArea(
+            bottom: false,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                // ── Glass header ──────────────────────────────────────────
+                // ── Header ──────────────────────────────────────────
                 SliverToBoxAdapter(
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.28)
-                            : Colors.white.withValues(alpha: 0.55),
-                        padding: EdgeInsets.fromLTRB(
-                            16,
-                            MediaQuery.paddingOf(context).top + 12,
-                            16,
-                            10),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Nutrition Diary',
-                                      style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w800,
-                                          color: textPrimary,
-                                          letterSpacing: -0.4)),
-                                  Text('AI-powered food intelligence',
-                                      style: TextStyle(
-                                          fontSize: 11, color: textSub)),
-                                ],
-                              ),
-                            ),
-                            // History
-                            GestureDetector(
-                              onTap: () =>
-                                  context.push('/nutrition/history'),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.09)
-                                      : Colors.white.withValues(alpha: 0.72),
-                                  border: Border.all(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.12)
-                                          : Colors.white,
-                                      width: 0.8),
-                                ),
-                                child: Icon(Icons.table_chart_outlined,
-                                    size: 16,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.textPrimary),
-                              ),
-                            ),
-                          ],
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Row(
+                      children: [
+                        // Icon
+                        Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppColors.primary, const Color(0xFF2563EB)]),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.restaurant_rounded, size: 20, color: Colors.white),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Nutrition Diary', style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800,
+                                color: tp, letterSpacing: -0.5)),
+                              Text('AI-powered food intelligence',
+                                style: TextStyle(fontSize: 11, color: ts)),
+                            ],
+                          ),
+                        ),
+                        // History button
+                        GestureDetector(
+                          onTap: () => context.push('/nutrition/history'),
+                          child: Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.72),
+                              border: Border.all(
+                                color: isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.06),
+                                width: 0.6),
+                            ),
+                            child: Icon(Icons.table_chart_outlined, size: 16, color: tp),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // ── Date navigator ────────────────────────────────────────
+                // ── Date navigator ──────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -166,8 +116,7 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
                           icon: Icons.chevron_left,
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            notifier.selectDate(state.selectedDate
-                                .subtract(const Duration(days: 1)));
+                            notifier.selectDate(state.selectedDate.subtract(const Duration(days: 1)));
                           },
                           isDark: isDark,
                         ),
@@ -178,39 +127,26 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
                               context: context,
                               initialDate: state.selectedDate,
                               firstDate: DateTime(2020),
-                              lastDate: DateTime.now()
-                                  .add(const Duration(days: 1)),
+                              lastDate: DateTime.now().add(const Duration(days: 1)),
                               builder: (ctx, child) => Theme(
                                 data: Theme.of(ctx).copyWith(
-                                  colorScheme: const ColorScheme.light(
-                                      primary: AppColors.primary),
-                                ),
+                                  colorScheme: const ColorScheme.light(primary: AppColors.primary)),
                                 child: child!,
                               ),
                             );
                             if (d != null) notifier.selectDate(d);
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.white.withValues(alpha: 0.75),
+                              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.75),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.12)
-                                      : Colors.black.withValues(alpha: 0.07),
-                                  width: 0.7),
+                                color: isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.06),
+                                width: 0.6),
                             ),
-                            child: Text(
-                              _formatDate(state.selectedDate),
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: textPrimary),
-                            ),
+                            child: Text(_formatDate(state.selectedDate),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: tp)),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -218,8 +154,7 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
                           icon: Icons.chevron_right,
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            notifier.selectDate(state.selectedDate
-                                .add(const Duration(days: 1)));
+                            notifier.selectDate(state.selectedDate.add(const Duration(days: 1)));
                           },
                           isDark: isDark,
                         ),
@@ -228,102 +163,81 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
                   ),
                 ),
 
-                // ── Body ──────────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: state.isLoading
-                      ? _buildLoading(isDark)
-                      : RefreshIndicator(
-                          onRefresh: () async => notifier.refresh(),
-                          color: AppColors.primary,
-                          displacement: 20,
-                          child: SingleChildScrollView(
-                            physics:
-                                const NeverScrollableScrollPhysics(),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                  16, 14, 16, 0),
-                              child: Column(
-                                children: [
-                                  // Calorie hero
-                                  PremiumCalorieHero(
-                                    summary: state.summary,
-                                    aiMealScore:
-                                        _computeAiScore(state),
-                                  ),
-                                  const SizedBox(height: 14),
-
-                                  // Meal timeline cards
-                                  ...MealType.values.map((type) =>
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 12),
-                                        child: MealTimelineCard(
-                                          mealType: type,
-                                          entries: state.forMeal(type),
-                                          onAddFood: () => context.push(
-                                              '/nutrition/search',
-                                              extra: type),
-                                        ),
-                                      )),
-
-                                  // Activity section
-                                  if (state.activities.isNotEmpty)
-                                    _ActivityCard(
-                                        activities: state.activities,
-                                        isDark: isDark,
-                                        onAdd: () => context.push(
-                                            '/nutrition/activity-search')),
-                                  if (state.activities.isEmpty)
-                                    _AddActivityButton(
-                                        isDark: isDark,
-                                        onTap: () => context.push(
-                                            '/nutrition/activity-search')),
-
-                                  const SizedBox(height: 14),
-
-                                  // AI suggestions
-                                  AiNextMealSuggestions(
-                                    summary: state.summary,
-                                    currentMealType: MealType.dinner,
-                                  ),
-
-                                  const SizedBox(height: 110),
-                                ],
-                              ),
-                            ),
-                          ),
+                // ── Body ────────────────────────────────────────────
+                if (state.isLoading)
+                  SliverToBoxAdapter(child: _buildLoading(isDark))
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // Calorie hero
+                        PremiumCalorieHero(
+                          summary: state.summary,
+                          aiMealScore: _computeAiScore(state),
                         ),
-                ),
+                        const SizedBox(height: 10),
+
+                        // Meal timeline cards
+                        ...MealType.values.map((type) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: MealTimelineCard(
+                            mealType: type,
+                            entries: state.forMeal(type),
+                            onAddFood: () => context.push('/nutrition/search', extra: type),
+                          ),
+                        )),
+
+                        // Activity section
+                        if (state.activities.isNotEmpty)
+                          _ActivityCard(
+                            activities: state.activities,
+                            isDark: isDark,
+                            onAdd: () => context.push('/nutrition/activity-search')),
+                        if (state.activities.isEmpty)
+                          _AddActivityButton(
+                            isDark: isDark,
+                            onTap: () => context.push('/nutrition/activity-search')),
+
+                        const SizedBox(height: 10),
+
+                        // AI suggestions
+                        AiNextMealSuggestions(
+                          summary: state.summary,
+                          currentMealType: MealType.dinner,
+                        ),
+
+                        const SizedBox(height: 90),
+                      ]),
+                    ),
+                  ),
               ],
             ),
           ),
 
-          // ── AI FAB ────────────────────────────────────────────────────
+          // ── AI FAB ────────────────────────────────────────────
           Positioned(
-            right: 16,
-            bottom: 100 + MediaQuery.paddingOf(context).bottom,
+            right: 18,
+            bottom: (MediaQuery.paddingOf(context).bottom == 0 ? 14.0 : MediaQuery.paddingOf(context).bottom) + 74,
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
                 context.push('/nutrition/ai');
               },
               child: Container(
-                width: 52,
-                height: 52,
+                width: 50, height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, const Color(0xFF2563EB)]),
                   boxShadow: [
                     BoxShadow(
-                        color: const Color(0xFF6366F1)
-                            .withValues(alpha: 0.45),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4)),
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4)),
                   ],
                 ),
-                child: const Icon(Icons.psychology_rounded,
-                    color: Colors.white, size: 24),
+                child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 22),
               ),
             ),
           ),
@@ -336,19 +250,14 @@ class _NutritionDiaryScreenState extends ConsumerState<NutritionDiaryScreen>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
-        children: List.generate(
-          4,
-          (i) => Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            height: 120,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.white.withValues(alpha: 0.50),
-              borderRadius: BorderRadius.circular(20),
-            ),
+        children: List.generate(4, (i) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          height: 110,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.50),
+            borderRadius: BorderRadius.circular(18),
           ),
-        ),
+        )),
       ),
     );
   }
@@ -413,7 +322,7 @@ class _ActivityCard extends StatelessWidget {
             : Colors.white.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.22),
+            color: AppColors.primary.withValues(alpha: 0.18),
             width: 0.7),
       ),
       child: Column(
@@ -426,10 +335,10 @@ class _ActivityCard extends StatelessWidget {
                   width: 34, height: 34,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                   ),
-                  child: const Icon(Icons.directions_run_rounded,
-                      size: 18, color: Color(0xFF10B981)),
+                  child: Icon(Icons.directions_run_rounded,
+                      size: 18, color: AppColors.primary),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -440,10 +349,10 @@ class _ActivityCard extends StatelessWidget {
                           color: textPrimary)),
                 ),
                 Text('${totalBurn.toInt()} kcal burned',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF10B981))),
+                        color: AppColors.primary)),
               ],
             ),
           ),
@@ -459,10 +368,10 @@ class _ActivityCard extends StatelessWidget {
                         style: TextStyle(fontSize: 11, color: textSub)),
                     const SizedBox(width: 8),
                     Text('${(a.caloriesBurned as num).toInt()} kcal',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF10B981))),
+                            color: AppColors.primary)),
                   ],
                 ),
               )),
@@ -471,19 +380,19 @@ class _ActivityCard extends StatelessWidget {
             child: Container(
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius:
                     const BorderRadius.vertical(bottom: Radius.circular(20)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_rounded, size: 14, color: Color(0xFF10B981)),
-                  SizedBox(width: 5),
+                  Icon(Icons.add_rounded, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 5),
                   Text('Add Activity',
                       style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF10B981),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.w600)),
                 ],
               ),
@@ -507,22 +416,22 @@ class _AddActivityButton extends StatelessWidget {
           height: 44,
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            color: AppColors.primary.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: const Color(0xFF10B981).withValues(alpha: 0.22),
+                color: AppColors.primary.withValues(alpha: 0.18),
                 width: 0.7),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.directions_run_rounded,
-                  size: 16, color: Color(0xFF10B981)),
-              SizedBox(width: 8),
+                  size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
               Text('+ Log Physical Activity',
                   style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF10B981),
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600)),
             ],
           ),

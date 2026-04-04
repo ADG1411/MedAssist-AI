@@ -79,7 +79,7 @@ class LiveVitalsGlassRail extends ConsumerWidget {
             const DashSectionLabel('📊 Live Vitals', 'Real-time body metrics'),
             const SizedBox(height: 10),
             SizedBox(
-              height: 122,
+              height: 128,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -106,7 +106,7 @@ class LiveVitalsGlassRail extends ConsumerWidget {
       n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 
   Widget _buildShimmer(bool isDark) => SizedBox(
-        height: 122,
+        height: 128,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -155,50 +155,51 @@ class _VitalCard extends StatelessWidget {
       radius: 18,
       blur: 16,
       child: SizedBox(
-        width: 100,
+        width: 108,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(tile.icon, size: 13, color: tile.color),
+                  Icon(tile.icon, size: 14, color: tile.color),
                   const Spacer(),
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: tile.riskColor,
                       boxShadow: [
                         BoxShadow(
-                            color: tile.riskColor.withValues(alpha: 0.55),
-                            blurRadius: 5)
+                            color: tile.riskColor.withValues(alpha: 0.45),
+                            blurRadius: 4)
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 6),
               RichText(
                 text: TextSpan(
                   children: [
                     TextSpan(
                       text: tile.value,
                       style: TextStyle(
-                        fontSize: 21,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : AppColors.textPrimary,
                         height: 1,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     TextSpan(
                       text: ' ${tile.unit}',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 10,
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.45)
+                            ? Colors.white.withValues(alpha: 0.42)
                             : AppColors.textSecondary,
                       ),
                     ),
@@ -208,14 +209,15 @@ class _VitalCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(tile.label,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.50)
+                        ? Colors.white.withValues(alpha: 0.48)
                         : AppColors.textSecondary,
                   )),
               const Spacer(),
               SizedBox(
-                height: 20,
+                height: 22,
                 child: CustomPaint(
                     painter: _SparklinePainter(tile.spark, tile.riskColor)),
               ),
@@ -241,13 +243,27 @@ class _SparklinePainter extends CustomPainter {
     final path = Path();
     for (int i = 0; i < data.length; i++) {
       final x = (i / (data.length - 1)) * size.width;
-      final y = size.height - ((data[i] - min) / range) * size.height;
+      final y = size.height - ((data[i] - min) / range) * (size.height - 2) - 1;
       i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
     }
+    // Area fill
+    final fill = Path.from(path)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+        fill,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0.0)],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)));
+    // Stroke
     canvas.drawPath(
         path,
         Paint()
-          ..color = color.withValues(alpha: 0.72)
+          ..color = color.withValues(alpha: 0.75)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
           ..strokeCap = StrokeCap.round

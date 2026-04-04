@@ -16,7 +16,7 @@ class HospitalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasEmergency = hospital['hasEmergency'] ?? false;
+    final bool hasEmergency = hospital['has_emergency'] ?? false;
     
     return AppSectionCard(
       child: Column(

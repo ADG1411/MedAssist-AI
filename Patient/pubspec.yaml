@@ -65,6 +65,10 @@ dependencies:
   health: ^13.3.1
   liquid_glass_renderer: 0.2.0-dev.4
   permission_handler: ^12.0.1
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  geolocator: ^14.0.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
