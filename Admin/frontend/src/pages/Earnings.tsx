@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CircleDollarSign, TrendingUp, Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { BudgetCard } from '@/components/ui/budget-card';
 
+const mockMonthlyData: Record<string, any> = {
+  "January": { totalBudget: 120000, spentAmount: 110000, breakdown: [{ label: "Platform Revenue", amount: 70000, color: "#059669" }, { label: "Commission Earned", amount: 15000, color: "#10B981" }, { label: "Doctor Payouts", amount: 25000, color: "#34D399" }] },
+  "February": { totalBudget: 130000, spentAmount: 125000, breakdown: [{ label: "Platform Revenue", amount: 80000, color: "#059669" }, { label: "Commission Earned", amount: 18000, color: "#10B981" }, { label: "Doctor Payouts", amount: 27000, color: "#34D399" }] },
+  "March": { totalBudget: 140000, spentAmount: 135000, breakdown: [{ label: "Platform Revenue", amount: 90000, color: "#059669" }, { label: "Commission Earned", amount: 19500, color: "#10B981" }, { label: "Doctor Payouts", amount: 25500, color: "#34D399" }] },
+  "April": { totalBudget: 150000, spentAmount: 142500, breakdown: [{ label: "Platform Revenue", amount: 100000, color: "#059669" }, { label: "Commission Earned", amount: 21375, color: "#10B981" }, { label: "Doctor Payouts", amount: 21125, color: "#34D399" }] },
+  "May": { totalBudget: 160000, spentAmount: 155000, breakdown: [{ label: "Platform Revenue", amount: 105000, color: "#059669" }, { label: "Commission Earned", amount: 23250, color: "#10B981" }, { label: "Doctor Payouts", amount: 26750, color: "#34D399" }] },
+  "June": { totalBudget: 170000, spentAmount: 162000, breakdown: [{ label: "Platform Revenue", amount: 110000, color: "#059669" }, { label: "Commission Earned", amount: 24300, color: "#10B981" }, { label: "Doctor Payouts", amount: 27700, color: "#34D399" }] },
+};
+
+const defaultData = {
+  totalBudget: 100000,
+  spentAmount: 85000,
+  breakdown: [
+    { label: "Platform Revenue", amount: 50000, color: "#059669" },
+    { label: "Commission Earned", amount: 15000, color: "#10B981" },
+    { label: "Doctor Payouts", amount: 20000, color: "#34D399" }
+  ]
+};
+
 export const Earnings: React.FC = () => {
+  const [selectedMonth, setSelectedMonth] = useState('April');
+  const currentData = mockMonthlyData[selectedMonth] || defaultData;
+
   return (
     <div className="p-8 max-w-[1400px] mx-auto fade-in animate-in slide-in-from-bottom-2 duration-300">
       <div className="mb-8">
@@ -15,15 +37,11 @@ export const Earnings: React.FC = () => {
 
       <div className="mb-8">
         <BudgetCard
-          month="April"
-          totalBudget={150000}
-          spentAmount={142500}
-          breakdown={[
-            { label: "Platform Revenue", amount: 100000, color: "#059669" },
-            { label: "Commission Earned", amount: 21375, color: "#10B981" },
-            { label: "Doctor Payouts", amount: 21125, color: "#34D399" }
-          ]}
-          onMonthChange={(m) => console.log('Month changed to', m)}
+          month={selectedMonth}
+          totalBudget={currentData.totalBudget}
+          spentAmount={currentData.spentAmount}
+          breakdown={currentData.breakdown}
+          onMonthChange={(m) => setSelectedMonth(m)}
           onViewDetails={() => console.log('View details clicked')}
         />
       </div>

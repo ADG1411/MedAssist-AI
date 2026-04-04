@@ -8,6 +8,7 @@ import {
 import { accessFullRecord, type FullRecord } from '../services/medcardService';
 import { generateDemoToken } from '../services/medcardService';
 import { cn } from '../layouts/DashboardLayout';
+import { AnnotateRecordModal } from '../components/AnnotateRecordModal';
 
 const initials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -37,6 +38,7 @@ export default function PatientRecordPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [activeAnnotateRecord, setActiveAnnotateRecord] = useState<{ id: string; category: string } | null>(null);
 
   useEffect(() => {
     if (!patientId) { setError('No patient ID'); setLoading(false); return; }
@@ -76,7 +78,10 @@ export default function PatientRecordPage() {
 
   const { patient, records, family_members, ai_summary } = record;
   const gradient = BLOOD_GRADIENT[patient.blood_group] ?? 'from-slate-600 to-slate-800';
-  const allergiesList = Array.isArray(patient.allergies) ? patient.allergies : (typeof patient.allergies === 'string' ? patient.allergies.split(',').map((a: string) => a.trim()).filter(Boolean) : []);
+  const allergiesRaw = patient.allergies;
+  const allergiesList: string[] = Array.isArray(allergiesRaw) 
+    ? allergiesRaw 
+    : (typeof allergiesRaw === 'string' ? allergiesRaw.split(',').map((a: string) => a.trim()).filter(Boolean) : []);
   const riskLevel: 'high' | 'moderate' | 'low' =
     allergiesList.length > 0 && records.length >= 3 ? 'high' :
     records.length >= 2 ? 'moderate' : 'low';
@@ -203,7 +208,7 @@ export default function PatientRecordPage() {
             </div>
             {allergiesList.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {allergiesList.map(a => (
+                {allergiesList.map((a: string) => (
                   <div key={a} className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 text-[12px] font-bold px-3 py-1.5 rounded-xl">
                     <AlertTriangle className="w-3 h-3" /> {a}
                   </div>
@@ -264,13 +269,23 @@ export default function PatientRecordPage() {
           ) : (
             <div className="divide-y divide-slate-100">
               {records.map(rec => (
-                <div key={rec.id} className="px-5 py-4">
+                <div key={rec.id} className="px-5 py-4 relative group">
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="font-black text-slate-800 text-[14px]">{rec.diagnosis}</p>
-                    <p className="text-[11px] font-medium text-slate-400 shrink-0 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(rec.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    <p className="font-black text-slate-800 text-[14px]">
+                      {rec.diagnosis || (rec as any).category || 'File Record'}
                     </p>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setActiveAnnotateRecord({ id: String(rec.id), category: rec.diagnosis || (rec as any).category || 'File Record' })}
+                        className="no-print opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-[11px] font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-lg hover:bg-teal-100 transition-all"
+                      >
+                        <ClipboardList className="w-3 h-3" /> Annotate
+                      </button>
+                      <p className="text-[11px] font-medium text-slate-400 shrink-0 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(rec.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
                   {rec.doctor_name && (
                     <p className="text-[11px] font-bold text-slate-400 mb-2 flex items-center gap-1">
@@ -357,6 +372,19 @@ export default function PatientRecordPage() {
           </button>
         </div>
       </div>
+      
+      {activeAnnotateRecord && (
+        <AnnotateRecordModal 
+          recordId={activeAnnotateRecord.id}
+          patientName={patient.name}
+          category={activeAnnotateRecord.category}
+          onClose={() => setActiveAnnotateRecord(null)}
+          onSuccess={() => {
+            setActiveAnnotateRecord(null);
+            // Optionally refresh the list or show a toast
+          }}
+        />
+      )}
     </>
   );
 }

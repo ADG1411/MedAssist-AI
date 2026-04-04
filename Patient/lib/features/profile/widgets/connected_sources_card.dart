@@ -20,53 +20,61 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
   void initState() {
     super.initState();
     _sources = [
-    _Source(
+      const _Source(
         name: 'Google Fit / Health Connect',
         icon: Icons.favorite_rounded,
         color: Color(0xFF10B981),
         connected: false,
-        lastSync: ''),
-    _Source(
+        lastSync: '',
+      ),
+      const _Source(
         name: 'Apple Health',
         icon: Icons.apple_rounded,
         color: Color(0xFF3B82F6),
         connected: false,
-        lastSync: ''),
-    _Source(
+        lastSync: '',
+      ),
+      const _Source(
         name: 'Smartwatch',
         icon: Icons.watch_rounded,
         color: Color(0xFF8B5CF6),
         connected: false,
-        lastSync: ''),
-    _Source(
+        lastSync: '',
+      ),
+      const _Source(
         name: 'Manual Vitals',
         icon: Icons.edit_note_rounded,
         color: Color(0xFF0EA5E9),
         connected: true,
-        lastSync: 'Always available'),
-    _Source(
+        lastSync: 'Always available',
+      ),
+      const _Source(
         name: 'Nutrition Sync',
         icon: Icons.restaurant_rounded,
         color: Color(0xFFF59E0B),
         connected: true,
-        lastSync: 'Synced'),
-    _Source(
+        lastSync: 'Synced',
+      ),
+      const _Source(
         name: 'Sleep Tracking',
         icon: Icons.bedtime_rounded,
         color: Color(0xFF6366F1),
         connected: false,
-        lastSync: ''),
-    _Source(
+        lastSync: '',
+      ),
+      const _Source(
         name: 'Steps & Activity',
         icon: Icons.directions_walk_rounded,
         color: Color(0xFF14B8A6),
         connected: false,
-        lastSync: ''),
-  ];
+        lastSync: '',
+      ),
+    ];
+  }
 
   void _handleConnect(int index) async {
     final source = _sources[index];
-    
+
     if (source.name.contains('Fit') || source.name.contains('Health')) {
       final status = await Permission.activityRecognition.request();
       if (status.isGranted) {
@@ -81,7 +89,6 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
         }
       }
     } else {
-      // Simulate connection for others
       setState(() {
         _sources[index] = source.copyWith(connected: true, lastSync: 'Just now');
       });
@@ -99,12 +106,10 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -115,8 +120,7 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cable_rounded,
-                        size: 12, color: Color(0xFF0EA5E9)),
+                    Icon(Icons.cable_rounded, size: 12, color: Color(0xFF0EA5E9)),
                     SizedBox(width: 4),
                     Text('Health Sources',
                         style: TextStyle(
@@ -138,12 +142,10 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
             ],
           ),
           const SizedBox(height: 10),
-
-          // Sources list
           ..._sources.asMap().entries.map((entry) => _SourceRow(
-            source: entry.value,
-            onConnect: () => _handleConnect(entry.key),
-          )),
+                source: entry.value,
+                onConnect: () => _handleConnect(entry.key),
+              )),
         ],
       ),
     );
@@ -186,7 +188,11 @@ class _SourceRow extends StatelessWidget {
   final _Source source;
   final VoidCallback onConnect;
 
-  const _SourceRow({required this.source, required this.onConnect});
+  const _SourceRow({
+    super.key,
+    required this.source,
+    required this.onConnect,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +220,7 @@ class _SourceRow extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color:
-                            isDark ? Colors.white : AppColors.textPrimary)),
+                        color: isDark ? Colors.white : AppColors.textPrimary)),
                 if (source.connected && source.lastSync.isNotEmpty)
                   Text(source.lastSync,
                       style: TextStyle(
@@ -228,8 +233,7 @@ class _SourceRow extends StatelessWidget {
           ),
           if (source.connected)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFF10B981).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
@@ -244,8 +248,7 @@ class _SourceRow extends StatelessWidget {
             GestureDetector(
               onTap: onConnect,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.06)

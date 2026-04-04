@@ -29,14 +29,18 @@ class MedicalTimelineWidget extends StatelessWidget {
     switch (type?.toLowerCase()) {
       case 'prescription':
         return Icons.medication_rounded;
-      case 'lab report':
+      case 'blood test':
         return Icons.science_rounded;
       case 'imaging':
         return Icons.image_rounded;
       case 'ai result':
         return Icons.auto_awesome;
-      case 'discharge summary':
+      case 'discharge note':
         return Icons.local_hospital_rounded;
+      case 'doctor note':
+        return Icons.note_alt_rounded;
+      case 'insurance':
+        return Icons.shield_rounded;
       default:
         return Icons.description_rounded;
     }
@@ -46,14 +50,18 @@ class MedicalTimelineWidget extends StatelessWidget {
     switch (type?.toLowerCase()) {
       case 'prescription':
         return const Color(0xFF10B981);
-      case 'lab report':
+      case 'blood test':
         return const Color(0xFF0EA5E9);
       case 'imaging':
         return const Color(0xFF8B5CF6);
       case 'ai result':
         return const Color(0xFFF59E0B);
-      case 'discharge summary':
+      case 'discharge note':
         return const Color(0xFFEF4444);
+      case 'doctor note':
+        return const Color(0xFF6366F1);
+      case 'insurance':
+        return const Color(0xFF14B8A6);
       default:
         return AppColors.primary;
     }
