@@ -10,18 +10,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Raise warning limit — bundle is large due to Recharts, Framer Motion, Supabase
+    chunkSizeWarningLimit: 2000,
+  },
   server: {
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
-      '/nim-api': {
-        target: 'https://integrate.api.nvidia.com/v1',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/nim-api/, ''),
-        secure: true,
-      }
     }
   }
 })
+
