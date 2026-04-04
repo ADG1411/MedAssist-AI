@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, Video, Moon, Trash2, LogOut, UserCog, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, Video, Moon, Trash2, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clsx } from 'clsx';
@@ -20,7 +20,6 @@ const SIDEBAR_ITEMS = [
   { name: 'Patients',     path: '/dashboard/patients',   icon: Users           },
   { name: 'Profile',      path: '/dashboard/profile',    icon: User            },
   { name: 'AI Assistant', path: '/dashboard/ai',         icon: Bot             },
-  { name: 'Profile Setup', path: '/dashboard/profile-setup', icon: UserCog     },
   { name: 'Case Workflow', path: '/dashboard/case',        icon: Clipboard       },
   { name: 'Live Bookings', path: '/dashboard/live-bookings', icon: Video          },
   { name: 'Scan QR',      path: '/dashboard/scan',        icon: QrCode          },

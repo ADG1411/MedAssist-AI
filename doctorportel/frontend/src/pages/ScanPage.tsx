@@ -16,6 +16,7 @@ import { ReferralForm }    from '../components/referral/ReferralForm';
 import { BookingModal }    from '../components/referral/BookingModal';
 import { TicketView }      from '../components/referral/TicketView';
 import { QRScanner }       from '../components/medcard/QRScanner';
+import { ViewOnMap } from '../components/ui/view-on-map';
 import { ScanHistoryDrawer } from '../components/medcard/ScanHistoryDrawer';
 import { ErrorBoundary }     from '../components/ErrorBoundary';
 import { useNavigate }     from 'react-router-dom';
@@ -163,10 +164,10 @@ export default function ScanPage() {
   ];
 
   return (
-    <div className="max-w-lg lg:max-w-4xl mx-auto pb-20 md:pb-8 px-2 lg:px-0">
+    <div className="w-full mx-auto pb-20 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Header Area */}
-      <div className="flex items-center justify-between mb-6 max-w-lg mx-auto lg:max-w-none">
+      <div className="flex items-center justify-between mb-6 w-full">
         {/* Tab Bar */}
         <div className="flex bg-slate-100 rounded-2xl p-1 gap-1 flex-1 max-w-[300px]">
           {TABS.map(t => (
@@ -179,10 +180,13 @@ export default function ScanPage() {
           ))}
         </div>
         
-        <button onClick={() => setIsHistoryOpen(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-[13px] shadow-sm transition-all ml-4">
-          <Clock className="w-4 h-4" />
-          <span className="hidden sm:inline">History</span>
-        </button>
+        <div className="flex items-center gap-3 ml-4">
+          <ViewOnMap className="hidden sm:flex" />
+          <button onClick={() => setIsHistoryOpen(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-[13px] shadow-sm transition-all">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">History</span>
+          </button>
+        </div>
       </div>
 
       <ScanHistoryDrawer 
@@ -212,7 +216,7 @@ export default function ScanPage() {
 
             {/* MedCard Renderer */}
             {activeFlow === 'medcard' && scanPhase === 'details' && medcardPreview && (
-              <div className="space-y-4 max-w-lg mx-auto">
+              <div className="space-y-4 w-full max-w-4xl mx-auto">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Back to Scanner
                 </button>
@@ -231,7 +235,7 @@ export default function ScanPage() {
 
             {/* MedCard Dashboard */}
             {activeFlow === 'medcard' && (scanPhase as any) === 'dashboard' && medcardRecord && (
-              <div className="space-y-4 max-w-lg lg:max-w-none mx-auto">
+              <div className="space-y-4 w-full">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Scan Another Patient
                 </button>
@@ -256,7 +260,7 @@ export default function ScanPage() {
 
             {/* Referral Renderer */}
             {activeFlow === 'referral' && scanPhase === 'details' && referral && insight && (
-              <div className="space-y-4 max-w-lg mx-auto">
+              <div className="space-y-4 w-full max-w-4xl mx-auto">
                 <button onClick={resetScan} className="flex items-center gap-2 text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Back to Scanner
                 </button>
@@ -275,7 +279,7 @@ export default function ScanPage() {
             )}
 
             {scanPhase === 'ticket' && ticket && (
-              <div className="space-y-4 max-w-lg mx-auto">
+              <div className="space-y-4 w-full max-w-4xl mx-auto">
                 <TicketView ticket={ticket} onNewScan={resetScan} />
               </div>
             )}
@@ -305,7 +309,7 @@ export default function ScanPage() {
 
         {/* ── CREATE TAB ── */}
         {tab === 'create' && (
-          <motion.div key="create" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className={cn("mx-auto w-full", createdReferral ? "max-w-lg" : "max-w-lg lg:max-w-4xl")}>
+          <motion.div key="create" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mx-auto w-full">
             {!createdReferral ? (
               <div className="space-y-4">
                 <div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { TabsNav } from '../components/profile/TabsNav';
 import type { TabId } from '../components/profile/TabsNav';
@@ -14,6 +15,7 @@ import { AIAssistant } from '../components/profile/AIAssistant';
 import { profileService, type DoctorProfile } from '../services/profileService';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const defaultProfile: DoctorProfile = {
     id: "mock-1",
     user_id: "user-1",
@@ -70,7 +72,7 @@ export default function Profile() {
       
       <ProfileHeader 
         profile={profile}
-        onEdit={() => console.log('Edit profile')}
+        onEdit={() => navigate('/dashboard/profile-setup')}
         onShare={() => console.log('Share profile')}
         onPreview={() => console.log('Preview profile')}
       />

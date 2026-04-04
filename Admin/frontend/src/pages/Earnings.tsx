@@ -1,7 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CircleDollarSign, TrendingUp, Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { BudgetCard } from '@/components/ui/budget-card';
+
+const mockMonthlyData: Record<string, any> = {
+  "January": { totalBudget: 120000, spentAmount: 110000, breakdown: [{ label: "Platform Revenue", amount: 70000, color: "#059669" }, { label: "Commission Earned", amount: 15000, color: "#10B981" }, { label: "Doctor Payouts", amount: 25000, color: "#34D399" }] },
+  "February": { totalBudget: 130000, spentAmount: 125000, breakdown: [{ label: "Platform Revenue", amount: 80000, color: "#059669" }, { label: "Commission Earned", amount: 18000, color: "#10B981" }, { label: "Doctor Payouts", amount: 27000, color: "#34D399" }] },
+  "March": { totalBudget: 140000, spentAmount: 135000, breakdown: [{ label: "Platform Revenue", amount: 90000, color: "#059669" }, { label: "Commission Earned", amount: 19500, color: "#10B981" }, { label: "Doctor Payouts", amount: 25500, color: "#34D399" }] },
+  "April": { totalBudget: 150000, spentAmount: 142500, breakdown: [{ label: "Platform Revenue", amount: 100000, color: "#059669" }, { label: "Commission Earned", amount: 21375, color: "#10B981" }, { label: "Doctor Payouts", amount: 21125, color: "#34D399" }] },
+  "May": { totalBudget: 160000, spentAmount: 155000, breakdown: [{ label: "Platform Revenue", amount: 105000, color: "#059669" }, { label: "Commission Earned", amount: 23250, color: "#10B981" }, { label: "Doctor Payouts", amount: 26750, color: "#34D399" }] },
+  "June": { totalBudget: 170000, spentAmount: 162000, breakdown: [{ label: "Platform Revenue", amount: 110000, color: "#059669" }, { label: "Commission Earned", amount: 24300, color: "#10B981" }, { label: "Doctor Payouts", amount: 27700, color: "#34D399" }] },
+};
+
+const defaultData = {
+  totalBudget: 100000,
+  spentAmount: 85000,
+  breakdown: [
+    { label: "Platform Revenue", amount: 50000, color: "#059669" },
+    { label: "Commission Earned", amount: 15000, color: "#10B981" },
+    { label: "Doctor Payouts", amount: 20000, color: "#34D399" }
+  ]
+};
 
 export const Earnings: React.FC = () => {
+  const [selectedMonth, setSelectedMonth] = useState('April');
+  const currentData = mockMonthlyData[selectedMonth] || defaultData;
+
   return (
     <div className="p-8 max-w-[1400px] mx-auto fade-in animate-in slide-in-from-bottom-2 duration-300">
       <div className="mb-8">
@@ -12,25 +35,15 @@ export const Earnings: React.FC = () => {
         <p className="text-slate-500 font-medium text-sm mt-3 ml-[3.25rem]">Manage platform revenue, commissions, and payouts</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-800 text-white p-6 rounded-2xl shadow-md border border-emerald-500/20 relative overflow-hidden">
-           <Wallet className="absolute -bottom-4 -right-4 h-24 w-24 text-white/10" />
-           <p className="text-sm font-bold text-emerald-100 uppercase tracking-widest relative z-10">Total Platform Revenue</p>
-           <p className="text-4xl font-extrabold tabular-nums mt-1 relative z-10">$142,500.00</p>
-           <p className="text-xs font-semibold mt-3 text-emerald-200 flex items-center gap-1 relative z-10"><ArrowUpRight className="h-4 w-4" /> +15.3% this month</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Commission Earned</p>
-           <p className="text-4xl font-extrabold text-slate-800 tabular-nums mt-1">$21,375.00</p>
-           <p className="text-xs font-semibold mt-3 text-emerald-500 flex items-center gap-1"><TrendingUp className="h-4 w-4" /> Stable at 15% rate</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Pending Doctor Payouts</p>
-           <p className="text-4xl font-extrabold text-slate-800 tabular-nums mt-1">$8,450.00</p>
-           <button className="mt-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 w-max">
-             <ArrowDownRight className="h-3.5 w-3.5" /> Process Payouts
-           </button>
-        </div>
+      <div className="mb-8">
+        <BudgetCard
+          month={selectedMonth}
+          totalBudget={currentData.totalBudget}
+          spentAmount={currentData.spentAmount}
+          breakdown={currentData.breakdown}
+          onMonthChange={(m) => setSelectedMonth(m)}
+          onViewDetails={() => console.log('View details clicked')}
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-6">
