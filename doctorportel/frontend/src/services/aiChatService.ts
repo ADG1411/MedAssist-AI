@@ -1,5 +1,5 @@
 import type { ChatMessage } from '../types/chat';
-import { supabase } from '../services/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 /**
  * AI Chat Service — Supabase-aware, NIM-powered clinical assistant
