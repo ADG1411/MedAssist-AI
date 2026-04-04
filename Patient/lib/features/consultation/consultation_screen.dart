@@ -35,13 +35,7 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
   }
 
   void _joinMeeting() {
-    if (kIsWeb) {
-      setState(() => _inCall = true);
-    } else {
-      // On native, also just show the iframe-like view for now
-      // Full native Jitsi SDK can be added later for Android/iOS
-      setState(() => _inCall = true);
-    }
+    setState(() => _inCall = true);
   }
 
   void _endCall() {

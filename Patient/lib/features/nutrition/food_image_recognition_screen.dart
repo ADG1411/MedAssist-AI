@@ -76,43 +76,45 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Future<void> _pickImage({required bool fromCamera}) async {
     try {
-      // On native Android: request camera permission
-      if (fromCamera && !kIsWeb) {
-        final status = await Permission.camera.request();
-        if (status.isDenied || status.isPermanentlyDenied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Camera permission needed to scan food.'),
-                action: SnackBarAction(
-                  label: 'Settings',
-                  textColor: Colors.white,
-                  onPressed: () => openAppSettings(),
-                ),
-              ),
-            );
-          }
-          return;
-        }
+      ImageSource source = fromCamera ? ImageSource.camera : ImageSource.gallery;
+
+      // On web: always use gallery (no camera available)
+      if (kIsWeb && fromCamera) {
+        source = ImageSource.gallery;
       }
 
-      // On web, camera may not be available — show helpful message
-      if (fromCamera && kIsWeb) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Camera capture works best on the Android app. Use Gallery to upload a photo instead.'),
-              duration: Duration(seconds: 3),
-            ),
-          );
+      // On Android: request camera permission before using camera
+      if (fromCamera && !kIsWeb) {
+        try {
+          final status = await Permission.camera.request();
+          if (!status.isGranted) {
+            // Permission not granted — fall back to gallery silently
+            debugPrint('Camera permission not granted (status: $status), using gallery');
+            source = ImageSource.gallery;
+            if (status.isPermanentlyDenied && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Camera permission denied. Opening gallery instead.'),
+                  action: SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  ),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          // permission_handler can throw — just use gallery
+          debugPrint('Permission request failed: $e, falling back to gallery');
+          source = ImageSource.gallery;
         }
-        // Still try — some browsers support getUserMedia
       }
 
       final XFile? picked = await _imagePicker.pickImage(
-        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 85,
       );
 
@@ -127,12 +129,28 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
       }
     } catch (e) {
       debugPrint('Image pick error: $e');
+      // Final fallback: try plain gallery with no options
+      if (fromCamera) {
+        try {
+          final XFile? picked = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+          );
+          if (picked != null && mounted) {
+            final bytes = await picked.readAsBytes();
+            setState(() {
+              _imageBytes = bytes;
+              _result = null;
+              _hasError = false;
+            });
+            _startRecognition();
+            return;
+          }
+        } catch (_) {}
+      }
       if (mounted) {
         setState(() {
           _hasError = true;
-          _errorMessage = fromCamera
-              ? 'Camera not available. Try uploading from Gallery instead.'
-              : 'Could not load image. Please try again.';
+          _errorMessage = 'Could not load image. Please try again.';
         });
       }
     }

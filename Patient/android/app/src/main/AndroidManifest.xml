@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Camera: Required for Jitsi video calls -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <!-- Internet: Required for all API calls -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Activity Recognition: Required for Google Fit and Pedometer -->
@@ -94,6 +96,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Required for image_picker camera on Android 11+ -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
         </intent>
         <!-- Required for Health Connect -->
         <package android:name="com.google.android.apps.healthdata"/>
