@@ -50,6 +50,7 @@ class HealthRecordsScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: _buildUploadFAB(context, ref, isDark),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -79,8 +80,10 @@ class HealthRecordsScreen extends ConsumerWidget {
   // ── Upload FAB ──────────────────────────────────────────────────────────
 
   Widget _buildUploadFAB(BuildContext context, WidgetRef ref, bool isDark) {
-    return GestureDetector(
-      onTap: () {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 80.0), // Elevate above bottom navbar
+      child: GestureDetector(
+        onTap: () {
         HapticFeedback.mediumImpact();
         _handleUpload(context, ref);
       },
@@ -109,6 +112,7 @@ class HealthRecordsScreen extends ConsumerWidget {
                     color: Colors.white,
                     fontWeight: FontWeight.w700)),
           ],
+        ),
         ),
       ),
     );
