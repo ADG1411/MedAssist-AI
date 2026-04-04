@@ -66,7 +66,7 @@ async def generate_text(prompt: str, system_prompt: str = "You are a helpful AI 
     messages = _build_messages(prompt, system_prompt, images)
     
     try:
-        content = await _call_with_retry(messages, temperature, 1024)
+        content = await _call_with_retry(messages, temperature, 4096)
         if content:
             return content.strip()
         return ""
@@ -82,7 +82,7 @@ async def generate_json(prompt: str, system_prompt: str = "You are a helpful AI 
     content = ""
     
     try:
-        content = await _call_with_retry(messages, temperature, 2048)
+        content = await _call_with_retry(messages, temperature, 8192)
         if content is None:
             content = "{}"
         content = content.strip()

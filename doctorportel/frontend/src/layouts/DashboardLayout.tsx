@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, GitBranch, Video, Moon, Trash2, LogOut } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, Video, Moon, Trash2, LogOut, UserCog, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { getProfile } from '../services/doctorProfileService';
 
 // Simple utility for Tailwind class merging
 // eslint-disable-next-line react-refresh/only-export-components
@@ -18,6 +19,7 @@ const SIDEBAR_ITEMS = [
   { name: 'Patients',     path: '/dashboard/patients',   icon: Users           },
   { name: 'Profile',      path: '/dashboard/profile',    icon: User            },
   { name: 'AI Assistant', path: '/dashboard/ai',         icon: Bot             },
+  { name: 'Profile Setup', path: '/dashboard/profile-setup', icon: UserCog     },
   { name: 'Case Workflow', path: '/dashboard/case',        icon: Clipboard       },
   { name: 'Live Bookings', path: '/dashboard/live-bookings', icon: Video          },
   { name: 'Scan QR',      path: '/dashboard/scan',        icon: QrCode          },
@@ -41,6 +43,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/sos':        'Emergency',
   '/dashboard/prescription': 'Prescription',
   '/dashboard/case':         'Case Workflow',
+  '/dashboard/profile-setup': 'Profile Setup',
   '/dashboard/live-bookings': 'Live Bookings',
   '/dashboard/scan':         'Universal Scanner',
 };
@@ -51,9 +54,32 @@ const DashboardLayout = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+
   useEffect(() => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
   }, []);
+
+  // Check profile completion to identify completely new users
+  useEffect(() => {
+    getProfile()
+      .then((profile) => {
+        const _isNew = profile.completion_percent === 0;
+        setIsNewUser(_isNew);
+        // Force completely new users to go through the setup wizard exactly once
+        if (_isNew && location.pathname !== '/dashboard/profile-setup') {
+          navigate('/dashboard/profile-setup', { replace: true });
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        setIsCheckingProfile(false);
+      });
+  }, [location.pathname, navigate]);
 
   const toggleDarkMode = () => {
     const isDark = document.documentElement.classList.toggle('dark');
@@ -67,8 +93,25 @@ const DashboardLayout = () => {
     window.location.reload();
   };
   
-  const location = useLocation();
   const pageTitle = PAGE_TITLES[location.pathname] || location.pathname.split('/').pop() || 'Dashboard';
+
+  if (isCheckingProfile) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-blue" />
+      </div>
+    );
+  }
+
+  // If completely new, only show the setup wizard
+  // If returning, show all standard links but hide the one-time setup wizard
+  const navItems = isNewUser
+    ? SIDEBAR_ITEMS.filter(item => item.path === '/dashboard/profile-setup')
+    : SIDEBAR_ITEMS.filter(item => item.path !== '/dashboard/profile-setup');
+    
+  const bottomNavItems = isNewUser 
+    ? BOTTOM_NAV.filter(item => item.path === '/dashboard/profile-setup') 
+    : BOTTOM_NAV;
 
   return (
     <div className="min-h-screen bg-slate-50 flex overflow-hidden font-sans">
@@ -107,7 +150,7 @@ const DashboardLayout = () => {
         {/* Nav Items */}
         <div className="flex-1 py-4 overflow-y-auto">
           <nav className="space-y-0.5 px-3">
-            {SIDEBAR_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
@@ -283,27 +326,29 @@ const DashboardLayout = () => {
         </div>
 
         {/* ── Mobile Bottom Nav ── */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-3 backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
-          {BOTTOM_NAV.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 rounded-xl transition-all',
-                  isActive ? 'text-brand-blue' : 'text-slate-400'
-                )}
-              >
-                <div className={cn('p-1.5 rounded-xl transition-all', isActive && 'bg-blue-50')}>
-                  <Icon className={cn('h-[22px] w-[22px]', isActive ? 'stroke-[2.5px]' : 'stroke-[1.8px]')} />
-                </div>
-                <span className={cn('text-[10px] leading-none', isActive ? 'font-bold' : 'font-medium')}>{item.name}</span>
-              </Link>
-            );
-          })}
-        </div>
+        {!isNewUser && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-3 backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 rounded-xl transition-all',
+                    isActive ? 'text-brand-blue' : 'text-slate-400'
+                  )}
+                >
+                  <div className={cn('p-1.5 rounded-xl transition-all', isActive && 'bg-blue-50')}>
+                    <Icon className={cn('h-[22px] w-[22px]', isActive ? 'stroke-[2.5px]' : 'stroke-[1.8px]')} />
+                  </div>
+                  <span className={cn('text-[10px] leading-none', isActive ? 'font-bold' : 'font-medium')}>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
       </main>
     </div>

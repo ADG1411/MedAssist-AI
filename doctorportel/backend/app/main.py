@@ -14,6 +14,7 @@ from app.api.profile_ai.router import router as profile_ai_router
 from app.api.medcard.router import router as medcard_router
 from app.api.referral.router import router as referral_router
 from app.api.consultation.router import router as consultation_router
+from app.api.doctor_profile.router import router as doctor_profile_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -42,6 +43,7 @@ app.include_router(profile_ai_router, prefix=f"{settings.API_V1_STR}/profile-ai"
 app.include_router(medcard_router,    prefix=f"{settings.API_V1_STR}/medcard",   tags=["medcard"])
 app.include_router(referral_router,   prefix=f"{settings.API_V1_STR}/referral",  tags=["referral"])
 app.include_router(consultation_router,prefix=f"{settings.API_V1_STR}/consultation",tags=["consultation"])
+app.include_router(doctor_profile_router, prefix=f"{settings.API_V1_STR}/doctor-profile", tags=["doctor-profile"])
 
 @app.get("/")
 def read_root():

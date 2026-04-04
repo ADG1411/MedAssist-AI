@@ -16,6 +16,7 @@ import PatientRecordPage from './pages/PatientRecordPage';
 import ScanPage from './pages/ScanPage';
 import { ConsultationRoom } from './pages/ConsultationRoom';
 import LiveBookings from './pages/LiveBookings';
+import DoctorProfileSetup from './pages/DoctorProfileSetup';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="prescription" element={<PrescriptionWriter />} />
           <Route path="sos" element={<EmergencyAlerts />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="profile-setup" element={<DoctorProfileSetup />} />
           <Route path="ai" element={<AIAssistant />} />
           <Route path="case" element={<PatientCaseFlow />} />
           <Route path="scan" element={<ScanPage />} />
