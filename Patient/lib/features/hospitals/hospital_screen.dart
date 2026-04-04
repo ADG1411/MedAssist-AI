@@ -61,12 +61,21 @@ class _HospitalScreenState extends State<HospitalScreen> {
       await _fetchOSMHospitals(latLng);
 
     } catch (e) {
+<<<<<<< HEAD
+      // Return empty if table doesn't exist or fails
+      if (mounted) {
+        setState(() {
+          _hospitals = [];
+          _loading = false;
+        });
+=======
       debugPrint('Error loading map data: $e');
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load location: $e', style: const TextStyle(color: Colors.white)), backgroundColor: AppColors.danger),
         );
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
       }
     }
   }

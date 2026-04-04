@@ -25,31 +25,56 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
   int _currentStage = 0;
 
   static const _stages = [
-    (icon: Icons.text_snippet_rounded, label: 'Parsing symptoms', color: Color(0xFF3B82F6)),
-    (icon: Icons.warning_amber_rounded, label: 'Checking red flags', color: Color(0xFFEF4444)),
-    (icon: Icons.compare_arrows_rounded, label: 'Comparing likely causes', color: Color(0xFFF59E0B)),
-    (icon: Icons.history_rounded, label: 'Considering history', color: Color(0xFF8B5CF6)),
-    (icon: Icons.psychology_rounded, label: 'Deciding next action', color: Color(0xFF10B981)),
-    (icon: Icons.local_hospital_rounded, label: 'Preparing route', color: Color(0xFF0EA5E9)),
+    (
+      icon: Icons.text_snippet_rounded,
+      label: 'Parsing symptoms',
+      color: Color(0xFF3B82F6),
+    ),
+    (
+      icon: Icons.warning_amber_rounded,
+      label: 'Checking red flags',
+      color: Color(0xFFEF4444),
+    ),
+    (
+      icon: Icons.compare_arrows_rounded,
+      label: 'Comparing likely causes',
+      color: Color(0xFFF59E0B),
+    ),
+    (
+      icon: Icons.history_rounded,
+      label: 'Considering history',
+      color: Color(0xFF8B5CF6),
+    ),
+    (
+      icon: Icons.psychology_rounded,
+      label: 'Deciding next action',
+      color: Color(0xFF10B981),
+    ),
+    (
+      icon: Icons.local_hospital_rounded,
+      label: 'Preparing route',
+      color: Color(0xFF0EA5E9),
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          if (_currentStage < _stages.length - 1) {
-            setState(() => _currentStage++);
-            _ctrl.forward(from: 0);
-          } else {
-            // Loop back with pulse
-            _ctrl.repeat(reverse: true);
+    _ctrl =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 800),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            if (_currentStage < _stages.length - 1) {
+              setState(() => _currentStage++);
+              _ctrl.forward(from: 0);
+            } else {
+              // Loop back with pulse
+              _ctrl.repeat(reverse: true);
+            }
           }
-        }
-      });
+        });
     _ctrl.forward();
   }
 
@@ -81,7 +106,11 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
               ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+            child: const Icon(
+              Icons.auto_awesome,
+              size: 16,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -97,23 +126,32 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.psychology_rounded,
-                                size: 10, color: Colors.white),
+                            Icon(
+                              Icons.psychology_rounded,
+                              size: 10,
+                              color: Colors.white,
+                            ),
                             SizedBox(width: 3),
-                            Text('AI Reasoning',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700)),
+                            Text(
+                              'AI Reasoning',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -121,17 +159,19 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                       // Pulse dot
                       AnimatedBuilder(
                         animation: _ctrl,
-                        builder: (_, __) => Container(
+                        builder: (_, _) => Container(
                           width: 7,
                           height: 7,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF10B981)
-                                .withValues(alpha: 0.5 + 0.5 * _ctrl.value),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.5 + 0.5 * _ctrl.value),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF10B981)
-                                    .withValues(alpha: 0.3 * _ctrl.value),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.3 * _ctrl.value),
                                 blurRadius: 6,
                               ),
                             ],
@@ -139,8 +179,10 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text('Processing…',
-                          style: TextStyle(fontSize: 10, color: textSub)),
+                      Text(
+                        'Processing…',
+                        style: TextStyle(fontSize: 10, color: textSub),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -154,12 +196,12 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
 
                     return AnimatedBuilder(
                       animation: _ctrl,
-                      builder: (_, __) {
+                      builder: (_, _) {
                         final opacity = isPending
                             ? 0.25
                             : isCurrent
-                                ? 0.5 + 0.5 * _ctrl.value
-                                : 1.0;
+                            ? 0.5 + 0.5 * _ctrl.value
+                            : 1.0;
 
                         return Opacity(
                           opacity: opacity,
@@ -176,29 +218,34 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                                     color: isComplete
                                         ? stage.color.withValues(alpha: 0.18)
                                         : isCurrent
-                                            ? stage.color
-                                                .withValues(alpha: 0.12)
-                                            : (isDark
-                                                ? Colors.white
-                                                    .withValues(alpha: 0.05)
-                                                : Colors.black
-                                                    .withValues(alpha: 0.04)),
+                                        ? stage.color.withValues(alpha: 0.12)
+                                        : (isDark
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.05,
+                                                )
+                                              : Colors.black.withValues(
+                                                  alpha: 0.04,
+                                                )),
                                     border: Border.all(
                                       color: isCurrent
-                                          ? stage.color
-                                              .withValues(alpha: 0.50)
+                                          ? stage.color.withValues(alpha: 0.50)
                                           : Colors.transparent,
                                       width: 1.2,
                                     ),
                                   ),
                                   child: isComplete
-                                      ? Icon(Icons.check_rounded,
-                                          size: 12, color: stage.color)
-                                      : Icon(stage.icon,
+                                      ? Icon(
+                                          Icons.check_rounded,
+                                          size: 12,
+                                          color: stage.color,
+                                        )
+                                      : Icon(
+                                          stage.icon,
                                           size: 11,
                                           color: isCurrent
                                               ? stage.color
-                                              : textSub),
+                                              : textSub,
+                                        ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -210,8 +257,8 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                                         : FontWeight.w500,
                                     color: isCurrent
                                         ? (isDark
-                                            ? Colors.white
-                                            : AppColors.textPrimary)
+                                              ? Colors.white
+                                              : AppColors.textPrimary)
                                         : textSub,
                                   ),
                                 ),
@@ -222,8 +269,9 @@ class _AiReasoningStreamState extends State<AiReasoningStream>
                                     height: 12,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 1.5,
-                                      valueColor:
-                                          AlwaysStoppedAnimation(stage.color),
+                                      valueColor: AlwaysStoppedAnimation(
+                                        stage.color,
+                                      ),
                                     ),
                                   ),
                                 ],

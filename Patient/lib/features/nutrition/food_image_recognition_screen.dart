@@ -1,5 +1,7 @@
 /// Food Image Recognition Screen — FatSecret AI
 /// Pick from camera or gallery → animated scan → results with nutrition
+library;
+
 import 'dart:ui';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -17,10 +19,12 @@ class FoodImageRecognitionScreen extends ConsumerStatefulWidget {
   const FoodImageRecognitionScreen({super.key, this.initialMealType});
 
   @override
-  ConsumerState<FoodImageRecognitionScreen> createState() => _FoodImageRecognitionScreenState();
+  ConsumerState<FoodImageRecognitionScreen> createState() =>
+      _FoodImageRecognitionScreenState();
 }
 
-class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitionScreen>
+class _FoodImageRecognitionScreenState
+    extends ConsumerState<FoodImageRecognitionScreen>
     with TickerProviderStateMixin {
   final _fatSecretService = FatSecretService();
   final _imagePicker = ImagePicker();
@@ -76,7 +80,9 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Future<void> _pickImage({required bool fromCamera}) async {
     try {
-      ImageSource source = fromCamera ? ImageSource.camera : ImageSource.gallery;
+      ImageSource source = fromCamera
+          ? ImageSource.camera
+          : ImageSource.gallery;
 
       // On web: always use gallery (no camera available)
       if (kIsWeb && fromCamera) {
@@ -89,12 +95,16 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
           final status = await Permission.camera.request();
           if (!status.isGranted) {
             // Permission not granted — fall back to gallery silently
-            debugPrint('Camera permission not granted (status: $status), using gallery');
+            debugPrint(
+              'Camera permission not granted (status: $status), using gallery',
+            );
             source = ImageSource.gallery;
             if (status.isPermanentlyDenied && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Camera permission denied. Opening gallery instead.'),
+                  content: const Text(
+                    'Camera permission denied. Opening gallery instead.',
+                  ),
                   action: SnackBarAction(
                     label: 'Settings',
                     textColor: Colors.white,
@@ -227,16 +237,21 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                           GestureDetector(
                             onTap: () => context.pop(),
                             child: Container(
-                              width: 36, height: 36,
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white.withValues(alpha: 0.10),
                                 border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    width: 0.8),
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  width: 0.8,
+                                ),
                               ),
-                              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                                  size: 14, color: Colors.white),
+                              child: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -244,42 +259,55 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('AI Food Scanner',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white,
-                                        letterSpacing: -0.3)),
+                                const Text(
+                                  'AI Food Scanner',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
                                 Text(
                                   widget.initialMealType != null
                                       ? 'Adding to ${widget.initialMealType!.label}'
                                       : 'Photo → instant nutrition',
                                   style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white.withValues(alpha: 0.50)),
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.50),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                              ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.auto_awesome,
-                                    size: 10, color: Colors.white),
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 10,
+                                  color: Colors.white,
+                                ),
                                 SizedBox(width: 4),
-                                Text('AI Powered',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700)),
+                                Text(
+                                  'AI Powered',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -344,10 +372,7 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                     child: child,
                   );
                 },
-                child: Image.memory(
-                  _imageBytes!,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.memory(_imageBytes!, fit: BoxFit.cover),
               )
             else
               _buildPlaceholder(),
@@ -363,11 +388,16 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                 right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0xFF58D68D).withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: const Color(0xFF58D68D).withValues(alpha: 0.5),
+                      ),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -377,13 +407,19 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF58D68D)),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF58D68D),
+                            ),
                           ),
                         ),
                         SizedBox(width: 10),
                         Text(
                           'Analyzing food...',
-                          style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -401,11 +437,18 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, color: Color(0xFFE74C3C), size: 48),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Color(0xFFE74C3C),
+                          size: 48,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           _errorMessage,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
@@ -416,7 +459,9 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF58D68D),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -444,10 +489,7 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF58D68D),
-                  Color(0xFF3498DB),
-                ],
+                colors: [Color(0xFF58D68D), Color(0xFF3498DB)],
               ),
               boxShadow: [
                 BoxShadow(
@@ -457,28 +499,36 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                 ),
               ],
             ),
-            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 44),
+            child: const Icon(
+              Icons.camera_alt_rounded,
+              color: Colors.white,
+              size: 44,
+            ),
           ),
           const SizedBox(height: 22),
           const Text(
             'Point camera at your food',
             style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3),
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'AI detects food and calculates full nutrition instantly',
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.50), fontSize: 13),
+              color: Colors.white.withValues(alpha: 0.50),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 20),
           // Feature pills
           Wrap(
-            spacing: 8, runSpacing: 8,
+            spacing: 8,
+            runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
               _FeaturePill('🍚 Indian foods'),
@@ -493,20 +543,24 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
   }
 
   Widget _FeaturePill(String text) => Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12), width: 0.7),
-        ),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 11,
-                color: Colors.white.withValues(alpha: 0.70),
-                fontWeight: FontWeight.w500)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: Colors.white.withValues(alpha: 0.12),
+        width: 0.7,
+      ),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 11,
+        color: Colors.white.withValues(alpha: 0.70),
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 
   Widget _buildScanOverlay() {
     return AnimatedBuilder(
@@ -528,19 +582,25 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: EdgeInsets.fromLTRB(
-              20, 16, 20, 20 + MediaQuery.paddingOf(context).bottom),
+            20,
+            16,
+            20,
+            20 + MediaQuery.paddingOf(context).bottom,
+          ),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.40),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08), width: 0.7),
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 0.7,
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 38, height: 4,
+                width: 38,
+                height: 4,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.20),
                   borderRadius: BorderRadius.circular(2),
@@ -579,8 +639,9 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                 'Supports JPG, PNG, WebP  •  AI identifies multiple foods at once',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.30),
-                    fontSize: 10),
+                  color: Colors.white.withValues(alpha: 0.30),
+                  fontSize: 10,
+                ),
               ),
             ],
           ),
@@ -593,23 +654,27 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
     final result = _result!;
 
     return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 1),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-          parent: _resultSlideController, curve: Curves.easeOutCubic)),
+      position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+          .animate(
+            CurvedAnimation(
+              parent: _resultSlideController,
+              curve: Curves.easeOutCubic,
+            ),
+          ),
       child: ClipRRect(
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.55),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
               border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.08), width: 0.7),
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 0.7,
+              ),
             ),
             child: Column(
               children: [
@@ -619,7 +684,8 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                   child: Column(
                     children: [
                       Container(
-                        width: 38, height: 4,
+                        width: 38,
+                        height: 4,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(2),
@@ -630,29 +696,37 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF58D68D)
-                                  .withValues(alpha: 0.18),
+                              color: const Color(
+                                0xFF58D68D,
+                              ).withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: const Color(0xFF58D68D)
-                                      .withValues(alpha: 0.30),
-                                  width: 0.7),
+                                color: const Color(
+                                  0xFF58D68D,
+                                ).withValues(alpha: 0.30),
+                                width: 0.7,
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.check_circle_rounded,
-                                    size: 12,
-                                    color: Color(0xFF58D68D)),
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 12,
+                                  color: Color(0xFF58D68D),
+                                ),
                                 const SizedBox(width: 5),
                                 Text(
                                   '${result.foods.length} Foods Detected',
                                   style: const TextStyle(
-                                      color: Color(0xFF58D68D),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700),
+                                    color: Color(0xFF58D68D),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -661,9 +735,10 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                           Text(
                             '${result.totalCalories} kcal total',
                             style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.55),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
+                              color: Colors.white.withValues(alpha: 0.55),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
@@ -672,14 +747,17 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                               _pickImage(fromCamera: false);
                             },
                             child: Container(
-                              width: 32, height: 32,
+                              width: 32,
+                              height: 32,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white.withValues(alpha: 0.10),
                               ),
-                              child: const Icon(Icons.refresh_rounded,
-                                  size: 16,
-                                  color: Color(0xFF58D68D)),
+                              child: const Icon(
+                                Icons.refresh_rounded,
+                                size: 16,
+                                color: Color(0xFF58D68D),
+                              ),
                             ),
                           ),
                         ],
@@ -692,7 +770,9 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                 Container(
                   margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -702,32 +782,37 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: const Color(0xFF58D68D).withValues(alpha: 0.18),
-                        width: 0.7),
+                      color: const Color(0xFF58D68D).withValues(alpha: 0.18),
+                      width: 0.7,
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _MacroChip(
-                          label: 'Calories',
-                          value: '${result.totalCalories}',
-                          unit: 'kcal',
-                          color: const Color(0xFFF39C12)),
+                        label: 'Calories',
+                        value: '${result.totalCalories}',
+                        unit: 'kcal',
+                        color: const Color(0xFFF39C12),
+                      ),
                       _MacroChip(
-                          label: 'Protein',
-                          value: result.totalProtein.toStringAsFixed(1),
-                          unit: 'g',
-                          color: const Color(0xFF58D68D)),
+                        label: 'Protein',
+                        value: result.totalProtein.toStringAsFixed(1),
+                        unit: 'g',
+                        color: const Color(0xFF58D68D),
+                      ),
                       _MacroChip(
-                          label: 'Carbs',
-                          value: result.totalCarbs.toStringAsFixed(1),
-                          unit: 'g',
-                          color: const Color(0xFF3498DB)),
+                        label: 'Carbs',
+                        value: result.totalCarbs.toStringAsFixed(1),
+                        unit: 'g',
+                        color: const Color(0xFF3498DB),
+                      ),
                       _MacroChip(
-                          label: 'Fat',
-                          value: result.totalFat.toStringAsFixed(1),
-                          unit: 'g',
-                          color: const Color(0xFFE74C3C)),
+                        label: 'Fat',
+                        value: result.totalFat.toStringAsFixed(1),
+                        unit: 'g',
+                        color: const Color(0xFFE74C3C),
+                      ),
                     ],
                   ),
                 ),
@@ -735,8 +820,7 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                 // Food cards list
                 Expanded(
                   child: ListView.builder(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                     itemCount: result.foods.length,
                     itemBuilder: (context, i) {
                       final food = result.foods[i];
@@ -744,11 +828,14 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
                         food: food,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          context.push('/nutrition/food-detail', extra: {
-                            'meal': food.toMealEntity(),
-                            'mealType':
-                                widget.initialMealType ?? MealType.snack,
-                          });
+                          context.push(
+                            '/nutrition/food-detail',
+                            extra: {
+                              'meal': food.toMealEntity(),
+                              'mealType':
+                                  widget.initialMealType ?? MealType.snack,
+                            },
+                          );
                         },
                       );
                     },
@@ -780,36 +867,40 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color.withValues(alpha: 0.20), color.withValues(alpha: 0.10)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border:
-                Border.all(color: color.withValues(alpha: 0.28), width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                  color: color.withValues(alpha: 0.15),
-                  blurRadius: 12),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 30),
-              const SizedBox(height: 7),
-              Text(label,
-                  style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13)),
-            ],
-          ),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.20),
+            color.withValues(alpha: 0.10),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      );
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.28), width: 0.8),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 12),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 30),
+          const SizedBox(height: 7),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _MacroChip extends StatelessWidget {
@@ -829,11 +920,27 @@ class _MacroChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 16)),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(unit, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 10)),
+        Text(
+          unit,
+          style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 10),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 10,
+          ),
+        ),
       ],
     );
   }
@@ -855,22 +962,29 @@ class _FoodResultCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.10),
-              width: 0.7),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.10),
+            width: 0.7,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              width: 46, height: 46,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF58D68D), Color(0xFF3498DB)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.restaurant_rounded,
-                  color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.restaurant_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -880,9 +994,10 @@ class _FoodResultCard extends StatelessWidget {
                   Text(
                     food.name,
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -890,20 +1005,27 @@ class _FoodResultCard extends StatelessWidget {
                   Text(
                     '${food.servingDescription}  •  ${food.totalMetricAmount.toStringAsFixed(0)}${food.metricUnit}',
                     style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.45),
-                        fontSize: 11),
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 11,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      _MiniBadge('P ${food.protein.toStringAsFixed(0)}g',
-                          const Color(0xFF58D68D)),
+                      _MiniBadge(
+                        'P ${food.protein.toStringAsFixed(0)}g',
+                        const Color(0xFF58D68D),
+                      ),
                       const SizedBox(width: 4),
-                      _MiniBadge('C ${food.carbs.toStringAsFixed(0)}g',
-                          const Color(0xFF3498DB)),
+                      _MiniBadge(
+                        'C ${food.carbs.toStringAsFixed(0)}g',
+                        const Color(0xFF3498DB),
+                      ),
                       const SizedBox(width: 4),
-                      _MiniBadge('F ${food.fat.toStringAsFixed(0)}g',
-                          const Color(0xFFE74C3C)),
+                      _MiniBadge(
+                        'F ${food.fat.toStringAsFixed(0)}g',
+                        const Color(0xFFE74C3C),
+                      ),
                     ],
                   ),
                 ],
@@ -916,14 +1038,18 @@ class _FoodResultCard extends StatelessWidget {
                 Text(
                   '${food.calories.toInt()}',
                   style: const TextStyle(
-                      color: Color(0xFFF39C12),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18),
+                    color: Color(0xFFF39C12),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                 ),
-                Text('kcal',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.40),
-                        fontSize: 10)),
+                Text(
+                  'kcal',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.40),
+                    fontSize: 10,
+                  ),
+                ),
               ],
             ),
           ],
@@ -939,15 +1065,16 @@ class _MiniBadge extends StatelessWidget {
   const _MiniBadge(this.text, this.color);
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 9, color: color, fontWeight: FontWeight.w700)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w700),
+    ),
+  );
 }
 
 // ── Scan line painter ────────────────────────────────────────────────────────
@@ -1000,22 +1127,55 @@ class _ScanLinePainter extends CustomPainter {
     const margin = 16.0;
 
     // Top-left
-    canvas.drawLine(Offset(margin, margin), Offset(margin + bracketLen, margin), bracketPaint);
-    canvas.drawLine(Offset(margin, margin), Offset(margin, margin + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(margin, margin),
+      Offset(margin + bracketLen, margin),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(margin, margin),
+      Offset(margin, margin + bracketLen),
+      bracketPaint,
+    );
 
     // Top-right
-    canvas.drawLine(Offset(size.width - margin, margin), Offset(size.width - margin - bracketLen, margin), bracketPaint);
-    canvas.drawLine(Offset(size.width - margin, margin), Offset(size.width - margin, margin + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(size.width - margin, margin),
+      Offset(size.width - margin - bracketLen, margin),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width - margin, margin),
+      Offset(size.width - margin, margin + bracketLen),
+      bracketPaint,
+    );
 
     // Bottom-left
-    canvas.drawLine(Offset(margin, size.height - margin), Offset(margin + bracketLen, size.height - margin), bracketPaint);
-    canvas.drawLine(Offset(margin, size.height - margin), Offset(margin, size.height - margin - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(margin, size.height - margin),
+      Offset(margin + bracketLen, size.height - margin),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(margin, size.height - margin),
+      Offset(margin, size.height - margin - bracketLen),
+      bracketPaint,
+    );
 
     // Bottom-right
-    canvas.drawLine(Offset(size.width - margin, size.height - margin), Offset(size.width - margin - bracketLen, size.height - margin), bracketPaint);
-    canvas.drawLine(Offset(size.width - margin, size.height - margin), Offset(size.width - margin, size.height - margin - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(size.width - margin, size.height - margin),
+      Offset(size.width - margin - bracketLen, size.height - margin),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width - margin, size.height - margin),
+      Offset(size.width - margin, size.height - margin - bracketLen),
+      bracketPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(_ScanLinePainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(_ScanLinePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

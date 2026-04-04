@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, X, Clipboard, QrCode, Video, Moon, Trash2, LogOut, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, User, Bell, Bot, PieChart, Menu, Clipboard, QrCode, Video, Moon, Trash2, LogOut, Loader2 } from 'lucide-react'; 
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { getProfile } from '../services/doctorProfileService';
 import { authService } from '../services/authService';
+import { MacOSSidebar } from '@/components/ui/macos-sidebar';
 
 // Simple utility for Tailwind class merging
 // eslint-disable-next-line react-refresh/only-export-components
@@ -49,7 +50,6 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 const DashboardLayout = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -114,89 +114,20 @@ const DashboardLayout = () => {
   }
 
   // Show all standard links. If they are incomplete, don't hide the portal content.
-  const navItems = SIDEBAR_ITEMS;
     
   const bottomNavItems = BOTTOM_NAV;
 
   return (
-    <div className="h-screen bg-slate-50 flex overflow-hidden font-sans">
-
-      {/* ── Mobile Backdrop ── */}
-      <div
-        className={cn(
-          'fixed inset-0 bg-slate-900/60 z-40 md:hidden transition-opacity duration-300',
-          isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        )}
-        onClick={() => setSidebarOpen(false)}
-      />
-
-      {/* ── Sidebar ── */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-[270px] bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out',
-          'md:translate-x-0 md:static md:z-auto',
-          isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'
-        )}
-      >
-        {/* Logo + Close (mobile) */}
-        <div className="flex items-center justify-between h-16 md:h-32 md:flex-col px-4 md:px-0 md:items-center md:justify-center border-b border-slate-100 bg-white/50 shrink-0">
-          <div className="flex items-center gap-3 md:flex-col md:gap-1">
-            <img src="/logo.svg" alt="MedAssist" className="h-9 w-9 md:h-12 md:w-12 object-contain" />
-            <span className="font-bold text-lg md:text-xl text-[#0A2540] tracking-tight">MedAssist</span>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="md:hidden p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Nav Items */}
-        <div className="flex-1 py-4 overflow-y-auto">
-          <nav className="space-y-0.5 px-3">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center px-3 py-3 rounded-xl transition-all duration-200 group text-[15px] font-medium',
-                    isActive
-                      ? 'bg-brand-blue text-white shadow-soft'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  )}
-                >
-                  <Icon className={cn('mr-3 h-5 w-5 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-brand-blue')} />
-                  {item.name}
-                  {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/80" />}
-                </Link>
-              );
-            })}
-          </nav>
-
-
-        </div>
-
-        {/* Doctor Identity */}
-        <div className="p-4 border-t border-slate-100 shrink-0">
-          <div className="flex items-center gap-3 px-2 py-2 hover:bg-slate-50 cursor-pointer rounded-xl transition-colors">
-            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden shrink-0">
-              <img src="https://ui-avatars.com/api/?name=Dr.+Smith&background=1A6BFF&color=fff" className="w-full h-full object-cover" alt="Dr Smith" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-800 truncate">Dr. Smith</p>
-              <p className="text-xs text-slate-500 truncate">Cardiologist</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
+    <MacOSSidebar
+      items={SIDEBAR_ITEMS.map((i) => i.name)}
+      initialSelectedIndex={Math.max(0, SIDEBAR_ITEMS.findIndex((i) => i.path === location.pathname))}
+      onItemSelect={(idx) => {
+        navigate(SIDEBAR_ITEMS[idx].path);
+      }}
+      className="h-screen bg-slate-50 !font-sans !p-0 !rounded-none !min-w-0"
+    >
       {/* ── Main Content ── */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#F9FBFF] pb-[72px] md:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col h-full min-w-0 bg-[#F9FBFF] pb-[72px] md:pb-0 overflow-hidden">
 
         {/* Top Navbar */}
         {location.pathname !== '/dashboard/ai' && (
@@ -204,7 +135,6 @@ const DashboardLayout = () => {
             <div className="flex items-center gap-3">
               {/* Hamburger (mobile) */}
               <button
-                onClick={() => setSidebarOpen(true)}
                 className="md:hidden p-2 -ml-1 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
               >
                 <Menu className="h-5 w-5" />
@@ -356,7 +286,7 @@ const DashboardLayout = () => {
           </div>
 
       </main>
-    </div>
+    </MacOSSidebar>
   );
 };
 

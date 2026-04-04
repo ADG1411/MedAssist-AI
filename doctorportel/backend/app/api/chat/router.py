@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+﻿from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 
@@ -47,11 +47,17 @@ async def process_chat_message(chat: ChatMessage):
     
     mode = chat.search_mode or "auto"
     
-    # ── FORCED OFFLINE MODE ──
+    # â”€â”€ FORCED OFFLINE MODE â”€â”€
     if mode == "offline":
         local_context = get_full_context()
+        sys_guardrails = (
+            "IMPORTANT GUARDRAILS:\n"
+            "1. You MUST ONLY discuss topics related to the medical ecosystem, health, patient care, doctors, and MedAssist.\n"
+            "2. If the user asks about non-medical topics (e.g., 'What is the capital of India?', sports, general trivia), you MUST refuse to answer and state you only assist with health-related topics.\n"
+            "3. If the user provides an invalid number or nonsensical input, inform them the input is invalid.\n"
+        )
         text = await generate_with_context(
-            user_message=chat.message,
+            user_message=f"{sys_guardrails}\nUser Message: {chat.message}",
             local_context=local_context,
             images=chat.images,
         )
@@ -60,14 +66,17 @@ async def process_chat_message(chat: ChatMessage):
             mode="offline",
         )
     
-    # ── FORCED ONLINE MODE ──
+    # â”€â”€ FORCED ONLINE MODE â”€â”€
     if mode == "online":
         internet_results = search_web(chat.message, max_results=5)
         synthesis_prompt = (
-            f"You are a medical AI assistant. The doctor asked: '{chat.message}'.\n\n"
+            "CRITICAL GUARDRAILS: You are restricted to medical, healthcare, and patient-centric conversations ONLY. "
+            "If the user query is outside this scope (e.g. asking for capitals, sports) or is an invalid number, "
+            "respond that you only assist with medical ecosystem inquiries. Do NOT provide the answer to out-of-scope questions even if search results have it.\n\n"
+            f"The doctor asked: '{chat.message}'.\n\n"
             f"Web search results:\n---\n{internet_results}\n---\n\n"
-            "Write a helpful, structured response based on this data. "
-            "Cite sources. Keep it professional and medically accurate."
+            "If the query is medical, write a helpful response based on the data. "
+            "If it is NOT medical, just output a polite refusal."
         )
         text = await generate_text(synthesis_prompt, images=chat.images)
         return ChatResponse(
@@ -76,17 +85,45 @@ async def process_chat_message(chat: ChatMessage):
         )
     
     # ── AUTO MODE: AI classifies intent ──
+    # 🛑 1. LENGTH GUARDRAIL
+    if len(chat.message.strip()) < 3:
+        return ChatResponse(
+            text="Please ask a complete medical question.",
+            action=None,
+            mode="auto"
+        )
+        
+    # 🛑 2. AI CLASSIFIER (STRICT)
+    is_med_prompt = (
+        "You are a strict classifier.\n"
+        "ONLY answer:\n"
+        "YES -> if question is medical/health related\n"
+        "NO -> if not\n"
+        "No explanation.\n\n"
+        f"Question: {chat.message}"
+    )
+    is_med_check = await generate_text(is_med_prompt)
+    if "no" in (is_med_check or "").lower():
+        return ChatResponse(
+            text="⚠ I am a medical AI. Please ask health-related questions only.",
+            action=None,
+            mode="auto"
+        )
+
+    # 🚀 3. MAIN AI WITH HARD RESTRICTION
     system_prompt_intent = (
-        "You are an AI assistant integrated into a Doctor's Portal. "
-        "The user will ask you something related to their medical practice: viewing appointments, "
-        "checking critical cases, generating prescriptions, checking patient history, or getting a daily summary. "
-        "If they ask a general medical/knowledge question or ask you to fetch data from the internet, classify as 'search_web'. "
-        "If they ask about their own patients, appointments, schedule, or practice data, classify as 'local_data'. "
-        "Classify the intent into one of the following actions: "
+        "You are MedAssist AI.\n\n"
+        "STRICT RULES:\n"
+        "- Only answer medical/health questions\n"
+        "- If question is not medical → REFUSE\n\n"
+        "Refusal format:\n"
+        "\"I'm a medical assistant. I can only answer health-related questions.\"\n\n"
+        "DO NOT answer anything outside healthcare.\n\n"
+        "Analyze the user intent into one of the following actions:\n"
         "'show_appointments', 'show_critical', 'generate_prescription', 'show_history', "
         "'show_summary', 'search_web', 'local_data', or 'none'.\n\n"
         "Return a JSON object with:\n"
-        "- 'text': A conversational, professional reply.\n"
+        "- 'text': A conversational reply (If out-of-scope, strictly decline here without answering).\n"
         "- 'action': The selected action string (or null if 'none').\n"
         "- 'search_query': If intent is 'search_web', provide a short optimal web search query. null otherwise.\n"
         "- 'patient_name': If the user asks about a specific patient, extract their name. null otherwise.\n"
@@ -95,35 +132,38 @@ async def process_chat_message(chat: ChatMessage):
     )
     
     prompt = f"Message: {chat.message}\nContext: {json.dumps(chat.context) if chat.context else '{}'}"
-    
     aiResponse = await generate_json(prompt, system_prompt_intent, images=chat.images)
-    
+
     if "error" in aiResponse:
         return ChatResponse(
             text="I'm having trouble connecting to my cognitive services right now. How else can I assist?",
             mode="auto",
         )
-        
+
     action = aiResponse.get("action")
     text = aiResponse.get("text", "")
-    
-    # ── Handle Web Search ──
+
+    # â”€â”€ Handle Web Search â”€â”€
     if action == "search_web" and aiResponse.get("search_query"):
         search_query = aiResponse.get("search_query")
+
         internet_results = search_web(search_query)
-        
+
         synthesis_prompt = (
-            f"You are a medical AI assistant. The user asked: '{chat.message}'.\n\n"
-            f"I fetched the following data from the internet:\n---\n{internet_results}\n---\n\n"
-            "Write a helpful, structured response directly addressing the user's question based on this data. "
-            "Cite sources appropriately and keep it professional. Do not use JSON."
+            "CRITICAL GUARDRAILS: You are restricted to medical, healthcare, and patient-centric conversations ONLY. "
+            "If the user's query is outside this scope or is an invalid number/gibberish, "
+            "you MUST decline answering. Do NOT provide the answer to their out-of-scope question, even if the web search results contain it.\n\n"
+            f"The user asked: '{chat.message}'.\n\n"
+            f"Web search results:\n---\n{internet_results}\n---\n\n"
+            "If the query is primarily medical, write a helpful response based on the data, citing sources and keeping it professional. "
+            "If it is NOT medical, strictly output ONLY this exact phrase: 'I am a medical assistant. I can only assist you with health, medical ecosystem, and patient-related queries.'"
         )
         final_answer = await generate_text(synthesis_prompt, images=chat.images)
         text = final_answer
         action = "none"
         return ChatResponse(text=text, action=None, payload=None, mode="online")
     
-    # ── Handle Local Data Queries ──
+    # â”€â”€ Handle Local Data Queries â”€â”€
     if action == "local_data" or action in ("show_appointments", "show_critical", "show_history", "show_summary"):
         patient_name = aiResponse.get("patient_name")
         
@@ -134,18 +174,16 @@ async def process_chat_message(chat: ChatMessage):
         else:
             local_context = get_full_context()
         
+        sys_guardrails = (
+            "IMPORTANT GUARDRAIL: You are restricted entirely to healthcare, patient data, and medical ecosystem contexts. "
+            "If the user asks an unrelated general question or inputs invalid data/numbers, gently decline to answer and offer health assistance."
+        )
+
         enriched_text = await generate_with_context(
-            user_message=chat.message,
-            local_context=local_context,
-            images=chat.images,
+            user_message=f"{sys_guardrails}\nUser Message: {chat.message}",
+            context_data=local_context
         )
-        
-        return ChatResponse(
-            text=enriched_text or text,
-            action=action if action not in ("local_data", "none") else None,
-            payload=aiResponse.get("payload"),
-            mode="offline",
-        )
+        text = enriched_text
     
     return ChatResponse(
         text=text if text else "I can help you fetch patient records, schedule appointments, or generate prescriptions.",
@@ -161,14 +199,40 @@ async def search_online(req: SearchRequest):
     internet_results = search_web(req.query, max_results=5)
     
     synthesis_prompt = (
-        f"You are a medical AI assistant. The doctor asked: '{req.query}'.\n\n"
+        "CRITICAL GUARDRAILS: You are a medical AI assistant restricted to medical, healthcare, and patient-centric conversations ONLY. "
+        "If the user's query is outside this scope (e.g., asking for capitals, sports) or is an invalid number, "
+        "you MUST decline answering. Do NOT provide the answer to out-of-scope questions even if the search results have it. "
+        f"The doctor asked: '{req.query}'.\n\n" 
         f"Web search results:\n---\n{internet_results}\n---\n\n"
-        "Write a helpful, structured response based on this data. "
-        "Cite sources. Be professional and medically accurate."
+        "If the query is medical, write a helpful, structured response based on this data, citing sources, and being professional. "
+        "If it is NOT medical, output a polite refusal stating you only assist with the health ecosystem."
     )
-    text = await generate_text(synthesis_prompt)
-    
-    return SearchResponse(
-        text=text or "I couldn't find relevant information.",
-        sources=[line.split("(")[1].split(")")[0] for line in internet_results.split("\n\n") if "(" in line][:5]
+
+
+
+
+
+class ValidateRequest(BaseModel):
+    message: str
+
+class ValidateResponse(BaseModel):
+    isMedical: str
+
+@router.post("/validate", response_model=ValidateResponse)
+async def validate_query(req: ValidateRequest):
+    """Live typing validation endpoint to check if query is medical."""
+    if len(req.message.strip()) < 3:
+        return ValidateResponse(isMedical="YES") # Allow short inputs during typing
+
+    classification_prompt = (
+        "You are a strict classifier.\n"
+        "ONLY answer:\n"
+        "YES -> if question is medical/health related\n"
+        "NO -> if not\n"
+        "No explanation.\n\n"
+        f"Question: {req.message}"
     )
+    is_med_check = await generate_text(classification_prompt)
+    if "no" in (is_med_check or "").lower():
+        return ValidateResponse(isMedical="NO")
+    return ValidateResponse(isMedical="YES")

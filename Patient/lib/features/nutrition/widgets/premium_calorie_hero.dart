@@ -28,7 +28,9 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200));
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _ringAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     _ctrl.forward();
   }
@@ -55,8 +57,9 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
     final progress = s.calorieProgress.clamp(0.0, 1.0);
     final overGoal = s.caloriesLogged > s.calorieGoal;
 
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
 
     return GlassCard(
       radius: 24,
@@ -81,7 +84,7 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
               // Center ring
               AnimatedBuilder(
                 animation: _ringAnim,
-                builder: (_, __) => _CalorieRing(
+                builder: (_, _) => _CalorieRing(
                   progress: progress * _ringAnim.value,
                   remaining: remaining.toInt(),
                   overGoal: overGoal,
@@ -140,24 +143,33 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
               // AI Meal Score
               if (widget.aiMealScore > 0) ...[
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome,
-                          size: 11, color: Colors.white),
+                      const Icon(
+                        Icons.auto_awesome,
+                        size: 11,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 4),
-                      Text('AI Score ${widget.aiMealScore}/100',
-                          style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        'AI Score ${widget.aiMealScore}/100',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -166,26 +178,35 @@ class _PremiumCalorieHeroState extends State<PremiumCalorieHero>
               // Sodium warning
               if (_hasSodiumWarning(s)) ...[
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEF4444).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.25),
-                        width: 0.6),
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+                      width: 0.6,
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.warning_rounded,
-                          size: 10, color: Color(0xFFEF4444)),
+                      Icon(
+                        Icons.warning_rounded,
+                        size: 10,
+                        color: Color(0xFFEF4444),
+                      ),
                       SizedBox(width: 4),
-                      Text('High Sodium',
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFFEF4444),
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        'High Sodium',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFEF4444),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -244,9 +265,7 @@ class _CalorieRing extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
-                  color: overGoal
-                      ? const Color(0xFFEF4444)
-                      : AppColors.primary,
+                  color: overGoal ? const Color(0xFFEF4444) : AppColors.primary,
                   letterSpacing: -1,
                 ),
               ),
@@ -286,7 +305,8 @@ class _RingPainter extends CustomPainter {
     final radius = (min(size.width, size.height) - strokeWidth) / 2;
 
     canvas.drawCircle(
-      center, radius,
+      center,
+      radius,
       Paint()
         ..color = trackColor
         ..style = PaintingStyle.stroke
@@ -334,16 +354,23 @@ class _StatColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
     return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: textSub)),
-        Text(value,
-            style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
         Text(unit, style: TextStyle(fontSize: 10, color: textSub)),
       ],
     );
@@ -368,8 +395,9 @@ class _MacroProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = goal > 0 ? (logged / goal).clamp(0.0, 1.0) : 0.0;
-    final textSub =
-        isDark ? Colors.white.withValues(alpha: 0.50) : AppColors.textSecondary;
+    final textSub = isDark
+        ? Colors.white.withValues(alpha: 0.50)
+        : AppColors.textSecondary;
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
 
     return Expanded(
@@ -379,13 +407,15 @@ class _MacroProgress extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: TextStyle(fontSize: 10, color: textSub)),
-              Text('${logged.toInt()}/${goal.toInt()}g',
-                  style: TextStyle(
-                      fontSize: 9,
-                      color: textPrimary,
-                      fontWeight: FontWeight.w600)),
+              Text(label, style: TextStyle(fontSize: 10, color: textSub)),
+              Text(
+                '${logged.toInt()}/${goal.toInt()}g',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),

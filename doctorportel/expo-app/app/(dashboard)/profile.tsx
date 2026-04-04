@@ -9,9 +9,12 @@ import { supabase } from '../../services/supabase';
 export default function ProfileScreen() {
   const router = useRouter();
   const [doctorName, setDoctorName] = useState('Dr. Smith');
-  const [specialization, setSpecialization] = useState('Cardiologist');
+  const [specialization, setSpecialization] = useState('General');
   const [completion, setCompletion] = useState(0);
   const [email, setEmail] = useState('');
+  
+  const [overview, setOverview] = useState<any>(null);
+  const [fees, setFees] = useState<any>(null);
 
   useEffect(() => {
     loadProfile();
@@ -22,8 +25,10 @@ export default function ProfileScreen() {
       const { data } = await authService.getCurrentUser();
       if (data?.user) {
         setEmail(data.user.email || '');
-        const { data: profile } = await supabase.from('doctor_profiles').select('overview, completion_percent').eq('id', data.user.id).maybeSingle();
+        const { data: profile } = await supabase.from('doctor_profiles').select('overview, fees, completion_percent').eq('id', data.user.id).maybeSingle();
         if (profile) {
+          setOverview(profile.overview || null);
+          setFees(profile.fees || null);
           setDoctorName(profile.overview?.full_name || 'Dr. Smith');
           setSpecialization(profile.overview?.specialization || 'General');
           setCompletion(profile.completion_percent || 0);
@@ -87,6 +92,53 @@ export default function ProfileScreen() {
           <Ionicons name="create-outline" size={18} color={Colors.brandBlue} />
         </TouchableOpacity>
       </View>
+      
+      {/* Dynamic Profile Data Cards */}
+      {(overview || fees) && (
+        <View style={styles.infoCardsContainer}>
+          {/* Expertise & Bio */}
+          {overview && (
+            <View style={styles.infoCard}>
+               <View style={styles.infoHeader}>
+                 <Ionicons name="medical" size={16} color={Colors.emerald} />
+                 <Text style={styles.infoCardTitle}>Expertise & Background</Text>
+               </View>
+               {overview.degree ? <Text style={styles.infoField}><Text style={styles.infoLabel}>Degree: </Text>{overview.degree}</Text> : null}
+               {overview.years_of_experience ? <Text style={styles.infoField}><Text style={styles.infoLabel}>Experience: </Text>{overview.years_of_experience} years</Text> : null}
+               {overview.city ? <Text style={styles.infoField}><Text style={styles.infoLabel}>Location: </Text>{overview.city}</Text> : null}
+               {overview.bio ? (
+                 <View style={styles.bioBox}>
+                   <Text style={styles.bioText}>"{overview.bio}"</Text>
+                 </View>
+               ) : null}
+            </View>
+          )}
+
+          {/* Fees */}
+          {fees && (
+            <View style={[styles.infoCard, { marginBottom: 16 }]}>
+               <View style={styles.infoHeader}>
+                 <Ionicons name="cash" size={16} color={Colors.amber} />
+                 <Text style={styles.infoCardTitle}>Consultation Fees</Text>
+               </View>
+               <View style={styles.feeGrid}>
+                 <View style={styles.feeBox}>
+                   <Text style={styles.feeLabel}>Online</Text>
+                   <Text style={styles.feeAmount}>₹{fees.online_fee || 0}</Text>
+                 </View>
+                 <View style={styles.feeBox}>
+                   <Text style={styles.feeLabel}>In-Clinic</Text>
+                   <Text style={styles.feeAmount}>₹{fees.offline_fee || 0}</Text>
+                 </View>
+                 <View style={[styles.feeBox, { backgroundColor: Colors.redBg }]}>
+                   <Text style={[styles.feeLabel, { color: Colors.red }]}>Emergency</Text>
+                   <Text style={[styles.feeAmount, { color: Colors.red }]}>₹{fees.emergency_fee || 0}</Text>
+                 </View>
+               </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Completion Bar */}
       <View style={styles.completionCard}>
@@ -140,12 +192,28 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 56, paddingBottom: 8 },
   pageTitle: { fontSize: FontSize.h1, fontWeight: '900', color: Colors.textPrimary },
   // Profile Card
-  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.surface, margin: 16, marginBottom: 10, borderRadius: BorderRadius.xxl, padding: 16, borderWidth: 1, borderColor: Colors.borderLight },
+  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.surface, margin: 16, marginBottom: 12, borderRadius: BorderRadius.xxl, padding: 16, borderWidth: 1, borderColor: Colors.borderLight },
   avatar: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, borderColor: Colors.blueLight },
   name: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
   spec: { fontSize: FontSize.sm, color: Colors.brandBlue, fontWeight: '600', marginTop: 1 },
   email: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 2 },
   editBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: Colors.blueBg, justifyContent: 'center', alignItems: 'center' },
+  
+  // Info Cards
+  infoCardsContainer: { paddingHorizontal: 16, gap: 12 },
+  infoCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xl, padding: 16, borderWidth: 1, borderColor: Colors.borderLight },
+  infoHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  infoCardTitle: { fontSize: FontSize.sm, fontWeight: '800', color: Colors.textPrimary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoField: { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: 4 },
+  infoLabel: { fontWeight: '700', color: Colors.textPrimary },
+  bioBox: { marginTop: 8, padding: 12, backgroundColor: Colors.slate50, borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.borderLight },
+  bioText: { fontSize: FontSize.sm, color: Colors.textSecondary, fontStyle: 'italic', lineHeight: 20 },
+  
+  feeGrid: { flexDirection: 'row', gap: 8 },
+  feeBox: { flex: 1, backgroundColor: Colors.slate50, padding: 12, borderRadius: BorderRadius.md, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderLight },
+  feeLabel: { fontSize: FontSize.xs, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', marginBottom: 2 },
+  feeAmount: { fontSize: FontSize.base, fontWeight: '900', color: Colors.textPrimary },
+
   // Completion
   completionCard: { backgroundColor: Colors.surface, marginHorizontal: 16, borderRadius: BorderRadius.xl, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: Colors.borderLight },
   completionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },

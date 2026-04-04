@@ -48,7 +48,7 @@ class _EmergencyRiskBannerState extends State<EmergencyRiskBanner>
 
     return AnimatedBuilder(
       animation: _pulseCtrl,
-      builder: (_, __) {
+      builder: (_, _) {
         final pulseAlpha = 0.10 + 0.08 * _pulseCtrl.value;
         final borderAlpha = 0.40 + 0.20 * _pulseCtrl.value;
 
@@ -59,13 +59,14 @@ class _EmergencyRiskBannerState extends State<EmergencyRiskBanner>
             borderRadius: BorderRadius.circular(18),
             color: const Color(0xFFEF4444).withValues(alpha: pulseAlpha),
             border: Border.all(
-                color:
-                    const Color(0xFFEF4444).withValues(alpha: borderAlpha),
-                width: 1.2),
+              color: const Color(0xFFEF4444).withValues(alpha: borderAlpha),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFEF4444)
-                    .withValues(alpha: 0.15 * _pulseCtrl.value),
+                color: const Color(
+                  0xFFEF4444,
+                ).withValues(alpha: 0.15 * _pulseCtrl.value),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
@@ -81,49 +82,63 @@ class _EmergencyRiskBannerState extends State<EmergencyRiskBanner>
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color:
-                          const Color(0xFFEF4444).withValues(alpha: 0.20),
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.20),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.emergency_rounded,
-                        size: 20, color: Color(0xFFEF4444)),
+                    child: const Icon(
+                      Icons.emergency_rounded,
+                      size: 20,
+                      color: Color(0xFFEF4444),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Emergency Risk Detected',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFFEF4444))),
+                        Text(
+                          'Emergency Risk Detected',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFFEF4444),
+                          ),
+                        ),
                         if (widget.likelyCause.isNotEmpty)
-                          Text(widget.likelyCause,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.65)
-                                      : const Color(0xFFEF4444)
-                                          .withValues(alpha: 0.70))),
+                          Text(
+                            widget.likelyCause,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.65)
+                                  : const Color(
+                                      0xFFEF4444,
+                                    ).withValues(alpha: 0.70),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('URGENT',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5)),
+                    child: const Text(
+                      'URGENT',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -132,11 +147,12 @@ class _EmergencyRiskBannerState extends State<EmergencyRiskBanner>
               Text(
                 'Please seek immediate medical attention. Use the options below for quick action.',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.55)
-                        : AppColors.textSecondary,
-                    height: 1.4),
+                  fontSize: 12,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.55)
+                      : AppColors.textSecondary,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -216,21 +232,26 @@ class _SOSButton extends StatelessWidget {
               ? null
               : Border.all(
                   color: const Color(0xFFEF4444).withValues(alpha: 0.30),
-                  width: 0.7),
+                  width: 0.7,
+                ),
         ),
         child: Column(
           children: [
-            Icon(icon,
-                size: 16,
-                color: isPrimary ? Colors.white : const Color(0xFFEF4444)),
+            Icon(
+              icon,
+              size: 16,
+              color: isPrimary ? Colors.white : const Color(0xFFEF4444),
+            ),
             const SizedBox(height: 3),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 9,
-                    color:
-                        isPrimary ? Colors.white : const Color(0xFFEF4444),
-                    fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9,
+                color: isPrimary ? Colors.white : const Color(0xFFEF4444),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),

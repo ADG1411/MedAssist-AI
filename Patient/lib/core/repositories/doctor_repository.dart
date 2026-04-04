@@ -42,17 +42,11 @@ class DoctorRepository {
       
       if (legacyList.isNotEmpty) return legacyList;
       
-      // If both empty, return fallback
-      if (filter != 'All') {
-        return _fallbackDoctors.where((doc) => doc['specialty'] == filter).toList();
-      }
-      return _fallbackDoctors;
+      // If both empty, return empty list
+      return [];
     } catch (e) {
-      // Fallback mock if database isn't ready/seeded yet so the UI doesn't crash during transition
-      if (filter != 'All') {
-        return _fallbackDoctors.where((doc) => doc['specialty'] == filter).toList();
-      }
-      return _fallbackDoctors;
+      // Return empty if database isn't ready
+      return [];
     }
   }
 

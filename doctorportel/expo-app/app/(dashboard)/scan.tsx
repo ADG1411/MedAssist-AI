@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Vibration } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Vibration, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -70,11 +70,9 @@ export default function ScanScreen() {
     setLoading(true);
     setScanResult(result);
     try {
-      // 1. Fetch Patient Data
       const patient = await getPatientById(result.patientId);
       if (patient) {
         setPatientData(patient);
-        // 2. Auto-save to 'My Patients' if logged in
         const { data: authData } = await supabase.auth.getUser();
         if (authData?.user) {
           await autoSavePatient(result.patientId, authData.user.id);
@@ -92,15 +90,20 @@ export default function ScanScreen() {
   };
 
   const handleScan = (data: string) => {
-    if (scanned) return;
+    if (scanned || !data) return;
     setScanned(true);
-    Vibration.vibrate(100);
+    if (Platform.OS !== 'web') Vibration.vibrate(100);
     try {
       const result = parseToken(data);
+      if (result.type === 'referral') {
+        router.push(`/(dashboard)/provider-ticket?qr=REFQR::${result.patientId}`);
+        setTimeout(() => setScanned(false), 2000);
+        return;
+      }
       processScanResult(result);
     } catch (e: any) {
       Alert.alert('Scan Error', e.message);
-      setTimeout(() => setScanned(false), 2000);
+      setTimeout(() => setScanned(false), 2500);
     }
   };
 
@@ -114,11 +117,6 @@ export default function ScanScreen() {
     }
   };
 
-  const generateDemoToken = (id: string) => {
-    const ts = Date.now() + 30 * 60 * 1000;
-    return `MEDCARD::${id}::${ts}`;
-  };
-
   const resetScan = () => {
     setScanResult(null);
     setPatientData(null);
@@ -126,166 +124,227 @@ export default function ScanScreen() {
     setManualToken('');
   };
 
-  // Preview Card View
+  const generateDemoToken = (id: string) => {
+    const ts = Date.now() + 30 * 60 * 1000;
+    return `MEDCARD::${id}::${ts}`;
+  };
+
+  // ------------------
+  // PREVIEW VIEW
+  // ------------------
   if (scanResult && patientData) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={resetScan} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <TouchableOpacity onPress={resetScan} style={styles.iconBtn}>
+            <Ionicons name="close" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Patient Found</Text>
+          <Text style={styles.pageTitle}>Patient Card</Text>
+          <View style={{ width: 40 }} />
         </View>
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <View style={[styles.previewCard, scanResult.isEmergency && styles.previewCardEmergency]}>
-            <View style={styles.previewHeader}>
-              <View style={styles.resultIconBox}>
-                <Ionicons name={scanResult.isEmergency ? 'warning' : 'person'} size={32}
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <View style={[styles.modernCard, scanResult.isEmergency && styles.emergencyCard]}>
+            <View style={styles.modernCardHeader}>
+              <View style={[styles.modernAvatar, scanResult.isEmergency && { backgroundColor: Colors.redBg }]}>
+                <Ionicons name={scanResult.isEmergency ? 'medical' : 'person'} size={32}
                   color={scanResult.isEmergency ? Colors.red : Colors.brandBlue} />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.resultTitle}>{patientData.name}</Text>
-                <Text style={styles.resultType}>{patientData.age}y • {patientData.gender} • ID: {patientData.id}</Text>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={styles.patientName}>{patientData.name}</Text>
+                <Text style={styles.patientMeta}>{patientData.age} yrs • {patientData.gender}</Text>
+                <View style={styles.badgeRow}>
+                  <View style={styles.badge}><Text style={styles.badgeText}>ID: {patientData.id}</Text></View>
+                  <View style={styles.badgeBlood}><Text style={styles.badgeBloodText}>{patientData.blood_group}</Text></View>
+                </View>
               </View>
             </View>
 
-            <View style={styles.previewDetails}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Blood Group:</Text>
-                <Text style={styles.detailValue}>{patientData.blood_group}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Last Visit:</Text>
+            <View style={styles.divider} />
+
+            <View style={styles.detailsGrid}>
+              <View style={styles.detailBox}>
+                <Text style={styles.detailLabel}>Last Visit</Text>
                 <Text style={styles.detailValue}>{patientData.lastVisit}</Text>
               </View>
-              {patientData.allergies.length > 0 && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Allergies:</Text>
-                  <Text style={[styles.detailValue, { color: Colors.red }]}>{patientData.allergies.join(', ')}</Text>
-                </View>
-              )}
+              <View style={styles.detailBox}>
+                <Text style={styles.detailLabel}>Visits</Text>
+                <Text style={styles.detailValue}>{patientData.visitCount}</Text>
+              </View>
             </View>
 
-            {scanResult.isEmergency && (
-              <View style={styles.emergencyBanner}>
-                <Text style={styles.emergencyText}>🚨 EMERGENCY SCAN DETECTED</Text>
+            {patientData.allergies.length > 0 && (
+              <View style={styles.alertBox}>
+                <Ionicons name="warning" size={18} color={Colors.red} />
+                <Text style={styles.alertText}>Allergies: {patientData.allergies.join(', ')}</Text>
               </View>
             )}
 
-            <View style={styles.resultActions}>
+            {scanResult.isEmergency && (
+              <View style={[styles.alertBox, { backgroundColor: Colors.red, marginTop: 12 }]}>
+                <Ionicons name="alert-circle" size={18} color="#FFF" />
+                <Text style={[styles.alertText, { color: '#FFF' }]}>EMERGENCY SCAN TRIGGERED</Text>
+              </View>
+            )}
+
+            <View style={styles.actionGrid}>
               <TouchableOpacity 
-                style={styles.resultBtn}
+                style={[styles.primaryBtn, { flex: 1.5 }]}
                 onPress={() => router.push(`/(dashboard)/patient-record?id=${patientData.id}&name=${encodeURIComponent(patientData.name)}`)}
               >
-                <Ionicons name="document-text" size={18} color="#FFF" />
-                <Text style={styles.resultBtnText}>Open Dashboard</Text>
+                <Ionicons name="analytics" size={18} color="#FFF" />
+                <Text style={styles.btnTextWhite}>Full Dashboard</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.resultBtn, { backgroundColor: Colors.emerald }]} onPress={() => router.push('/(dashboard)/prescription')}>
-                <Ionicons name="medkit" size={18} color="#FFF" />
-                <Text style={styles.resultBtnText}>Quick Prescribe</Text>
+              <TouchableOpacity style={[styles.secondaryBtn, { flex: 1 }]} onPress={() => router.push('/(dashboard)/prescription')}>
+                <Ionicons name="medkit" size={18} color={Colors.brandBlue} />
+                <Text style={styles.btnTextBlue}>Prescribe</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          <TouchableOpacity style={styles.scanAgainBtn} onPress={resetScan}>
-            <Ionicons name="refresh" size={18} color={Colors.brandBlue} />
-            <Text style={styles.scanAgainText}>Scan Another</Text>
-          </TouchableOpacity>
         </ScrollView>
       </View>
     );
   }
 
+  // ------------------
+  // SCANNER MAIN VIEW
+  // ------------------
   return (
     <View style={styles.container}>
+      {/* Sleek Header */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>Patient Access</Text>
       </View>
 
-      {/* Mode Tabs */}
-      <View style={styles.modeTabs}>
-        {(['camera', 'manual', 'demo'] as ScanMode[]).map(m => (
-          <TouchableOpacity key={m} style={[styles.modeTab, mode === m && styles.modeTabActive]} onPress={() => setMode(m)}>
-            <Ionicons name={m === 'camera' ? 'camera' : m === 'manual' ? 'create' : 'flask'} size={16}
-              color={mode === m ? '#FFF' : Colors.slate600} />
-            <Text style={[styles.modeTabText, mode === m && styles.modeTabTextActive]}>
-              {m === 'camera' ? 'Camera' : m === 'manual' ? 'Manual' : 'Demo'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* Modern Pill Segmented Control */}
+      <View style={styles.segmentContainer}>
+        {(['camera', 'manual', 'demo'] as ScanMode[]).map(m => {
+          const isActive = mode === m;
+          return (
+            <TouchableOpacity key={m} style={[styles.segmentBtn, isActive && styles.segmentBtnActive]} onPress={() => setMode(m)}>
+              <Ionicons name={m === 'camera' ? 'scan' : m === 'manual' ? 'keypad' : 'flask'} size={14}
+                color={isActive ? Colors.brandBlue : Colors.slate500} />
+              <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      {/* Content Area */}
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        
+        {/* CAMERA MODE */}
         {mode === 'camera' && (
-          <View>
+          <View style={styles.fadeContainer}>
             {!permission?.granted ? (
-              <View style={styles.permissionCard}>
-                <Ionicons name="camera-outline" size={48} color={Colors.slate400} />
-                <Text style={styles.permissionTitle}>Camera Access Needed</Text>
-                <Text style={styles.permissionDesc}>Allow camera to scan MedCard QR codes for instant patient access.</Text>
-                <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
-                  <Text style={styles.permissionBtnText}>Grant Access</Text>
+              <View style={styles.emptyStateContainer}>
+                <View style={styles.iconCircleLg}>
+                  <Ionicons name="camera" size={40} color={Colors.brandBlue} />
+                </View>
+                <Text style={styles.emptyTitle}>Camera Required</Text>
+                <Text style={styles.emptyDesc}>Allow MedAssist to access your camera to instantly scan patient QR records.</Text>
+                <TouchableOpacity style={styles.primaryBtn} onPress={requestPermission}>
+                  <Text style={styles.btnTextWhite}>Enable Camera</Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={styles.cameraBox}>
-                <CameraView
-                  style={styles.camera}
-                  facing="back"
-                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-                  onBarcodeScanned={scanned ? undefined : (r) => handleScan(r.data)}
-                />
-                <View style={styles.cameraOverlay}>
-                  <View style={styles.scanFrame} />
+              <View style={styles.cameraWrapper}>
+                <View style={styles.cameraFrame}>
+                  {/* flex: 1 and minHeight assure the camera renders over Web */}
+                  <CameraView
+                    style={{ flex: 1, minHeight: 400 }}
+                    facing="back"
+                    barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                    onBarcodeScanned={scanned ? undefined : (r) => handleScan(r.data)}
+                  />
+                  {/* Minimalist Overlay */}
+                  <View style={styles.scanOverlay}>
+                    <View style={styles.targetSquare}>
+                      <View style={[styles.corner, styles.cornerTL]} />
+                      <View style={[styles.corner, styles.cornerTR]} />
+                      <View style={[styles.corner, styles.cornerBL]} />
+                      <View style={[styles.corner, styles.cornerBR]} />
+                      {/* Animated scanning line could go here */}
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.cameraHint}>Point camera at MedCard or Health ID QR</Text>
+                <View style={styles.helperTip}>
+                  <Ionicons name="information-circle" size={18} color={Colors.brandBlue} />
+                  <Text style={styles.helperText}>Point at MedCard or Health ID</Text>
+                </View>
               </View>
             )}
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle" size={20} color={Colors.brandBlue} />
-              <Text style={styles.infoText}>Scanning automatically adds the patient to your directory.</Text>
+          </View>
+        )}
+
+        {/* MANUAL MODE */}
+        {mode === 'manual' && (
+          <View style={styles.fadeContainer}>
+            <View style={styles.modernCard}>
+              <View style={styles.iconCircleMd}>
+                <Ionicons name="keypad" size={24} color={Colors.brandBlue} />
+              </View>
+              <Text style={styles.sectionTitle}>Manual Entry</Text>
+              <Text style={styles.sectionDesc}>Enter the digital token manually if the QR code is illegible or missing.</Text>
+              
+              <View style={styles.inputWrapper}>
+                <TextInput 
+                  style={styles.textInput} 
+                  placeholder="e.g. MEDCARD::12345::171..."
+                  placeholderTextColor={Colors.slate400} 
+                  value={manualToken} 
+                  onChangeText={setManualToken}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              
+              <TouchableOpacity style={[styles.primaryBtn, { width: '100%', marginTop: 10 }]} onPress={handleManualSubmit}>
+                {loading ? <Text style={styles.btnTextWhite}>Verifying...</Text> : <Text style={styles.btnTextWhite}>Verify Token</Text>}
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {mode === 'manual' && (
-          <View style={styles.manualCard}>
-            <Ionicons name="create-outline" size={40} color={Colors.brandBlue} />
-            <Text style={styles.manualTitle}>Enter QR Token</Text>
-            <Text style={styles.manualDesc}>Paste or type the QR code content manually</Text>
-            <TextInput style={styles.manualInput} placeholder="e.g. MEDCARD::1::1714234567890"
-              placeholderTextColor={Colors.slate400} value={manualToken} onChangeText={setManualToken}
-              multiline />
-            <TouchableOpacity style={styles.manualBtn} onPress={handleManualSubmit}>
-              <Text style={styles.manualBtnText}>{loading ? 'Verifying...' : 'Verify Token'}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        {/* DEMO MODE */}
         {mode === 'demo' && (
-          <View>
-            <Text style={styles.demoTitle}>🧪 Testing & Demo</Text>
-            <Text style={styles.demoDesc}>Select a patient to generate a MedCard QR code and test the flow.</Text>
-            {DEMO_PATIENTS.map(p => (
-              <TouchableOpacity key={p.id} style={[styles.demoCard, selectedDemo?.id === p.id && styles.demoCardSelected]}
-                onPress={() => setSelectedDemo(p)}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.demoName}>{p.name}</Text>
-                  <Text style={styles.demoMeta}>{p.age}y • Blood: {p.blood} • Phone: {p.phone}</Text>
-                </View>
-                <Ionicons name={selectedDemo?.id === p.id ? 'checkmark-circle' : 'ellipse-outline'} size={24}
-                  color={selectedDemo?.id === p.id ? Colors.brandBlue : Colors.slate400} />
-              </TouchableOpacity>
-            ))}
+          <View style={styles.fadeContainer}>
+            <Text style={styles.sectionTitle}>Lab / Demo Mode</Text>
+            <Text style={styles.sectionDesc}>Select a test patient to generate a synthetic MedCard token. Use this to simulate a successful scan.</Text>
+            
+            <View style={{ marginTop: 16 }}>
+              {DEMO_PATIENTS.map(p => {
+                const isSelected = selectedDemo?.id === p.id;
+                return (
+                  <TouchableOpacity 
+                    key={p.id} 
+                    style={[styles.demoPatientCard, isSelected && styles.demoPatientCardActive]}
+                    onPress={() => setSelectedDemo(p)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.demoAvatar}>
+                      <Text style={styles.demoAvatarText}>{p.name.charAt(0)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.demoName, isSelected && { color: Colors.brandBlue }]}>{p.name}</Text>
+                      <Text style={styles.demoDetails}>{p.age}y • Blood: {p.blood}</Text>
+                    </View>
+                    <Ionicons name={isSelected ? 'radio-button-on' : 'radio-button-off'} size={24} color={isSelected ? Colors.brandBlue : Colors.slate300} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             {selectedDemo && (
-              <View style={styles.qrCard}>
-                <Text style={styles.qrLabel}>Generated QR for {selectedDemo.name}</Text>
-                <View style={styles.qrBox}>
-                  <QRCode value={generateDemoToken(selectedDemo.id)} size={180} backgroundColor="#FFF" color={Colors.textPrimary} />
+              <View style={styles.demoResultContainer}>
+                <Text style={styles.qrTitle}>Virtual QR Token</Text>
+                <View style={styles.qrRenderBox}>
+                  <QRCode value={generateDemoToken(selectedDemo.id)} size={160} backgroundColor="#FFF" color={Colors.textPrimary} />
                 </View>
-                <TouchableOpacity style={styles.scanDemoBtn} onPress={() => handleScan(generateDemoToken(selectedDemo.id))}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={() => handleScan(generateDemoToken(selectedDemo.id))}>
                   <Ionicons name="scan" size={18} color="#FFF" />
-                  <Text style={styles.scanDemoBtnText}>Simulate Scan</Text>
+                  <Text style={styles.btnTextWhite}>Inject Scan Result</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -297,64 +356,83 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
-  pageTitle: { fontSize: FontSize.h1, fontWeight: '900', color: Colors.textPrimary },
-  modeTabs: { flexDirection: 'row', marginHorizontal: 16, backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, padding: 4, borderWidth: 1, borderColor: Colors.border, marginBottom: 8 },
-  modeTab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: BorderRadius.md },
-  modeTabActive: { backgroundColor: Colors.brandBlue },
-  modeTabText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.slate600 },
-  modeTabTextActive: { color: '#FFF' },
-  // Camera
-  cameraBox: { borderRadius: BorderRadius.xxl, overflow: 'hidden', marginBottom: 16 },
-  camera: { width: '100%', height: 350 },
-  cameraOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
-  scanFrame: { width: 220, height: 220, borderWidth: 3, borderColor: Colors.brandBlue, borderRadius: 24, backgroundColor: 'transparent' },
-  cameraHint: { textAlign: 'center', color: Colors.textSecondary, fontSize: FontSize.sm, fontWeight: '600', paddingVertical: 12 },
-  infoCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.blueBg, padding: 16, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.blueLight },
-  infoText: { flex: 1, color: Colors.brandBlue, fontSize: FontSize.sm, fontWeight: '600' },
-  // Permission
-  permissionCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 40, alignItems: 'center', gap: 12, borderWidth: 1, borderColor: Colors.border },
-  permissionTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
-  permissionDesc: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center' },
-  permissionBtn: { backgroundColor: Colors.brandBlue, paddingHorizontal: 28, paddingVertical: 14, borderRadius: BorderRadius.full, marginTop: 8 },
-  permissionBtnText: { color: '#FFF', fontWeight: '700', fontSize: FontSize.md },
-  // Manual
-  manualCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 24, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: Colors.border },
-  manualTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
-  manualDesc: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center' },
-  manualInput: { width: '100%', backgroundColor: Colors.slate50, borderRadius: BorderRadius.md, padding: 14, fontSize: FontSize.md, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border, minHeight: 80, textAlignVertical: 'top', marginTop: 8 },
-  manualBtn: { backgroundColor: Colors.brandBlue, width: '100%', paddingVertical: 14, borderRadius: BorderRadius.md, alignItems: 'center', marginTop: 8 },
-  manualBtnText: { color: '#FFF', fontWeight: '700', fontSize: FontSize.md },
+  container: { flex: 1, backgroundColor: Colors.slate50 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.borderLight },
+  pageTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary, letterSpacing: -0.5 },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.slate100, justifyContent: 'center', alignItems: 'center' },
+  
+  // Segment Control
+  segmentContainer: { flexDirection: 'row', backgroundColor: Colors.surface, padding: 6, margin: 20, borderRadius: BorderRadius.full, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  segmentBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: BorderRadius.full },
+  segmentBtnActive: { backgroundColor: Colors.blueBg },
+  segmentText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.slate500 },
+  segmentTextActive: { color: Colors.brandBlue },
+
+  fadeContainer: { animationDuration: '300ms', animationName: 'fadeIn' as any },
+
+  // Empty/Permission States
+  emptyStateContainer: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
+  iconCircleLg: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.blueBg, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary, marginBottom: 8 },
+  emptyDesc: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  
+  // Modern Camera
+  cameraWrapper: { borderRadius: BorderRadius.xxl, overflow: 'hidden', backgroundColor: '#000', shadowColor: Colors.brandBlue, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+  cameraFrame: { width: '100%', height: 450, position: 'relative' },
+  scanOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  targetSquare: { width: 240, height: 240, position: 'relative' },
+  corner: { position: 'absolute', width: 40, height: 40, borderColor: '#FFF', borderWidth: 4 },
+  cornerTL: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 16 },
+  cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 16 },
+  cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 16 },
+  cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 16 },
+  helperTip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, backgroundColor: Colors.surface },
+  helperText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
+
+  // Modern Card Shared
+  modernCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 24, borderWidth: 1, borderColor: Colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 4 },
+  iconCircleMd: { width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.blueBg, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary, marginBottom: 8 },
+  sectionDesc: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20, opacity: 0.8 },
+
+  // Form Inputs
+  inputWrapper: { width: '100%', marginTop: 24, marginBottom: 16 },
+  textInput: { backgroundColor: Colors.slate50, borderWidth: 1, borderColor: Colors.border, borderRadius: BorderRadius.lg, paddingHorizontal: 16, paddingVertical: 16, fontSize: FontSize.md, color: Colors.textPrimary, fontWeight: '600' },
+
   // Demo
-  demoTitle: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
-  demoDesc: { fontSize: FontSize.md, color: Colors.textSecondary, marginBottom: 16 },
-  demoCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, padding: 16, marginBottom: 10, borderWidth: 1.5, borderColor: Colors.border },
-  demoCardSelected: { borderColor: Colors.brandBlue, backgroundColor: Colors.blueBg },
-  demoName: { fontSize: FontSize.base, fontWeight: '700', color: Colors.textPrimary },
-  demoMeta: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
-  qrCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, marginTop: 16 },
-  qrLabel: { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary, marginBottom: 16 },
-  qrBox: { padding: 16, backgroundColor: '#FFF', borderRadius: 16, borderWidth: 1, borderColor: Colors.border, marginBottom: 16 },
-  scanDemoBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.brandBlue, paddingHorizontal: 24, paddingVertical: 14, borderRadius: BorderRadius.md },
-  scanDemoBtnText: { color: '#FFF', fontWeight: '700', fontSize: FontSize.md },
-  // Preview
-  previewCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.xxl, padding: 24, borderWidth: 1, borderColor: Colors.emeraldLight, shadowColor: Colors.emerald, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 8 },
-  previewCardEmergency: { borderColor: Colors.redLight, backgroundColor: '#fef2f2' },
-  previewHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  resultIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.blueBg, justifyContent: 'center', alignItems: 'center' },
-  resultTitle: { fontSize: FontSize.xxl, fontWeight: '900', color: Colors.textPrimary },
-  resultType: { fontSize: FontSize.md, fontWeight: '600', color: Colors.textSecondary, marginTop: 2 },
-  previewDetails: { backgroundColor: Colors.slate50, borderRadius: BorderRadius.lg, padding: 16, gap: 12, marginBottom: 24, borderWidth: 1, borderColor: Colors.borderLight },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  detailLabel: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
-  detailValue: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textPrimary },
-  emergencyBanner: { backgroundColor: Colors.red, padding: 12, borderRadius: BorderRadius.md, alignItems: 'center', marginBottom: 20 },
-  emergencyText: { color: '#FFF', fontWeight: '800', fontSize: FontSize.sm, letterSpacing: 0.5 },
-  resultActions: { width: '100%', gap: 10 },
-  resultBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.brandBlue, paddingVertical: 14, borderRadius: BorderRadius.md },
-  resultBtnText: { color: '#FFF', fontWeight: '700', fontSize: FontSize.md },
-  scanAgainBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, paddingVertical: 14 },
-  scanAgainText: { color: Colors.brandBlue, fontWeight: '700', fontSize: FontSize.md },
+  demoPatientCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, padding: 16, borderRadius: BorderRadius.xl, marginBottom: 12, borderWidth: 1, borderColor: Colors.borderLight, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 },
+  demoPatientCardActive: { borderColor: Colors.brandBlue, backgroundColor: Colors.blueBg },
+  demoAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.slate100, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  demoAvatarText: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.slate500 },
+  demoName: { fontSize: FontSize.base, fontWeight: '800', color: Colors.textPrimary, marginBottom: 2 },
+  demoDetails: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600' },
+  demoResultContainer: { marginTop: 24, padding: 24, backgroundColor: Colors.surface, borderRadius: BorderRadius.xl, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderLight },
+  qrTitle: { fontSize: FontSize.sm, fontWeight: '800', color: Colors.textSecondary, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 },
+  qrRenderBox: { padding: 20, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 1, borderColor: Colors.borderLight, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 4 },
+
+  // Buttons
+  primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.brandBlue, paddingVertical: 16, paddingHorizontal: 24, borderRadius: BorderRadius.lg },
+  btnTextWhite: { color: '#FFF', fontSize: FontSize.md, fontWeight: '700' },
+  secondaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.blueBg, paddingVertical: 16, paddingHorizontal: 24, borderRadius: BorderRadius.lg },
+  btnTextBlue: { color: Colors.brandBlue, fontSize: FontSize.md, fontWeight: '700' },
+
+  // Patient Card Detail
+  emergencyCard: { borderColor: Colors.redLight, backgroundColor: '#FFF5F5' },
+  modernCardHeader: { flexDirection: 'row', alignItems: 'center' },
+  modernAvatar: { width: 64, height: 64, borderRadius: 20, backgroundColor: Colors.blueBg, justifyContent: 'center', alignItems: 'center' },
+  patientName: { fontSize: FontSize.xxl, fontWeight: '900', color: Colors.textPrimary, marginBottom: 2 },
+  patientMeta: { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '600', marginBottom: 8 },
+  badgeRow: { flexDirection: 'row', gap: 8 },
+  badge: { backgroundColor: Colors.slate100, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  badgeText: { fontSize: 11, fontWeight: '800', color: Colors.slate600 },
+  badgeBlood: { backgroundColor: Colors.redBg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  badgeBloodText: { fontSize: 11, fontWeight: '800', color: Colors.red },
+  divider: { height: 1, backgroundColor: Colors.borderLight, marginVertical: 20 },
+  detailsGrid: { flexDirection: 'row', gap: 16, marginBottom: 20 },
+  detailBox: { flex: 1, backgroundColor: Colors.slate50, padding: 12, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.borderLight },
+  detailLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase' },
+  detailValue: { fontSize: FontSize.lg, color: Colors.textPrimary, fontWeight: '800' },
+  alertBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.redBg, padding: 12, borderRadius: BorderRadius.lg, marginBottom: 20 },
+  alertText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.red },
+  actionGrid: { flexDirection: 'row', gap: 12 },
 });

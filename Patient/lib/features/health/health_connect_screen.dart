@@ -18,7 +18,8 @@ class HealthConnectScreen extends ConsumerStatefulWidget {
   const HealthConnectScreen({super.key});
 
   @override
-  ConsumerState<HealthConnectScreen> createState() => _HealthConnectScreenState();
+  ConsumerState<HealthConnectScreen> createState() =>
+      _HealthConnectScreenState();
 }
 
 class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
@@ -38,7 +39,8 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       setState(() {
         _aiResult = {
           'overall_assessment': insight['ai_insight'],
-          'risk_flags': (insight['ai_risk_flags'] as List?)?.cast<String>() ?? [],
+          'risk_flags':
+              (insight['ai_risk_flags'] as List?)?.cast<String>() ?? [],
         };
       });
     }
@@ -120,7 +122,8 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
     }
   }
 
-  String _fmtNum(num n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
+  String _fmtNum(num n) =>
+      n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
 
   @override
   Widget build(BuildContext context) {
@@ -155,9 +158,13 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                                   : Colors.white.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.arrow_back_ios_new_rounded,
-                                size: 18,
-                                color: isDark ? Colors.white : AppColors.textPrimary),
+                            child: Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 18,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -169,7 +176,9 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : AppColors.textPrimary,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             Text(
@@ -194,11 +203,18 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                             ),
                             child: _isSyncing
                                 ? const SizedBox(
-                                    width: 18, height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
                                   )
-                                : const Icon(Icons.sync_rounded,
-                                    size: 18, color: AppColors.primary),
+                                : const Icon(
+                                    Icons.sync_rounded,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
                           ),
                         ),
                       ],
@@ -218,7 +234,8 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                         ),
                       ),
                       error: (e, _) => _buildError(context, isDark),
-                      data: (metrics) => _buildContent(context, metrics, asyncHistory, isDark),
+                      data: (metrics) =>
+                          _buildContent(context, metrics, asyncHistory, isDark),
                     ),
                   ),
                 ),
@@ -241,6 +258,12 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
+<<<<<<< HEAD
+          const Icon(
+            Icons.health_and_safety_rounded,
+            size: 48,
+            color: AppColors.primary,
+=======
           Container(
             width: 56,
             height: 56,
@@ -249,6 +272,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.health_and_safety_rounded, size: 28, color: AppColors.primary),
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
           ),
           const SizedBox(height: 12),
           Text(
@@ -265,8 +289,14 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
+<<<<<<< HEAD
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.6)
+                  : AppColors.textSecondary,
+=======
               height: 1.5,
               color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.textSecondary,
+>>>>>>> 93734fd3f97e030281539a5b220720560048d38e
             ),
           ),
           const SizedBox(height: 16),
@@ -322,7 +352,8 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
         AiHealthInsightCard(
           overallAssessment: _aiResult?['overall_assessment'] as String?,
           riskFlags: (_aiResult?['risk_flags'] as List?)?.cast<String>() ?? [],
-          recommendations: (_aiResult?['recommendations'] as List?)?.cast<String>() ?? [],
+          recommendations:
+              (_aiResult?['recommendations'] as List?)?.cast<String>() ?? [],
           trendDirection: _aiResult?['trend_direction'] as String? ?? 'stable',
           priorityMetric: _aiResult?['priority_metric'] as String?,
           isLoading: _isAnalyzing,
@@ -343,65 +374,105 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
           childAspectRatio: 0.85,
           children: [
             HealthActivityCard(
-              label: 'Steps', value: _fmtNum(m.steps), unit: 'steps',
-              icon: Icons.directions_walk_rounded, color: const Color(0xFF6366F1),
+              label: 'Steps',
+              value: _fmtNum(m.steps),
+              unit: 'steps',
+              icon: Icons.directions_walk_rounded,
+              color: const Color(0xFF6366F1),
               hasData: m.steps > 0,
             ),
             HealthActivityCard(
-              label: 'Heart Rate', value: m.heartRate > 0 ? '${m.heartRate.toInt()}' : '--', unit: 'bpm',
-              icon: Icons.favorite_rounded, color: const Color(0xFFEF4444),
+              label: 'Heart Rate',
+              value: m.heartRate > 0 ? '${m.heartRate.toInt()}' : '--',
+              unit: 'bpm',
+              icon: Icons.favorite_rounded,
+              color: const Color(0xFFEF4444),
               hasData: m.heartRate > 0,
             ),
             HealthActivityCard(
-              label: 'Sleep', value: m.sleepHours > 0 ? m.sleepHours.toStringAsFixed(1) : '--', unit: 'hrs',
-              icon: Icons.nightlight_round, color: const Color(0xFF8B5CF6),
+              label: 'Sleep',
+              value: m.sleepHours > 0 ? m.sleepHours.toStringAsFixed(1) : '--',
+              unit: 'hrs',
+              icon: Icons.nightlight_round,
+              color: const Color(0xFF8B5CF6),
               hasData: m.sleepHours > 0,
             ),
             HealthActivityCard(
-              label: 'Calories', value: '${m.caloriesBurned.toInt()}', unit: 'kcal',
-              icon: Icons.local_fire_department_rounded, color: const Color(0xFFF59E0B),
+              label: 'Calories',
+              value: '${m.caloriesBurned.toInt()}',
+              unit: 'kcal',
+              icon: Icons.local_fire_department_rounded,
+              color: const Color(0xFFF59E0B),
               hasData: m.caloriesBurned > 0,
             ),
             HealthActivityCard(
-              label: 'SpO₂', value: m.bloodOxygen > 0 ? '${m.bloodOxygen.toInt()}' : '--', unit: '%',
-              icon: Icons.air_rounded, color: const Color(0xFF06B6D4),
+              label: 'SpO₂',
+              value: m.bloodOxygen > 0 ? '${m.bloodOxygen.toInt()}' : '--',
+              unit: '%',
+              icon: Icons.air_rounded,
+              color: const Color(0xFF06B6D4),
               hasData: m.bloodOxygen > 0,
             ),
             HealthActivityCard(
-              label: 'Distance', value: m.distanceKm > 0 ? m.distanceKm.toStringAsFixed(1) : '--', unit: 'km',
-              icon: Icons.place_rounded, color: const Color(0xFF10B981),
+              label: 'Distance',
+              value: m.distanceKm > 0 ? m.distanceKm.toStringAsFixed(1) : '--',
+              unit: 'km',
+              icon: Icons.place_rounded,
+              color: const Color(0xFF10B981),
               hasData: m.distanceMeters > 0,
             ),
             HealthActivityCard(
               label: 'BP',
-              value: m.bpSystolic > 0 ? '${m.bpSystolic.toInt()}/${m.bpDiastolic.toInt()}' : '--',
+              value: m.bpSystolic > 0
+                  ? '${m.bpSystolic.toInt()}/${m.bpDiastolic.toInt()}'
+                  : '--',
               unit: 'mmHg',
-              icon: Icons.speed_rounded, color: const Color(0xFFEC4899),
+              icon: Icons.speed_rounded,
+              color: const Color(0xFFEC4899),
               hasData: m.bpSystolic > 0,
             ),
             HealthActivityCard(
-              label: 'Glucose', value: m.bloodGlucose > 0 ? '${m.bloodGlucose.toInt()}' : '--', unit: 'mg/dL',
-              icon: Icons.bloodtype_rounded, color: const Color(0xFFD946EF),
+              label: 'Glucose',
+              value: m.bloodGlucose > 0 ? '${m.bloodGlucose.toInt()}' : '--',
+              unit: 'mg/dL',
+              icon: Icons.bloodtype_rounded,
+              color: const Color(0xFFD946EF),
               hasData: m.bloodGlucose > 0,
             ),
             HealthActivityCard(
-              label: 'Weight', value: m.weight > 0 ? m.weight.toStringAsFixed(1) : '--', unit: 'kg',
-              icon: Icons.monitor_weight_rounded, color: const Color(0xFF14B8A6),
+              label: 'Weight',
+              value: m.weight > 0 ? m.weight.toStringAsFixed(1) : '--',
+              unit: 'kg',
+              icon: Icons.monitor_weight_rounded,
+              color: const Color(0xFF14B8A6),
               hasData: m.weight > 0,
             ),
             HealthActivityCard(
-              label: 'Temp', value: m.bodyTemperature > 0 ? m.bodyTemperature.toStringAsFixed(1) : '--', unit: '°C',
-              icon: Icons.thermostat_rounded, color: const Color(0xFFFF6B6B),
+              label: 'Temp',
+              value: m.bodyTemperature > 0
+                  ? m.bodyTemperature.toStringAsFixed(1)
+                  : '--',
+              unit: '°C',
+              icon: Icons.thermostat_rounded,
+              color: const Color(0xFFFF6B6B),
               hasData: m.bodyTemperature > 0,
             ),
             HealthActivityCard(
-              label: 'Resp Rate', value: m.respiratoryRate > 0 ? '${m.respiratoryRate.toInt()}' : '--', unit: 'bpm',
-              icon: Icons.waves_rounded, color: const Color(0xFF0EA5E9),
+              label: 'Resp Rate',
+              value: m.respiratoryRate > 0
+                  ? '${m.respiratoryRate.toInt()}'
+                  : '--',
+              unit: 'bpm',
+              icon: Icons.waves_rounded,
+              color: const Color(0xFF0EA5E9),
               hasData: m.respiratoryRate > 0,
             ),
             HealthActivityCard(
-              label: 'Body Fat', value: m.bodyFatPct > 0 ? m.bodyFatPct.toStringAsFixed(1) : '--', unit: '%',
-              icon: Icons.pie_chart_rounded, color: const Color(0xFFA855F7),
+              label: 'Body Fat',
+              value: m.bodyFatPct > 0 ? m.bodyFatPct.toStringAsFixed(1) : '--',
+              unit: '%',
+              icon: Icons.pie_chart_rounded,
+              color: const Color(0xFFA855F7),
               hasData: m.bodyFatPct > 0,
             ),
           ],
@@ -422,11 +493,13 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
         _sectionLabel('Weekly Trends', Icons.bar_chart_rounded, isDark),
         const SizedBox(height: 10),
         asyncHistory.when(
-          loading: () => const Center(child: Padding(
-            padding: EdgeInsets.all(24),
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )),
-          error: (_, __) => const SizedBox.shrink(),
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          error: (_, _) => const SizedBox.shrink(),
           data: (history) {
             if (history.dailyData.isEmpty) {
               return GlassCard(
@@ -437,19 +510,25 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                   'No historical data yet. Keep tracking!',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? Colors.white.withValues(alpha: 0.5) : AppColors.textSecondary,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : AppColors.textSecondary,
                   ),
                 ),
               );
             }
 
-            final dayLabels = history.dailyData.map((d) => DateFormat('E').format(d.date).substring(0, 2)).toList();
+            final dayLabels = history.dailyData
+                .map((d) => DateFormat('E').format(d.date).substring(0, 2))
+                .toList();
 
             return Column(
               children: [
                 WeeklyChartCard(
                   title: 'Steps',
-                  data: history.dailyData.map((d) => d.steps.toDouble()).toList(),
+                  data: history.dailyData
+                      .map((d) => d.steps.toDouble())
+                      .toList(),
                   dayLabels: dayLabels,
                   color: const Color(0xFF6366F1),
                   unit: 'steps',

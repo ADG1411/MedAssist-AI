@@ -198,6 +198,45 @@ const ChatInput = ({
   const [isDeepMindActive, setIsDeepMindActive] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showAppsModal, setShowAppsModal] = useState(false);
+  const [isMedical, setIsMedical] = useState<boolean>(true);
+  const [isValidating, setIsValidating] = useState<boolean>(false);
+  const validateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!inputValue.trim() || inputValue.trim().length <= 3) {
+      setIsMedical(true);
+      setIsValidating(false);
+      return;
+    }
+    
+    if (validateTimeoutRef.current) clearTimeout(validateTimeoutRef.current);
+    
+    setIsValidating(true);
+    validateTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/v1/chat/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: inputValue.trim() })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsMedical(data.is_medical);
+        } else {
+          setIsMedical(true);
+        }
+      } catch (e) {
+        console.error("Validation error:", e);
+        setIsMedical(true);
+      } finally {
+        setIsValidating(false);
+      }
+    }, 500);
+
+    return () => {
+      if (validateTimeoutRef.current) clearTimeout(validateTimeoutRef.current);
+    };
+  }, [inputValue]);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -221,6 +260,7 @@ const ChatInput = ({
 
   const handleSend = () => {
     if (!inputValue.trim() && attachments.length === 0) return;
+    if (!isMedical) return;
     onSend(inputValue || "Sending attachments...", selectedModel.id, attachments);
     setInputValue("");
     setAttachments([]);
@@ -254,7 +294,7 @@ const ChatInput = ({
       )}
 
       <div
-        className="w-full max-w-3xl rounded-2xl border border-neutral-200 bg-white p-3 shadow-lg sm:rounded-[24px] dark:border-neutral-800 dark:bg-neutral-900 transition-all duration-300"
+        className={`w-full max-w-3xl rounded-2xl border bg-white p-3 shadow-lg sm:rounded-[24px] dark:bg-neutral-900 transition-all duration-300 ${!isMedical ? "border-red-400 shadow-red-100 dark:border-red-800" : "border-neutral-200 dark:border-neutral-800"}`}
       >
         <input type="file" accept="image/*" multiple ref={imageInputRef} onChange={handleFileChange} className="hidden" />
         <input type="file" accept=".pdf,.doc,.docx,.txt" multiple ref={docInputRef} onChange={handleFileChange} className="hidden" />
@@ -273,6 +313,12 @@ const ChatInput = ({
           </div>
         )}
 
+        
+        {!isMedical && !isValidating && inputValue.trim().length > 3 && (
+          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 mb-2 px-3 py-2 text-sm text-red-600 font-medium bg-red-50/80 rounded-xl border border-red-200">
+            <span>⚠️</span> Not a medical question. Please ask a healthcare-related question.
+          </motion.div>
+        )}
         <textarea
           ref={textAreaRef}
           value={inputValue}
@@ -284,7 +330,7 @@ const ChatInput = ({
             }
           }}
           placeholder={placeholder}
-          className="mb-2 max-h-[180px] min-h-[40px] w-full resize-none bg-transparent px-1 text-sm font-semibold text-neutral-700 outline-none placeholder:text-neutral-400 sm:max-h-[200px] sm:min-h-[44px] sm:px-2 sm:text-base dark:text-neutral-300 dark:placeholder:text-neutral-600"
+          className={`mb-2 max-h-[180px] min-h-[40px] w-full resize-none bg-transparent px-1 text-sm font-semibold text-neutral-700 outline-none placeholder:text-neutral-400 sm:max-h-[200px] sm:min-h-[44px] sm:px-2 sm:text-base dark:text-neutral-300 dark:placeholder:text-neutral-600 ${!isMedical ? "text-red-500 placeholder:text-red-400 focus:text-red-600" : ""}`}
           rows={1}
         />
 
@@ -364,14 +410,17 @@ const ChatInput = ({
           </div>
 
           <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() && attachments.length === 0}
-            className={`rounded-lg p-2 transition-colors sm:p-3 ${
-              inputValue.trim() || attachments.length > 0
-                ? "bg-blue-600 text-white dark:bg-blue-500"
-                : "cursor-not-allowed bg-neutral-200 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600"
-            }`}
-          >
+              onClick={handleSend}
+              disabled={(!inputValue.trim() && attachments.length === 0) || !isMedical || isValidating}
+              title={!isMedical ? "Not a medical question" : ""}
+              className={`rounded-lg p-2 transition-colors sm:p-3 ${
+                isMedical && (inputValue.trim() || attachments.length > 0) && !isValidating
+                  ? "bg-blue-600 text-white dark:bg-blue-500 hover:bg-blue-700"
+                  : !isMedical && inputValue.trim() 
+                    ? "bg-red-500 text-white cursor-not-allowed"
+                    : "cursor-not-allowed bg-neutral-200 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-600"
+              }`}
+            >
             <Send className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>

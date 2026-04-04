@@ -79,18 +79,26 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
       final status = await Permission.activityRecognition.request();
       if (status.isGranted) {
         setState(() {
-          _sources[index] = source.copyWith(connected: true, lastSync: 'Just now');
+          _sources[index] = source.copyWith(
+            connected: true,
+            lastSync: 'Just now',
+          );
         });
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permission required to connect health sources.')),
+            const SnackBar(
+              content: Text('Permission required to connect health sources.'),
+            ),
           );
         }
       }
     } else {
       setState(() {
-        _sources[index] = source.copyWith(connected: true, lastSync: 'Just now');
+        _sources[index] = source.copyWith(
+          connected: true,
+          lastSync: 'Just now',
+        );
       });
     }
   }
@@ -114,38 +122,50 @@ class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
                   color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.22),
-                      width: 0.6),
+                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.22),
+                    width: 0.6,
+                  ),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cable_rounded, size: 12, color: Color(0xFF0EA5E9)),
+                    Icon(
+                      Icons.cable_rounded,
+                      size: 12,
+                      color: Color(0xFF0EA5E9),
+                    ),
                     SizedBox(width: 4),
-                    Text('Health Sources',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF0EA5E9),
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      'Health Sources',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF0EA5E9),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const Spacer(),
               Text(
-                  '${_sources.where((s) => s.connected).length}/${_sources.length} active',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.40)
-                          : AppColors.textSecondary,
-                      fontWeight: FontWeight.w500)),
+                '${_sources.where((s) => s.connected).length}/${_sources.length} active',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.40)
+                      : AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          ..._sources.asMap().entries.map((entry) => _SourceRow(
-                source: entry.value,
-                onConnect: () => _handleConnect(entry.key),
-              )),
+          ..._sources.asMap().entries.map(
+            (entry) => _SourceRow(
+              source: entry.value,
+              onConnect: () => _handleConnect(entry.key),
+            ),
+          ),
         ],
       ),
     );
@@ -188,11 +208,7 @@ class _SourceRow extends StatelessWidget {
   final _Source source;
   final VoidCallback onConnect;
 
-  const _SourceRow({
-    super.key,
-    required this.source,
-    required this.onConnect,
-  });
+  const _SourceRow({required this.source, required this.onConnect});
 
   @override
   Widget build(BuildContext context) {
@@ -216,18 +232,24 @@ class _SourceRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(source.name,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.textPrimary)),
+                Text(
+                  source.name,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
                 if (source.connected && source.lastSync.isNotEmpty)
-                  Text(source.lastSync,
-                      style: TextStyle(
-                          fontSize: 9,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.35)
-                              : AppColors.textSecondary)),
+                  Text(
+                    source.lastSync,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.35)
+                          : AppColors.textSecondary,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -238,11 +260,14 @@ class _SourceRow extends StatelessWidget {
                 color: const Color(0xFF10B981).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text('Active',
-                  style: TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF10B981),
-                      fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Active',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Color(0xFF10B981),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             )
           else
             GestureDetector(
@@ -255,18 +280,22 @@ class _SourceRow extends StatelessWidget {
                       : Colors.black.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.10)
-                          : Colors.black.withValues(alpha: 0.08),
-                      width: 0.6),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.black.withValues(alpha: 0.08),
+                    width: 0.6,
+                  ),
                 ),
-                child: Text('Connect',
-                    style: TextStyle(
-                        fontSize: 9,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.50)
-                            : AppColors.textSecondary,
-                        fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Connect',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.50)
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
         ],

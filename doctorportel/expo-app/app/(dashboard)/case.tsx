@@ -1,18 +1,94 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, BorderRadius } from '../../constants/Colors';
+import { supabase } from '../../services/supabase';
 
-const CASES = [
-  { id: 'case-1', patient: 'Rahul Sharma', stage: 'Diagnosis', progress: 40, diagnosis: 'Suspected Typhoid', priority: 'high', lastUpdate: '2 hours ago' },
-  { id: 'case-2', patient: 'Emma Watson', stage: 'Treatment', progress: 70, diagnosis: 'Iron Deficiency Anaemia', priority: 'medium', lastUpdate: '1 day ago' },
-  { id: 'case-3', patient: 'Arjun Mehta', stage: 'Follow-up', progress: 90, diagnosis: 'Coronary Artery Disease', priority: 'critical', lastUpdate: '30 min ago' },
+const MOCK_CASES = [
+  { id: 'case-1', patient: 'Rahul Sharma', patientId: '1', stage: 'Diagnosis', progress: 40, diagnosis: 'Suspected Typhoid', priority: 'high', lastUpdate: '2 hours ago' },
+  { id: 'case-2', patient: 'Emma Watson', patientId: '2', stage: 'Treatment', progress: 70, diagnosis: 'Iron Deficiency Anaemia', priority: 'medium', lastUpdate: '1 day ago' },
+  { id: 'case-3', patient: 'Arjun Mehta', patientId: '3', stage: 'Follow-up', progress: 90, diagnosis: 'Coronary Artery Disease', priority: 'critical', lastUpdate: '30 min ago' },
 ];
 
 const STAGES = ['Intake', 'Diagnosis', 'Treatment', 'Follow-up', 'Closed'];
 
 export default function CaseScreen() {
   const router = useRouter();
+  
+  const [cases, setCases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCases();
+  }, []);
+
+  const fetchCases = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not logged in');
+
+      // Get all active patients the doctor has access to
+      const { data: accessData } = await supabase
+        .from('doctor_patient_access')
+        .select('patient_id, granted_at')
+        .eq('doctor_id', user.id)
+        .eq('is_active', true);
+
+      if (!accessData || accessData.length === 0) {
+        setCases(MOCK_CASES);
+        setLoading(false);
+        return;
+      }
+
+      const builtCases = [];
+      
+      for (const grant of accessData) {
+        // Fetch patient profile
+        const { data: profile } = await supabase.from('profiles').select('name').eq('id', grant.patient_id).maybeSingle();
+        // Fetch their latest AI result / symptoms
+        const { data: aiResult } = await supabase.from('ai_results').select('conditions, risk_level, created_at').eq('user_id', grant.patient_id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+        
+        let priority = 'info';
+        if (aiResult?.risk_level) {
+          const rl = String(aiResult.risk_level).toLowerCase();
+          if (rl.includes('high') || rl.includes('critical')) priority = 'critical';
+          else if (rl.includes('medium') || rl.includes('elevated')) priority = 'high';
+          else priority = 'medium';
+        }
+
+        let diagnosis = 'Awaiting Assessment';
+        if (aiResult?.conditions && Array.isArray(aiResult.conditions) && aiResult.conditions.length > 0) {
+          diagnosis = aiResult.conditions[0].name || diagnosis;
+        }
+
+        // Relative time helper
+        let lastUpdate = 'Recently';
+        if (aiResult?.created_at) {
+          const hours = Math.round((Date.now() - new Date(aiResult.created_at).getTime()) / (1000 * 60 * 60));
+          lastUpdate = hours > 24 ? `${Math.round(hours / 24)} days ago` : `${hours} hours ago`;
+        }
+
+        builtCases.push({
+          id: `case-${grant.patient_id}`,
+          patientId: grant.patient_id,
+          patient: profile?.name || `Patient ${grant.patient_id.substring(0, 5)}`,
+          stage: aiResult ? 'Treatment' : 'Intake',
+          progress: aiResult ? 60 : 20,
+          diagnosis,
+          priority,
+          lastUpdate
+        });
+      }
+
+      setCases(builtCases.length > 0 ? builtCases : MOCK_CASES);
+    } catch (e) {
+      console.warn('Failed to fetch cases from Supabase:', e);
+      setCases(MOCK_CASES);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const priorityStyle = (p: string) => {
     if (p === 'critical') return { bg: Colors.redBg, text: Colors.red, icon: 'alert-circle' as const };
@@ -43,33 +119,52 @@ export default function CaseScreen() {
           ))}
         </View>
 
-        {CASES.map(c => {
-          const ps = priorityStyle(c.priority);
-          return (
-            <TouchableOpacity key={c.id} style={styles.caseCard}>
-              <View style={styles.caseHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.caseName}>{c.patient}</Text>
-                  <Text style={styles.caseDiag}>{c.diagnosis}</Text>
+        {/* Quick Actions */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 8 }}>
+          <TouchableOpacity 
+            style={[styles.caseCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, backgroundColor: Colors.brandBlue }]}
+            onPress={() => router.push('/(dashboard)/bookings')}
+          >
+            <Ionicons name="calendar" size={18} color="#FFF" />
+            <Text style={{ color: '#FFF', fontWeight: '800', fontSize: FontSize.sm }}>View Bookings</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={Colors.brandBlue} style={{ marginTop: 40 }} />
+        ) : (
+          cases.map(c => {
+            const ps = priorityStyle(c.priority);
+            return (
+              <TouchableOpacity 
+                key={c.id} 
+                style={styles.caseCard}
+                onPress={() => router.push(`/(dashboard)/patient-record?id=${c.patientId}&name=${encodeURIComponent(c.patient)}`)}
+              >
+                <View style={styles.caseHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.caseName}>{c.patient}</Text>
+                    <Text style={styles.caseDiag}>{c.diagnosis}</Text>
+                  </View>
+                  <View style={[styles.priorityBadge, { backgroundColor: ps.bg }]}>
+                    <Ionicons name={ps.icon} size={12} color={ps.text} />
+                    <Text style={[styles.priorityText, { color: ps.text }]}>{c.priority}</Text>
+                  </View>
                 </View>
-                <View style={[styles.priorityBadge, { backgroundColor: ps.bg }]}>
-                  <Ionicons name={ps.icon} size={12} color={ps.text} />
-                  <Text style={[styles.priorityText, { color: ps.text }]}>{c.priority}</Text>
+                <View style={styles.caseProgress}>
+                  <View style={styles.caseProgressHeader}>
+                    <Text style={styles.caseStage}>Stage: {c.stage}</Text>
+                    <Text style={styles.casePercent}>{c.progress}%</Text>
+                  </View>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${c.progress}%`, backgroundColor: ps.text }]} />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.caseProgress}>
-                <View style={styles.caseProgressHeader}>
-                  <Text style={styles.caseStage}>Stage: {c.stage}</Text>
-                  <Text style={styles.casePercent}>{c.progress}%</Text>
-                </View>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${c.progress}%`, backgroundColor: ps.text }]} />
-                </View>
-              </View>
-              <Text style={styles.caseUpdate}>Updated {c.lastUpdate}</Text>
-            </TouchableOpacity>
-          );
-        })}
+                <Text style={styles.caseUpdate}>Updated {c.lastUpdate}</Text>
+              </TouchableOpacity>
+            );
+          })
+        )}
       </View>
     </ScrollView>
   );
