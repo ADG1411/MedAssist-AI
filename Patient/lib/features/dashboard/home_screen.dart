@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../shared/widgets/app_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/shimmer_box.dart';
 import 'providers/dashboard_provider.dart';
@@ -102,8 +100,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
 
-          // ── Floating SOS pulse button ─────────────────────────────────
-          const _FloatingSOS(),
         ],
       ),
     );
@@ -200,88 +196,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-// ── Floating Adaptive SOS ─────────────────────────────────────────────────────
-
-class _FloatingSOS extends StatefulWidget {
-  const _FloatingSOS();
-
-  @override
-  State<_FloatingSOS> createState() => _FloatingSOSState();
-}
-
-class _FloatingSOSState extends State<_FloatingSOS>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseCtrl;
-  late Animation<double> _pulseAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600))
-      ..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.18)
-        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
-
-    return Positioned(
-      right: 16,
-      bottom: 100 + bottomPad,
-      child: Tooltip(
-        message: 'Emergency SOS — Long press to confirm',
-        child: GestureDetector(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Long press to activate SOS'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
-          onLongPress: () {
-            HapticFeedback.heavyImpact();
-            context.push('/sos');
-          },
-          child: AnimatedBuilder(
-            animation: _pulseAnim,
-            builder: (_, child) => Transform.scale(
-              scale: _pulseAnim.value,
-              child: child,
-            ),
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.danger,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.danger.withValues(alpha: 0.55),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.emergency_rounded,
-                  color: Colors.white, size: 24),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ── No-scrollbar behavior ─────────────────────────────────────────────────────
 

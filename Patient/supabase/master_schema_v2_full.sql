@@ -78,6 +78,18 @@ CREATE TABLE public.profiles (
     location_permission BOOLEAN DEFAULT false,
     onboarding_completed BOOLEAN DEFAULT false,
 
+    -- AI Health OS Extensions
+    primary_language TEXT DEFAULT 'en',
+    timezone TEXT DEFAULT 'Asia/Kolkata',
+    family_medical_history JSONB DEFAULT '[]'::jsonb,
+    health_goals JSONB DEFAULT '[]'::jsonb,
+    ai_tone_preference TEXT DEFAULT 'friendly',
+    organ_donor BOOLEAN DEFAULT false,
+    advance_directive BOOLEAN DEFAULT false,
+    menstrual_tracking BOOLEAN DEFAULT false,
+    primary_physician TEXT,
+    preferred_pharmacy TEXT,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -276,7 +288,148 @@ CREATE TABLE public.embeddings (
 );
 
 -- ============================================================
--- 7. TRIGGERS & RLS & INDEXES
+-- 7a. MEDICATION SCHEDULES
+-- ============================================================
+CREATE TABLE public.medication_schedules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    medication_name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    frequency TEXT NOT NULL DEFAULT 'daily',
+    times_of_day TEXT[] DEFAULT '{}',
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE,
+    prescribing_doctor TEXT,
+    purpose TEXT,
+    side_effects TEXT[] DEFAULT '{}',
+    interactions_checked BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    adherence_streak INTEGER DEFAULT 0,
+    last_taken_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.medication_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    schedule_id UUID REFERENCES public.medication_schedules(id) ON DELETE SET NULL,
+    medication_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'taken' CHECK (status IN ('taken', 'skipped', 'late', 'missed')),
+    taken_at TIMESTAMPTZ DEFAULT now(),
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- 7b. VITAL BASELINES & READINGS
+-- ============================================================
+CREATE TABLE public.vital_baselines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    metric_type TEXT NOT NULL,
+    baseline_value NUMERIC NOT NULL,
+    unit TEXT NOT NULL,
+    measured_at TIMESTAMPTZ DEFAULT now(),
+    source TEXT DEFAULT 'manual',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.vital_readings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    metric_type TEXT NOT NULL,
+    value NUMERIC NOT NULL,
+    unit TEXT NOT NULL,
+    source TEXT DEFAULT 'manual',
+    is_anomaly BOOLEAN DEFAULT false,
+    session_id UUID REFERENCES public.symptom_sessions(id) ON DELETE SET NULL,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- 7c. HEALTH GOALS
+-- ============================================================
+CREATE TABLE public.health_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    goal_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    target_value NUMERIC,
+    current_value NUMERIC DEFAULT 0,
+    unit TEXT,
+    target_date DATE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'achieved', 'paused', 'abandoned')),
+    ai_suggestions JSONB DEFAULT '[]'::jsonb,
+    milestones JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- 7d. VACCINATION RECORDS
+-- ============================================================
+CREATE TABLE public.vaccination_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    vaccine_name TEXT NOT NULL,
+    dose_number INTEGER DEFAULT 1,
+    administered_date DATE,
+    next_dose_date DATE,
+    provider TEXT,
+    lot_number TEXT,
+    document_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- 7e. WEARABLE DAILY SYNC
+-- ============================================================
+CREATE TABLE public.wearable_daily_sync (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    sync_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    steps INTEGER DEFAULT 0,
+    distance_m INTEGER DEFAULT 0,
+    calories_burned INTEGER DEFAULT 0,
+    active_minutes INTEGER DEFAULT 0,
+    resting_heart_rate INTEGER,
+    avg_heart_rate INTEGER,
+    max_heart_rate INTEGER,
+    hrv_ms INTEGER,
+    spo2_avg NUMERIC,
+    sleep_duration_min INTEGER,
+    deep_sleep_min INTEGER,
+    rem_sleep_min INTEGER,
+    light_sleep_min INTEGER,
+    stress_score INTEGER,
+    body_battery INTEGER,
+    skin_temp_delta NUMERIC,
+    source TEXT DEFAULT 'health_connect',
+    raw_data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, sync_date)
+);
+
+-- ============================================================
+-- 7f. AI CLINICAL CONTEXT
+-- ============================================================
+CREATE TABLE public.ai_clinical_context (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES public.symptom_sessions(id) ON DELETE CASCADE,
+    context_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+    ai_model_used TEXT,
+    token_count INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- 8. TRIGGERS & RLS & INDEXES
 -- ============================================================
 CREATE TRIGGER update_profiles_modtime BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_sessions_modtime BEFORE UPDATE ON public.symptom_sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -292,3 +445,11 @@ CREATE INDEX idx_ai_results_user ON public.ai_results(user_id);
 CREATE INDEX idx_nutrition_user ON public.nutrition_logs(user_id);
 CREATE INDEX idx_monitoring_user_date ON public.monitoring_logs(user_id, logged_date);
 CREATE INDEX idx_embeddings_vector ON public.embeddings USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX idx_med_schedules_user ON public.medication_schedules(user_id);
+CREATE INDEX idx_med_logs_user ON public.medication_logs(user_id);
+CREATE INDEX idx_vital_baselines_user ON public.vital_baselines(user_id);
+CREATE INDEX idx_vital_readings_user ON public.vital_readings(user_id);
+CREATE INDEX idx_health_goals_user ON public.health_goals(user_id);
+CREATE INDEX idx_vaccination_user ON public.vaccination_records(user_id);
+CREATE INDEX idx_wearable_daily_user ON public.wearable_daily_sync(user_id, sync_date DESC);
+CREATE INDEX idx_ai_context_session ON public.ai_clinical_context(session_id);

@@ -1,24 +1,36 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medassist_ai/features/auth/providers/auth_provider.dart';
 import 'package:medassist_ai/features/nutrition/providers/nutrition_providers.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:medassist_ai/core/services/edge_function_service.dart';
 
 class NutritionAiState {
   final List<Map<String, dynamic>> messages;
   final bool isTyping;
+  final String? lastDailyTip;
+  final String? lastMealSuggestion;
+  final String? lastMacroNote;
 
   const NutritionAiState({
     this.messages = const [],
     this.isTyping = false,
+    this.lastDailyTip,
+    this.lastMealSuggestion,
+    this.lastMacroNote,
   });
 
   NutritionAiState copyWith({
     List<Map<String, dynamic>>? messages,
     bool? isTyping,
+    String? lastDailyTip,
+    String? lastMealSuggestion,
+    String? lastMacroNote,
   }) {
     return NutritionAiState(
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
+      lastDailyTip: lastDailyTip ?? this.lastDailyTip,
+      lastMealSuggestion: lastMealSuggestion ?? this.lastMealSuggestion,
+      lastMacroNote: lastMacroNote ?? this.lastMacroNote,
     );
   }
 }
@@ -31,7 +43,10 @@ class NutritionAiNotifier extends Notifier<NutritionAiState> {
         {
           'id': 'init_1',
           'role': 'ai',
-          'text': 'Hello! I am Dr. NutriAssist. I can review your meals, check them against your chronic conditions, and provide dietary advice.',
+          'text':
+              'Hey there! I\'m Dr. NutriAssist, your personal nutrition coach. '
+              'I can review your meals, flag food-condition conflicts, suggest healthy '
+              'alternatives, and help you hit your dietary goals. What can I help you with?',
           'timestamp': 'Just now',
           'flags': [],
         }
@@ -46,7 +61,7 @@ class NutritionAiNotifier extends Notifier<NutritionAiState> {
       'text': text,
       'timestamp': 'Just now',
     };
-    
+
     state = state.copyWith(
       messages: [...state.messages, userMsg],
       isTyping: true,
@@ -54,18 +69,19 @@ class NutritionAiNotifier extends Notifier<NutritionAiState> {
 
     try {
       final contextPayload = state.messages.map((m) => <String, dynamic>{
-        'role': m['role'],
-        'content': m['text'],
-      }).toList();
+            'role': m['role'],
+            'content': m['text'],
+          }).toList();
 
       final user = ref.read(authProvider);
-      
+
       // Inject today's dietary summary
       final diaryState = ref.read(nutritionDiaryProvider);
       final todaySummary = diaryState.summary;
 
       final patientContext = <String, dynamic>{
-        'chronic_conditions': user?['chronicConditions'] ?? user?['chronic_conditions'] ?? [],
+        'chronic_conditions':
+            user?['chronicConditions'] ?? user?['chronic_conditions'] ?? [],
         'allergies': user?['allergies'] ?? [],
         'calories': todaySummary.caloriesLogged,
         'carbs': todaySummary.carbsLogged,
@@ -74,42 +90,50 @@ class NutritionAiNotifier extends Notifier<NutritionAiState> {
         'calories_burned': todaySummary.activityBurnLogged,
       };
 
-      final response = await Supabase.instance.client.functions.invoke(
+      final response = await EdgeFunctionService.invoke(
         'nutrition-ai',
         body: {
           'messages': contextPayload,
           'patient_context': patientContext,
         },
       );
-      
-      final data = response.data as Map<String, dynamic>;
-      final aiReplyText = data['reply'] ?? 'I cannot analyze that right now.';
-      final flags = data['flags'] ?? [];
-      final dailyTip = data['daily_tip'];
 
-      final replyContent = dailyTip != null && (dailyTip as String).isNotEmpty 
-          ? '$aiReplyText\n\n Tip: $dailyTip' 
-          : aiReplyText;
-      
+      final aiReplyText =
+          response['reply'] ?? 'I cannot analyze that right now.';
+      final flags = response['flags'] ?? [];
+      final dailyTip = response['daily_tip'] as String?;
+      final mealSuggestion = response['meal_suggestion'] as String?;
+      final macroNote = response['macro_note'] as String?;
+
       final aiMsg = {
         'id': 'ai_${DateTime.now().millisecondsSinceEpoch}',
         'role': 'ai',
-        'text': replyContent,
+        'text': aiReplyText,
         'timestamp': 'Just now',
         'flags': flags,
+        if (dailyTip != null && dailyTip.isNotEmpty) 'daily_tip': dailyTip,
+        if (mealSuggestion != null && mealSuggestion.isNotEmpty)
+          'meal_suggestion': mealSuggestion,
+        if (macroNote != null && macroNote.isNotEmpty)
+          'macro_note': macroNote,
       };
 
       state = state.copyWith(
         messages: [...state.messages, aiMsg],
         isTyping: false,
+        lastDailyTip: dailyTip,
+        lastMealSuggestion: mealSuggestion,
+        lastMacroNote: macroNote,
       );
-      
     } catch (e) {
+      final errorStr = e.toString();
       final errorMsg = {
         'id': 'err_${DateTime.now().millisecondsSinceEpoch}',
         'role': 'ai',
-        'text': 'Error: Unable to reach AI Coach.',
+        'text':
+            'I\'m having trouble connecting right now. Please try again in a moment.\n\nDetails: $errorStr',
         'timestamp': 'Just now',
+        'isError': true,
       };
       state = state.copyWith(
         messages: [...state.messages, errorMsg],
@@ -119,7 +143,8 @@ class NutritionAiNotifier extends Notifier<NutritionAiState> {
   }
 }
 
-final nutritionAiProvider = NotifierProvider<NutritionAiNotifier, NutritionAiState>(
+final nutritionAiProvider =
+    NotifierProvider<NutritionAiNotifier, NutritionAiState>(
   NutritionAiNotifier.new,
 );
 
