@@ -66,56 +66,47 @@ class RecordsNotifier extends AsyncNotifier<RecordsState> {
       );
 
       if (result == null || result.files.isEmpty) {
-        // User cancelled picker
         await refresh();
         return false;
       }
 
       final file = result.files.first;
       final fileName = file.name;
+      final fileBytes = file.bytes;
+
+      if (fileBytes == null) {
+        throw Exception("File data is corrupt or unreadable.");
+      }
       
-      // 2. Try calling Edge Function for AI processing
-      String aiSummary;
-      Map<String, dynamic> extractedMetrics;
-      
+      final category = _inferRecordType(fileName);
+
+      // 2. Upload to Supabase Storage & Create Medical Record row (Pending AI)
+      final repo = ref.read(recordsRepositoryProvider);
+      final recordId = await repo.createArchivedRecord(
+        fileType: fileName.contains('.pdf') ? 'application/pdf' : 'image/jpeg',
+        category: category,
+        fileBytes: fileBytes,
+        fileName: fileName,
+      );
+
+      if (recordId == null) throw Exception("Failed to upload to Security Vault");
+
+      // 3. Trigger Kimi Moonshot AI Processing in background
       try {
-        // Attempt real AI processing via Edge Function
-        final fileBytes = file.bytes;
-        final base64File = fileBytes != null ? base64Encode(fileBytes) : '';
+        final base64File = base64Encode(fileBytes);
         
-        final aiResult = await EdgeFunctionService.invoke(
-          'record-process',
+        await EdgeFunctionService.invoke(
+          'analyze-medical-record',
           body: {
-            'file_name': fileName,
-            'file_data': base64File,
+            'record_id': recordId,
+            'image_base64': base64File,
+            'file_type': fileName.contains('.pdf') ? 'application/pdf' : 'image/jpeg',
           },
         );
-        aiSummary = aiResult['summary'] ?? 'AI processing completed.';
-        extractedMetrics = Map<String, dynamic>.from(aiResult['metrics'] ?? {});
       } catch (e) {
-        // Edge Function not deployed - use intelligent fallback
-        debugPrint('Edge Function unavailable, using local analysis: $e');
-        aiSummary = 'Document "$fileName" uploaded successfully. AI analysis will be available when the processing service is online.';
-        extractedMetrics = {
-          'file_name': fileName,
-          'file_size': '${((file.size) / 1024).toStringAsFixed(1)} KB',
-          'upload_date': DateTime.now().toIso8601String(),
-        };
+        debugPrint('Kimi NIM Edge Function failed: $e');
+        // It's still safely stored, it just lacks AI summary for now.
       }
-
-      // 3. Save to repository (Supabase)
-      final repo = ref.read(recordsRepositoryProvider);
-      await repo.createRecord(
-        title: fileName.replaceAll(RegExp(r'\.[^.]+$'), ''),
-        recordType: _inferRecordType(fileName),
-        fileUrl: 'vault://${DateTime.now().millisecondsSinceEpoch}_$fileName',
-        metadata: {
-          'ai_summary': aiSummary,
-          'extracted_metrics': extractedMetrics,
-          'processed_by': 'NVIDIA NIM Llama-3.1',
-          'confidence': 0.94,
-        },
-      );
 
       await refresh();
       return true;

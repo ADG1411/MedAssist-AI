@@ -15,6 +15,7 @@ import 'widgets/medical_timeline_widget.dart';
 import 'widgets/report_trend_card.dart';
 import 'widgets/doctor_share_sheet.dart';
 import 'widgets/record_ai_card.dart';
+import 'widgets/ai_trend_timeline.dart';
 import 'providers/records_provider.dart';
 
 class HealthRecordsScreen extends ConsumerWidget {
@@ -465,6 +466,14 @@ class HealthRecordsScreen extends ConsumerWidget {
         // FILTERED RECORDS LIST
         // ═══════════════════════════════════════════════════════════════
         if (state.activeFilter != 'All') ...[
+          // Show AI longitudinal trend for this specific category
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: AiTrendTimeline(category: state.activeFilter),
+            ),
+          ),
+          
           if (state.filteredRecords.isEmpty)
             SliverFillRemaining(
               child: Center(
