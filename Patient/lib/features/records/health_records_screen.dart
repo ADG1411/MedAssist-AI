@@ -23,13 +23,12 @@ class HealthRecordsScreen extends ConsumerWidget {
 
   static const _categories = [
     (title: 'Prescriptions', icon: Icons.medication_rounded, color: Color(0xFF10B981), type: 'Prescription'),
-    (title: 'Blood Tests', icon: Icons.science_rounded, color: Color(0xFF0EA5E9), type: 'Lab Report'),
+    (title: 'Blood Tests', icon: Icons.science_rounded, color: Color(0xFF0EA5E9), type: 'Blood Test'),
     (title: 'Imaging / X-ray', icon: Icons.image_rounded, color: Color(0xFF8B5CF6), type: 'Imaging'),
-    (title: 'AI Results', icon: Icons.auto_awesome, color: Color(0xFFF59E0B), type: 'AI Result'),
-    (title: 'Discharge Notes', icon: Icons.local_hospital_rounded, color: Color(0xFFEF4444), type: 'Discharge Summary'),
-    (title: 'Doctor Notes', icon: Icons.note_alt_rounded, color: Color(0xFF6366F1), type: 'Doctor Notes'),
-    (title: 'Insurance', icon: Icons.shield_rounded, color: Color(0xFF14B8A6), type: 'Health Insurance'),
-    (title: 'Documents', icon: Icons.description_rounded, color: Color(0xFF64748B), type: 'Document'),
+    (title: 'Discharge Notes', icon: Icons.local_hospital_rounded, color: Color(0xFFEF4444), type: 'Discharge Note'),
+    (title: 'Doctor Notes', icon: Icons.note_alt_rounded, color: Color(0xFF6366F1), type: 'Doctor Note'),
+    (title: 'Insurance', icon: Icons.shield_rounded, color: Color(0xFF14B8A6), type: 'Insurance'),
+    (title: 'Documents', icon: Icons.description_rounded, color: Color(0xFF64748B), type: 'Other'),
   ];
 
   @override

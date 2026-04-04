@@ -121,9 +121,11 @@ class RecordsNotifier extends AsyncNotifier<RecordsState> {
 
   String _inferRecordType(String fileName) {
     final lower = fileName.toLowerCase();
-    if (lower.contains('lab') || lower.contains('blood') || lower.contains('lipid')) return 'Lab Report';
+    if (lower.contains('lab') || lower.contains('blood') || lower.contains('lipid')) return 'Blood Test';
     if (lower.contains('xray') || lower.contains('mri') || lower.contains('scan')) return 'Imaging';
     if (lower.contains('prescription') || lower.contains('rx')) return 'Prescription';
-    return 'Document';
+    if (lower.contains('discharge')) return 'Discharge Note';
+    if (lower.contains('insurance')) return 'Insurance';
+    return 'Other';
   }
 }
