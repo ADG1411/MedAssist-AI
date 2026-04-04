@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Share2, Lock, ShieldCheck, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { RevealAndCopy } from '../ui/reveal-copy';
+import { ShowQr } from '../ui/show-qr';
 import type { QRPreview } from '../../services/medcardService';
 
 interface Props {
@@ -107,19 +108,9 @@ export const PatientPreview = ({ preview, onAccess, onEmergency, loading }: Prop
           </div>
 
           {/* Right: QR code */}
-          <button onClick={() => setQrTimestamp(Date.now())} className="flex flex-col items-center gap-1.5 shrink-0 group hover:opacity-90 active:scale-95 transition-all outline-none">
-            <div className="bg-white rounded-2xl p-2 shadow-lg">
-              <img
-                src={qrUrl}
-                alt="Scan QR"
-                width={96}
-                height={96}
-                className="block rounded-lg pointer-events-none"
-                onError={e => { (e.target as HTMLImageElement).style.opacity = '0'; }}
-              />
-            </div>
-            <p className="text-teal-400 opacity-90 text-[9px] font-bold tracking-wider text-center">Tap for new QR</p>
-          </button>
+          <div className="shrink-0 flex items-center justify-center p-2">
+            <ShowQr value={qrData} buttonLabel="" />
+          </div>
         </div>
 
         {/* ── Bottom action bar ── */}

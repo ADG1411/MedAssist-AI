@@ -1,5 +1,6 @@
 import React from 'react';
-import { Siren, Activity, PhoneCall, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Siren, Activity, ShieldAlert, PhoneCall, AlertTriangle } from 'lucide-react';
+import { ViewOnMap } from '@/components/ui/view-on-map';
 
 const liveEmergencies = [
   { id: '#EMG-9021', patient: 'Unknown Male (Trauma)', location: 'Sector 4, Main St', status: 'Ambulance Dispatched', time: 'Just now', eta: '4 min' },
@@ -33,6 +34,7 @@ export const Emergency: React.FC = () => {
             <p className="text-rose-700 text-sm font-medium mt-1">Average response time currently at 1.2 minutes. System operating normally.</p>
          </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden h-[500px] flex flex-col">
@@ -70,15 +72,18 @@ export const Emergency: React.FC = () => {
         </div>
 
         <div className="bg-slate-100 rounded-2xl border border-slate-200/80 shadow-inner h-[500px] flex items-center justify-center relative overflow-hidden">
-          {/* Mock Map View */}
+          {/* Map View Integration */}
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          <div className="text-center relative z-10 p-8">
-             <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-md mb-4 ring-4 ring-white/50 border border-slate-200">
-               <Activity className="h-8 w-8 text-teal-600" />
-             </div>
-             <h3 className="text-lg font-bold text-slate-800">Map Integration Disabled</h3>
-             <p className="text-sm font-medium text-slate-500 mt-2">Connect Google Maps or Mapbox API in Settings to view live ambulance tracking.</p>
-             <button className="mt-6 px-5 py-2 bg-white text-slate-700 text-sm font-bold shadow-sm rounded-xl border border-slate-200 hover:bg-slate-50 transition">Configure Map API</button>
+          
+          <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
+             <ViewOnMap 
+                locationName="Live Tracker"
+                address="Sector 4, Main St"
+                className="scale-110"
+             />
+             <p className="mt-8 text-teal-700 font-bold tracking-tight bg-teal-50 px-4 py-1.5 rounded-full ring-1 ring-teal-500/20 shadow-sm">
+                Live Ambulance Tracking Active
+             </p>
           </div>
         </div>
       </div>

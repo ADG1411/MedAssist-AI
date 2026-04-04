@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Search, Filter, MoreHorizontal, UserCheck, ShieldBan, Users as UsersIcon, Activity, Building2, UserPlus } from 'lucide-react';
 import { MinimalCarousel, CarouselCard } from '../components/ui/minimal-carousel';
+import { FloatingDisclosure } from '../components/ui/floating-disclosure';
+import { FaUserDoctor, FaUserInjured, FaHospital } from 'react-icons/fa6';
 
 const statsCards: CarouselCard[] = [
   {
@@ -57,9 +59,14 @@ export const Users: React.FC = () => {
           <button className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium px-4 py-2 rounded-xl shadow-sm text-sm transition-all focus:ring-4 focus:ring-slate-100 flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
           </button>
-          <button className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2 rounded-xl shadow-sm text-sm transition-all focus:ring-4 focus:ring-teal-500/20 active:scale-95 flex items-center gap-2">
-             +  Add New User
-          </button>
+          
+          <FloatingDisclosure 
+            items={[
+              { title: "Doctor", description: "Add a new doctor", icon: FaUserDoctor },
+              { title: "Patient", description: "Add a new patient", icon: FaUserInjured },
+              { title: "Hospital", description: "Add a partner hospital", icon: FaHospital }
+            ]} 
+          />
         </div>
       </div>
 

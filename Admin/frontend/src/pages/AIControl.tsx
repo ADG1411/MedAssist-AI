@@ -51,9 +51,15 @@ export const AIControl: React.FC = () => {
                   onChange={(e) => setModel(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-teal-500/20 outline-none transition focus:border-teal-500"
                 >
-                  <option value="gpt-4-turbo">GPT-4 Turbo (Primary)</option>
-                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fallback)</option>
-                  <option value="claude-3-opus">Claude 3 Opus (Specialist)</option>
+                  <optgroup label="Patient Side Models">
+                    <option value="gpt-4-turbo">GPT-4 Turbo (Patient Primary)</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Patient Fallback)</option>
+                    <option value="claude-3-opus">Claude 3 Opus (Patient Specialist)</option>
+                  </optgroup>
+                  <optgroup label="Doctor Side Models">
+                    <option value="kimi-k-2.5">Kimi K 2.5 (Doctor Working Model)</option>
+                    <option value="step-3-fast">Step 3 Fast (Doctor Working Model)</option>
+                  </optgroup>
                 </select>
               </div>
               

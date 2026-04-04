@@ -266,6 +266,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
                 ))}
               </div>
             </div>
+            
             <button
               onClick={() => {
                 setIsDetailsOpen(true);

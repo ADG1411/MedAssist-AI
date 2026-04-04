@@ -1,5 +1,5 @@
-import { QRCodeSVG } from 'qrcode.react';
 import { CheckCircle2, MapPin, Calendar, Clock, FlaskConical, Stethoscope, User, RefreshCw } from 'lucide-react';
+import { ShowQr } from '../ui/show-qr';
 import { motion } from 'framer-motion';
 import type { Ticket, BookingType } from '../../types/referral';
 import { cn } from '../../layouts/DashboardLayout';
@@ -118,19 +118,9 @@ export function TicketView({ ticket, onNewScan }: Props) {
         </div>
 
         {/* QR Code Section */}
-        <div className="px-5 py-5 flex flex-col items-center gap-3">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Scan at Counter</p>
-          <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-inner">
-            <QRCodeSVG
-              value={ticket.qr_token}
-              size={160}
-              bgColor="#ffffff"
-              fgColor="#0f172a"
-              level="M"
-              includeMargin={false}
-            />
-          </div>
-          <p className="text-[10px] font-mono text-slate-300 tracking-widest">
+        <div className="px-5 py-3 flex flex-col items-center gap-1">
+          <ShowQr value={ticket.qr_token} buttonLabel="SCAN AT COUNTER" />
+          <p className="text-[10px] font-mono text-slate-300 tracking-widest mt-1">
             {ticket.id.slice(-10).toUpperCase()}
           </p>
         </div>

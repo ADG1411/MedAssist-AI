@@ -66,7 +66,17 @@ export const PatientDrawer: React.FC<PatientDrawerProps> = ({ isOpen, onClose, p
                          <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                        )}
                     </div>
-                    <p className="text-sm font-medium text-slate-500 mb-3">{patient.age} years • {patient.gender}</p>
+                    <p className="text-sm font-medium text-slate-500 mb-1">{patient.age} years • {patient.gender} {patient.blood_group ? `• ${patient.blood_group}` : ''}</p>
+                    {(patient.allergies?.length || patient.chronic_conditions?.length) ? (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {patient.allergies?.map((a: string) => (
+                           <span key={a} className="text-[10px] font-bold px-1.5 py-0.5 bg-red-50 text-red-600 rounded">Allergy: {a}</span>
+                        ))}
+                        {patient.chronic_conditions?.map((c: string) => (
+                           <span key={c} className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded">{c}</span>
+                        ))}
+                      </div>
+                    ) : <div className="mb-3" />}
                     
                     <div className="flex gap-4">
                        <button className="flex items-center text-xs font-bold text-brand-blue bg-brand-light hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">

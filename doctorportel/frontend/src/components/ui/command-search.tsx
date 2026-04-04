@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Search, Mic } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CommandSearchProps {
   value: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CircleDollarSign, TrendingUp, Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { CircleDollarSign } from 'lucide-react';
 import { BudgetCard } from '@/components/ui/budget-card';
 
 const mockMonthlyData: Record<string, any> = {

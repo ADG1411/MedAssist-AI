@@ -1,10 +1,16 @@
 import React from 'react';
 import { Bell, Search, UserCircle } from 'lucide-react';
+import logo from '../assets/logo.svg';
 
 export const Topbar: React.FC = () => {
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-sm ring-1 ring-slate-200 h-16 w-full flex items-center justify-between px-8 z-10 sticky top-0 transition-all">
-      <div className="flex-1 max-w-xl relative group">
+      <div className="flex items-center gap-4 mr-6">
+        <img src={logo} alt="MedAssist Logo" className="h-8 w-8 rounded-lg shadow-sm" />
+        <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent tracking-tight block md:hidden">MedAssist.</span>
+      </div>
+
+      <div className="flex-1 max-w-xl relative group ml-2 lg:ml-0">
         <label htmlFor="search" className="sr-only">Search</label>
         <input
           id="search"
