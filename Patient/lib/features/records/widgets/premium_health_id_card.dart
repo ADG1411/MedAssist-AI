@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Apple Wallet-grade premium medical identity card with QR, profile,
 /// blood group, allergies, conditions, emergency contact.
@@ -15,6 +16,18 @@ class PremiumHealthIdCard extends StatelessWidget {
     this.allergies = const [],
     this.conditions = const [],
   });
+
+  /// Build QR data: MEDCARD::<full_uuid>::<expiry_timestamp>
+  /// This format is compatible with the Doctor Portal's QR scanner.
+  String _buildQrData() {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      final expiry = DateTime.now().add(const Duration(minutes: 30)).millisecondsSinceEpoch;
+      return 'MEDCARD::$userId::$expiry';
+    }
+    // Fallback to health ID if not authenticated
+    return userData['healthId']?.toString() ?? 'MD-XXXXXXXX';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +178,7 @@ class PremiumHealthIdCard extends StatelessWidget {
                           ],
                         ),
                         child: QrImageView(
-                          data: healthId,
+                          data: _buildQrData(),
                           version: QrVersions.auto,
                           size: 72,
                           eyeStyle: const QrEyeStyle(

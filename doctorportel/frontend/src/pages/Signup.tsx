@@ -33,12 +33,7 @@ const SignupPage = () => {
     setLoading(false);
 
     if (error) {
-      if (error.message.toLowerCase().includes('rate limit')) {
-        setSuccessMsg("Dev Mode Bypass: Rate limit detected. Letting you in anyway!");
-        setTimeout(() => navigate('/dashboard'), 1500);
-      } else {
-        setErrorMsg(error.message);
-      }
+      setErrorMsg(error.message);
     } else if (data?.session) {
       setSuccessMsg("Account created successfully! Logging you in...");
       setTimeout(() => navigate('/dashboard'), 1500);

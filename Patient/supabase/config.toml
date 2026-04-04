@@ -42,3 +42,15 @@ entrypoint = "./functions/rag-retrieve/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/rag-retrieve/*.html" ]
+
+[functions.doctor-patient-view]
+enabled = true
+verify_jwt = true
+import_map = "./functions/doctor-patient-view/deno.json"
+entrypoint = "./functions/doctor-patient-view/index.ts"
+
+[functions.doctor-ai-consult]
+enabled = true
+verify_jwt = true
+import_map = "./functions/doctor-ai-consult/deno.json"
+entrypoint = "./functions/doctor-ai-consult/index.ts"

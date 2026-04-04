@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// Emergency QR preview bottom sheet — shows scannable emergency-safe
@@ -41,6 +42,18 @@ class EmergencyQrPreviewSheet extends StatelessWidget {
         recentMedicines: recentMedicines,
       ),
     );
+  }
+
+  /// Build emergency QR data in MEDCARD format for doctor portal compatibility.
+  String _buildEmergencyQrData(String healthId) {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      // 30-minute expiry for emergency QR
+      final expiry = DateTime.now().add(const Duration(minutes: 30)).millisecondsSinceEpoch;
+      return 'MEDCARD::$userId::$expiry';
+    }
+    // Fallback to legacy format
+    return 'medassist://emergency/$healthId';
   }
 
   @override
@@ -119,7 +132,7 @@ class EmergencyQrPreviewSheet extends StatelessWidget {
                   ],
                 ),
                 child: QrImageView(
-                  data: 'medassist://emergency/$healthId',
+                  data: _buildEmergencyQrData(healthId),
                   version: QrVersions.auto,
                   size: 160,
                   eyeStyle: const QrEyeStyle(

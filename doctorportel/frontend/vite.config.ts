@@ -15,6 +15,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+      },
+      '/nim-api': {
+        target: 'https://integrate.api.nvidia.com/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/nim-api/, ''),
+        secure: true,
       }
     }
   }

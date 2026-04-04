@@ -54,8 +54,29 @@ class DoctorsNotifier extends Notifier<DoctorsState> {
 
   Future<void> _loadDoctors() async {
     try {
+      // Try doctors_live view first (real registered doctors from doctor_profiles)
+      final liveData = await Supabase.instance.client.from('doctors_live').select();
+      final liveDoctors = List<Map<String, dynamic>>.from(liveData);
+      
+      if (liveDoctors.isNotEmpty) {
+        // Merge live doctors with fallback (live first, deduped)
+        final liveNames = liveDoctors.map((d) => d['name']).toSet();
+        final uniqueFallback = _fallback.where((d) => !liveNames.contains(d['name'])).toList();
+        state = state.copyWith(allDoctors: [...liveDoctors, ...uniqueFallback]);
+        return;
+      }
+      
+      // Try old doctors table
       final data = await Supabase.instance.client.from('doctors').select();
-      state = state.copyWith(allDoctors: List<Map<String, dynamic>>.from(data));
+      final legacyDoctors = List<Map<String, dynamic>>.from(data);
+      
+      if (legacyDoctors.isNotEmpty) {
+        state = state.copyWith(allDoctors: legacyDoctors);
+        return;
+      }
+      
+      // Fallback
+      state = state.copyWith(allDoctors: _fallback);
     } catch (e) {
       // Fallback if DB not ready
       state = state.copyWith(allDoctors: _fallback);

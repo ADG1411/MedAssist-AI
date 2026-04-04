@@ -8,14 +8,45 @@ class DoctorRepository {
 
   Future<List<Map<String, dynamic>>> getDoctors({String filter = 'All'}) async {
     try {
-      var query = _supabase.from('doctors').select();
+      // Try real doctors from doctors_live view (auto-synced from doctor_profiles)
+      var query = _supabase.from('doctors_live').select();
       
       if (filter != 'All') {
         query = query.eq('specialty', filter);
       }
       
       final response = await query;
-      return List<Map<String, dynamic>>.from(response);
+      final liveDoctors = List<Map<String, dynamic>>.from(response);
+      
+      if (liveDoctors.isNotEmpty) {
+        // Merge with fallback to ensure there's always data to show
+        // Real doctors come first, then fallback fills in
+        final fallback = filter != 'All'
+            ? _fallbackDoctors.where((doc) => doc['specialty'] == filter).toList()
+            : _fallbackDoctors;
+        
+        // Deduplicate by name
+        final liveNames = liveDoctors.map((d) => d['name']).toSet();
+        final uniqueFallback = fallback.where((d) => !liveNames.contains(d['name'])).toList();
+        
+        return [...liveDoctors, ...uniqueFallback];
+      }
+      
+      // If doctors_live returns empty, try old doctors table
+      var legacyQuery = _supabase.from('doctors').select();
+      if (filter != 'All') {
+        legacyQuery = legacyQuery.eq('specialty', filter);
+      }
+      final legacyData = await legacyQuery;
+      final legacyList = List<Map<String, dynamic>>.from(legacyData);
+      
+      if (legacyList.isNotEmpty) return legacyList;
+      
+      // If both empty, return fallback
+      if (filter != 'All') {
+        return _fallbackDoctors.where((doc) => doc['specialty'] == filter).toList();
+      }
+      return _fallbackDoctors;
     } catch (e) {
       // Fallback mock if database isn't ready/seeded yet so the UI doesn't crash during transition
       if (filter != 'All') {
@@ -25,10 +56,76 @@ class DoctorRepository {
     }
   }
 
+  /// Get AI-recommended specialty based on patient's latest triage data
   Future<String?> getAiRecommendedSpecialty() async {
-    // Ideally this queries an RPC function or an "ai_health_record" table for latest extracted insights.
-    await Future.delayed(const Duration(milliseconds: 400));
-    return 'Gastroenterology'; 
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return 'Gastroenterology'; // fallback if not logged in
+
+      // Check latest doctor handoff for specialty recommendation
+      final handoff = await _supabase
+          .from('doctor_handoffs')
+          .select('suggested_specialty')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (handoff != null && handoff['suggested_specialty'] != null) {
+        return handoff['suggested_specialty'] as String;
+      }
+
+      // Fallback: check latest AI results for doctor_handoff recommendation
+      final aiResult = await _supabase
+          .from('ai_results')
+          .select('conditions, doctor_handoff')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (aiResult != null) {
+        // Check doctor_handoff field
+        final handoffData = aiResult['doctor_handoff'];
+        if (handoffData is Map && handoffData['recommended_specialty'] != null) {
+          return handoffData['recommended_specialty'] as String;
+        }
+        
+        // Infer from conditions
+        final conditions = aiResult['conditions'];
+        if (conditions is List && conditions.isNotEmpty) {
+          final topCondition = conditions[0];
+          if (topCondition is Map && topCondition['name'] != null) {
+            return _inferSpecialty(topCondition['name'] as String);
+          }
+        }
+      }
+
+      return 'Gastroenterology'; // default fallback
+    } catch (e) {
+      return 'Gastroenterology'; // original fallback
+    }
+  }
+
+  /// Infer specialty from a condition name
+  String _inferSpecialty(String condition) {
+    final lower = condition.toLowerCase();
+    if (lower.contains('heart') || lower.contains('cardiac') || lower.contains('cardiovascular') || lower.contains('hypertens')) {
+      return 'Cardiology';
+    }
+    if (lower.contains('gastrit') || lower.contains('gerd') || lower.contains('digest') || lower.contains('liver') || lower.contains('ibs')) {
+      return 'Gastroenterology';
+    }
+    if (lower.contains('skin') || lower.contains('rash') || lower.contains('acne') || lower.contains('dermat')) {
+      return 'Dermatology';
+    }
+    if (lower.contains('bone') || lower.contains('joint') || lower.contains('fracture') || lower.contains('arthrit')) {
+      return 'Orthopedic';
+    }
+    if (lower.contains('brain') || lower.contains('neuro') || lower.contains('migraine') || lower.contains('headache')) {
+      return 'Neurology';
+    }
+    return 'General Practice';
   }
 
   // Fallback map matching migration script for offline local testing

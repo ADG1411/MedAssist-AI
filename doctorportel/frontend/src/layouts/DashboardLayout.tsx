@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { getProfile } from '../services/doctorProfileService';
+import { authService } from '../services/authService';
 
 // Simple utility for Tailwind class merging
 // eslint-disable-next-line react-refresh/only-export-components
@@ -55,7 +56,6 @@ const DashboardLayout = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
-  const [isNewUser, setIsNewUser] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,21 +64,27 @@ const DashboardLayout = () => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
   }, []);
 
-  // Check profile completion to identify completely new users
+  // Check auth and profile setup
   useEffect(() => {
-    getProfile()
-      .then((profile) => {
-        const _isNew = profile.completion_percent === 0;
-        setIsNewUser(_isNew);
-        // Force completely new users to go through the setup wizard exactly once
-        if (_isNew && location.pathname !== '/dashboard/profile-setup') {
-          navigate('/dashboard/profile-setup', { replace: true });
-        }
-      })
-      .catch(console.error)
-      .finally(() => {
+    const checkAuthAndProfile = async () => {
+      const { data } = await authService.getCurrentUser();
+      
+      if (!data?.user) {
+        navigate('/login', { replace: true });
+        return;
+      }
+      
+      try {
+        await getProfile();
+        // Removed forced navigation so portal remains open
+      } catch (err) {
+        console.error("Error fetching profile", err);
+      } finally {
         setIsCheckingProfile(false);
-      });
+      }
+    };
+    
+    checkAuthAndProfile();
   }, [location.pathname, navigate]);
 
   const toggleDarkMode = () => {
@@ -92,6 +98,11 @@ const DashboardLayout = () => {
     alert("System cache wiped successfully. Restoring session.");
     window.location.reload();
   };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate('/login');
+  };
   
   const pageTitle = PAGE_TITLES[location.pathname] || location.pathname.split('/').pop() || 'Dashboard';
 
@@ -103,15 +114,10 @@ const DashboardLayout = () => {
     );
   }
 
-  // If completely new, only show the setup wizard
-  // If returning, show all standard links but hide the one-time setup wizard
-  const navItems = isNewUser
-    ? SIDEBAR_ITEMS.filter(item => item.path === '/dashboard/profile-setup')
-    : SIDEBAR_ITEMS.filter(item => item.path !== '/dashboard/profile-setup');
+  // Show all standard links. If they are incomplete, don't hide the portal content.
+  const navItems = SIDEBAR_ITEMS;
     
-  const bottomNavItems = isNewUser 
-    ? BOTTOM_NAV.filter(item => item.path === '/dashboard/profile-setup') 
-    : BOTTOM_NAV;
+  const bottomNavItems = BOTTOM_NAV;
 
   return (
     <div className="min-h-screen bg-slate-50 flex overflow-hidden font-sans">
@@ -299,10 +305,10 @@ const DashboardLayout = () => {
                           Account Settings
                         </Link>
                         <div className="h-px bg-slate-100 my-1"></div>
-                        <Link to="/login" className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors text-left text-sm font-medium text-red-600 group">
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition-colors text-left text-sm font-medium text-red-600 group">
                           <LogOut className="w-4 h-4 text-red-400 group-hover:text-red-600" />
                           Logout
-                        </Link>
+                        </button>
                       </div>
                     </motion.div>
                   </>
@@ -326,8 +332,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* ── Mobile Bottom Nav ── */}
-        {!isNewUser && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-3 backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-3 backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
             {bottomNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -348,7 +353,6 @@ const DashboardLayout = () => {
               );
             })}
           </div>
-        )}
 
       </main>
     </div>
