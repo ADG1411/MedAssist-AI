@@ -141,8 +141,8 @@ class WeeklyChartCard extends StatelessWidget {
                   );
                 }),
               ),
-              swapAnimationDuration: const Duration(milliseconds: 500),
-              swapAnimationCurve: Curves.easeOutCubic,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutCubic,
             ),
           ),
         ],

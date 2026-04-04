@@ -1,4 +1,4 @@
--- Health Snapshots table for storing daily health data
+-- Health Snapshots table for storing daily health data (idempotent)
 CREATE TABLE IF NOT EXISTS health_snapshots (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -29,18 +29,19 @@ CREATE TABLE IF NOT EXISTS health_snapshots (
   UNIQUE(user_id, snapshot_date)
 );
 
--- RLS: users can only access their own data
 ALTER TABLE health_snapshots ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users read own snapshots" ON health_snapshots;
 CREATE POLICY "Users read own snapshots" ON health_snapshots
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users insert own snapshots" ON health_snapshots;
 CREATE POLICY "Users insert own snapshots" ON health_snapshots
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users update own snapshots" ON health_snapshots;
 CREATE POLICY "Users update own snapshots" ON health_snapshots
   FOR UPDATE USING (auth.uid() = user_id);
 
--- Index for fast date-range queries
 CREATE INDEX IF NOT EXISTS idx_health_snapshots_user_date 
   ON health_snapshots(user_id, snapshot_date DESC);

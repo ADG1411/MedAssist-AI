@@ -44,7 +44,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
   }
 
   Future<void> _syncAndAnalyze() async {
-    final metrics = ref.read(healthDataProvider).valueOrNull;
+    final metrics = ref.read(healthDataProvider).whenOrNull(data: (m) => m);
     if (metrics == null || !metrics.permissionGranted) return;
 
     setState(() => _isSyncing = true);
