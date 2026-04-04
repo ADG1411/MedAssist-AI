@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/profile/providers/profile_provider.dart';
 import 'widgets/premium_health_id_card.dart';
 import 'widgets/emergency_qr_preview_sheet.dart';
 
@@ -24,26 +25,37 @@ class MedAssistCardScreen extends ConsumerWidget {
         : AppColors.textSecondary;
 
     final authState = ref.watch(authProvider);
+    final asyncProfile = ref.watch(profileProvider);
+    final profile = asyncProfile.value ?? {};
 
-    // Build user data from real auth state, with sensible fallbacks
+    // Build user data from real auth/profile state, with sensible fallbacks
     final userData = {
-      'name': authState?['name'] ?? 'MedAssist User',
+      'name': profile['name'] ?? profile['full_name'] ?? authState?['name'] ?? 'MedAssist User',
       'healthId':
           'MD-${(authState?['id'] ?? 'anon').toString().substring(0, 8).toUpperCase()}',
-      'bloodGroup': authState?['bloodGroup'] ?? 'N/A',
-      'dob': authState?['dob'] ?? 'Not Set',
-      'gender': authState?['gender'] ?? 'Not Set',
+      'bloodGroup': profile['blood_group'] ?? profile['bloodGroup'] ?? 'Not Set',
+      'dob': profile['dob'] ?? profile['date_of_birth'] ?? 'Not Set',
+      'gender': profile['gender'] ?? 'Not Set',
     };
 
-    // Extract allergies and conditions from auth metadata
-    final allergies =
-        (authState?['allergies'] as List<dynamic>?) ?? [];
-    final conditions =
-        (authState?['chronicConditions'] as List<dynamic>?) ?? [];
-    final emergencyContact =
-        authState?['emergencyContact']?.toString() ?? '';
-    final insurance =
-        authState?['insurance']?.toString() ?? '';
+    // Extract allergies and conditions from profile metadata
+    final allergies = (profile['allergies'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+    final conditions = (profile['chronic_conditions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        (profile['chronicConditions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+    final emergencyContactsList = (profile['emergency_contacts'] as List<dynamic>?) ?? [];
+    
+    // Attempt to format the first emergency contact if it's a map or string
+    String emergencyContact = '';
+    if (emergencyContactsList.isNotEmpty) {
+      final first = emergencyContactsList.first;
+      if (first is Map) {
+        emergencyContact = '${first['name']} (${first['phone']})';
+      } else {
+        emergencyContact = first.toString();
+      }
+    }
+
+    final insurance = profile['insurance']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
