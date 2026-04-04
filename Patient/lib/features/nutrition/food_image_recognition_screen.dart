@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'models/intake_entry.dart';
 import 'services/fatsecret_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class FoodImageRecognitionScreen extends ConsumerStatefulWidget {
   final MealType? initialMealType;
@@ -74,6 +75,25 @@ class _FoodImageRecognitionScreenState extends ConsumerState<FoodImageRecognitio
 
   Future<void> _pickImage({required bool fromCamera}) async {
     try {
+      if (fromCamera) {
+        final status = await Permission.camera.request();
+        if (status.isDenied || status.isPermanentlyDenied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Camera permission needed to scan food.'),
+                action: SnackBarAction(
+                  label: 'Settings',
+                  textColor: Colors.white,
+                  onPressed: () => openAppSettings(),
+                ),
+              ),
+            );
+          }
+          return; // Stop here if no permission
+        }
+      }
+
       final XFile? picked = await _imagePicker.pickImage(
         source: fromCamera ? ImageSource.camera : ImageSource.gallery,
         maxWidth: 512,

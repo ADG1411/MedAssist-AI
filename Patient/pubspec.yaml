@@ -64,6 +64,7 @@ dependencies:
   jitsi_meet_flutter_sdk: ^11.6.0
   health: ^13.3.1
   liquid_glass_renderer: 0.2.0-dev.4
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:

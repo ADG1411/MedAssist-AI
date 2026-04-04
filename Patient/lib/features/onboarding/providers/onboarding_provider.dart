@@ -129,9 +129,19 @@ class OnboardingState {
 
   /// Convert to a flat map for Supabase upsert
   Map<String, dynamic> toProfileMap() {
+    int? age;
+    if (dateOfBirth != null) {
+      final now = DateTime.now();
+      age = now.year - dateOfBirth!.year;
+      if (now.month < dateOfBirth!.month || (now.month == dateOfBirth!.month && now.day < dateOfBirth!.day)) {
+        age--;
+      }
+    }
+
     return {
       'name': fullName,
       'date_of_birth': dateOfBirth?.toIso8601String(),
+      'age': age,
       'gender': gender,
       'height_cm': double.tryParse(heightCm),
       'weight_kg': double.tryParse(weightKg),

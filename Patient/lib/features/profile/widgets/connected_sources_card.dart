@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
 
 /// Connected Health Sources — shows health data connections:
 /// Google Fit, Apple Health, smartwatch, manual vitals, nutrition sync,
 /// sleep sync, steps sync. Each with status, last sync, reconnect CTA.
-/// Pure UI widget — no backend changes.
-class ConnectedSourcesCard extends StatelessWidget {
+class ConnectedSourcesCard extends StatefulWidget {
   const ConnectedSourcesCard({super.key});
 
-  static const _sources = [
+  @override
+  State<ConnectedSourcesCard> createState() => _ConnectedSourcesCardState();
+}
+
+class _ConnectedSourcesCardState extends State<ConnectedSourcesCard> {
+  late List<_Source> _sources;
+
+  @override
+  void initState() {
+    super.initState();
+    _sources = [
     _Source(
         name: 'Google Fit / Health Connect',
         icon: Icons.favorite_rounded,
@@ -53,6 +63,30 @@ class ConnectedSourcesCard extends StatelessWidget {
         connected: false,
         lastSync: ''),
   ];
+
+  void _handleConnect(int index) async {
+    final source = _sources[index];
+    
+    if (source.name.contains('Fit') || source.name.contains('Health')) {
+      final status = await Permission.activityRecognition.request();
+      if (status.isGranted) {
+        setState(() {
+          _sources[index] = source.copyWith(connected: true, lastSync: 'Just now');
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permission required to connect health sources.')),
+          );
+        }
+      }
+    } else {
+      // Simulate connection for others
+      setState(() {
+        _sources[index] = source.copyWith(connected: true, lastSync: 'Just now');
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +140,10 @@ class ConnectedSourcesCard extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Sources list
-          ..._sources.map((source) => _SourceRow(source: source)),
+          ..._sources.asMap().entries.map((entry) => _SourceRow(
+            source: entry.value,
+            onConnect: () => _handleConnect(entry.key),
+          )),
         ],
       ),
     );
@@ -127,12 +164,29 @@ class _Source {
     required this.connected,
     required this.lastSync,
   });
+
+  _Source copyWith({
+    String? name,
+    IconData? icon,
+    Color? color,
+    bool? connected,
+    String? lastSync,
+  }) {
+    return _Source(
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      connected: connected ?? this.connected,
+      lastSync: lastSync ?? this.lastSync,
+    );
+  }
 }
 
 class _SourceRow extends StatelessWidget {
   final _Source source;
+  final VoidCallback onConnect;
 
-  const _SourceRow({required this.source});
+  const _SourceRow({required this.source, required this.onConnect});
 
   @override
   Widget build(BuildContext context) {
@@ -187,27 +241,30 @@ class _SourceRow extends StatelessWidget {
                       fontWeight: FontWeight.w700)),
             )
           else
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : Colors.black.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : Colors.black.withValues(alpha: 0.08),
-                    width: 0.6),
-              ),
-              child: Text('Connect',
-                  style: TextStyle(
-                      fontSize: 9,
+            GestureDetector(
+              onTap: onConnect,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.50)
-                          : AppColors.textSecondary,
-                      fontWeight: FontWeight.w600)),
+                          ? Colors.white.withValues(alpha: 0.10)
+                          : Colors.black.withValues(alpha: 0.08),
+                      width: 0.6),
+                ),
+                child: Text('Connect',
+                    style: TextStyle(
+                        fontSize: 9,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.50)
+                            : AppColors.textSecondary,
+                        fontWeight: FontWeight.w600)),
+              ),
             ),
         ],
       ),
