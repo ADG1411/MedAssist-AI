@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User, Activity, FileText, Pill, Calendar,
   AlertTriangle, Mail, MapPin, Phone, ClipboardList,
@@ -8,6 +8,7 @@ import { cn } from '../../layouts/DashboardLayout';
 import { AIInsights } from './AIInsights';
 import { FamilyInfo }  from './FamilyInfo';
 import type { FullRecord } from '../../services/medcardService';
+import { getProfile } from '../../services/doctorProfileService';
 
 interface Props {
   record: FullRecord;
@@ -99,6 +100,18 @@ const SectionHeader = ({ icon: Icon, title, count, color = 'text-slate-600', bg 
 );
 
 export const PatientDashboard = ({ record, isEmergency = false, onNewScan }: Props) => {
+  const [doctorName, setDoctorName] = useState('Doctor');
+
+  useEffect(() => {
+    getProfile()
+      .then(prof => {
+        if (prof?.overview?.full_name) {
+          setDoctorName(prof.overview.full_name);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const { patient, records, family_members, ai_summary } = record;
   const gradient = BLOOD_GRADIENT[patient.blood_group] ?? 'from-slate-600 to-slate-800';
   const allergiesList = Array.isArray(patient.allergies)
@@ -238,7 +251,7 @@ export const PatientDashboard = ({ record, isEmergency = false, onNewScan }: Pro
       <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
         <Clock className="w-4 h-4 text-slate-400 shrink-0" />
         <p className="text-[11px] font-medium text-slate-500">
-          This access was logged at {new Date().toLocaleTimeString('en-IN')} by Dr. Smith ·
+          This access was logged at {new Date().toLocaleTimeString('en-IN')} by {doctorName} ·
           {isEmergency ? ' Tagged: EMERGENCY' : ' Tagged: STANDARD'}
         </p>
       </div>

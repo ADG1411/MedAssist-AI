@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../layouts/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
+import { getProfile } from '../services/doctorProfileService';
+import type { DoctorProfile } from '../services/doctorProfileService';
 
 /* --- MOCK DATA --- */
 const STATS = [
@@ -34,9 +36,13 @@ const NOTIFICATIONS = [
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState('');
+  const [profile, setProfile] = useState<DoctorProfile | null>(null);
 
   useEffect(() => {
     setCurrentDate(new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).format(new Date()));
+    getProfile()
+      .then(setProfile)
+      .catch(console.error);
   }, []);
 
   return (
@@ -53,13 +59,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-16 h-16 rounded-full overflow-hidden border-[3px] border-white shadow-sm shrink-0 bg-slate-100">
-                <img src="https://ui-avatars.com/api/?name=Dr.+Smith&background=1A6BFF&color=fff&size=128" alt="Dr. Smith" className="w-full h-full object-cover" />
+                <img src={profile?.overview?.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.overview?.full_name || 'Doctor')}&background=1A6BFF&color=fff&size=128`} alt={profile?.overview?.full_name || "Doctor"} className="w-full h-full object-cover" />
               </div>
             </div>
             <div>
               <p className="text-brand-blue font-bold text-xs mb-0.5 tracking-wide">{currentDate}</p>
               <h1 className="text-2xl md:text-[28px] font-black text-[#0A2540] tracking-tight flex items-center gap-2">
-                Good morning, Dr. Smith <Hand className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                Good morning, {profile?.overview?.full_name || 'Doctor'} <Hand className="w-6 h-6 text-yellow-400 fill-yellow-400" />
               </h1>
               <p className="text-slate-500 font-medium text-sm mt-0.5">Everything is under control today</p>
             </div>

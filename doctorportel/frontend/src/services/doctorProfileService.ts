@@ -81,6 +81,7 @@ export interface DoctorProfile {
 }
 
 const defaultProfile = {
+  id: null,
   overview: { full_name: '', profile_photo: null, specialization: '', degree: '', years_of_experience: 0, bio: '', languages: [], city: '', address: '' },
   workplaces: [], availability: { slot_duration: 30, monday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, tuesday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, wednesday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, thursday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, friday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, saturday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' }, sunday: { enabled: false, start_time: '09:00', end_time: '17:00', break_start: '13:00', break_end: '14:00' } }, fees: { online_fee: 0, offline_fee: 0, emergency_fee: 0, free_consultation: false, discount_percent: 0 }, documents: [], settings: { email_notifications: true, sms_notifications: false, push_notifications: true, language: 'English', profile_visibility: 'public', show_phone: false, show_email: true }, verification_status: 'incomplete', completion_percent: 0, created_at: null, updated_at: null } as DoctorProfile;
 
@@ -102,8 +103,34 @@ export async function getProfile(): Promise<DoctorProfile> {
   const { data, error } = await supabase.from('doctor_profiles').select('*').eq('id', user.id).maybeSingle();
   if (error && error.code !== 'PGRST116') { console.error("Error fetching profile from Supabase:", error); return { ...defaultProfile, id: user.id }; }
   
-  if (!data) return { ...defaultProfile, id: user.id };
-  return { id: data.id, overview: data.overview || defaultProfile.overview, workplaces: data.workplaces || [], availability: data.availability || defaultProfile.availability, fees: data.fees || defaultProfile.fees, documents: data.documents || [], settings: data.settings || defaultProfile.settings, verification_status: data.verification_status || 'incomplete', completion_percent: data.completion_percent || 0, created_at: data.created_at, updated_at: data.updated_at };
+  if (!data) return { 
+    ...defaultProfile, 
+    id: user.id,
+    overview: {
+      ...defaultProfile.overview,
+      full_name: user.user_metadata?.full_name || ''
+    }
+  };
+  
+  const result = { 
+    id: data.id, 
+    overview: { ...(data.overview || defaultProfile.overview) }, 
+    workplaces: data.workplaces || [], 
+    availability: data.availability || defaultProfile.availability, 
+    fees: data.fees || defaultProfile.fees, 
+    documents: data.documents || [], 
+    settings: data.settings || defaultProfile.settings, 
+    verification_status: data.verification_status || 'incomplete', 
+    completion_percent: data.completion_percent || 0, 
+    created_at: data.created_at, 
+    updated_at: data.updated_at 
+  };
+  
+  if (!result.overview.full_name && user.user_metadata?.full_name) {
+    result.overview.full_name = user.user_metadata.full_name;
+  }
+  
+  return result;
 }
 
 export async function saveProfile(data: Partial<DoctorProfile>): Promise<DoctorProfile> {

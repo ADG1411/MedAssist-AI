@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   PatientHeader, 
   MedicineForm, 
@@ -8,19 +8,29 @@ import {
 } from '../components/prescription/PrescriptionComponents';
 import type { MedicineItem, PatientInfo } from '../components/prescription/PrescriptionComponents';
 import { AlertTriangle, Clock } from 'lucide-react';
+import { getProfile } from '../services/doctorProfileService';
 
 export default function PrescriptionWriter() {
   const [medicines, setMedicines] = useState<MedicineItem[]>([]);
   
   // Mock Data
-  const [patient] = useState<PatientInfo>({ 
+  const [patient, setPatient] = useState<PatientInfo>({ 
     name: 'Emma Watson', 
     age: 34, 
     gender: 'Female', 
     date: new Date().toLocaleDateString(),
-    doctor: 'Smith',
+    doctor: 'Doctor',
     rxNumber: 'RX-849201'
   });
+
+  useEffect(() => {
+    getProfile().then(prof => {
+      setPatient(prev => ({
+        ...prev,
+        doctor: prof?.overview?.full_name || 'Doctor'
+      }));
+    }).catch(console.error);
+  }, []);
 
   const handleAddMedicine = (med: MedicineItem) => {
     setMedicines([...medicines, med]);
