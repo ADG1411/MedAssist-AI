@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "MedAssist Doctor",
+    "slug": "medassist-doctor",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "medassist-doctor",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A2540"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.medassist.doctor",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MedAssist needs camera access to scan patient QR codes"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A2540"
+      },
+      "package": "com.medassist.doctor",
+      "permissions": ["CAMERA"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MedAssist to scan patient QR codes"
+        }
+      ]
+    ]
+  }
+}
