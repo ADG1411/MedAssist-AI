@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User, Building2, Calendar, DollarSign, Star, FileText, Settings,
   ChevronRight, ChevronLeft, Check, Upload, Plus, Trash2, Copy,
@@ -42,6 +43,7 @@ const STATUS_COLORS: Record<string, string> = {
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function DoctorProfileSetup() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,10 +98,17 @@ export default function DoctorProfileSetup() {
       } else {
         setSubmitMsg(result.message || 'Profile submitted!');
         if (profile) setProfile({ ...profile, verification_status: 'pending' });
+        
+        // Navigate to dashboard after showing success message
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       }
     } catch {
       setSubmitMsg('Failed to submit. Please try again.');
     }
+    // Only clear the message if we didn't navigate away, but since we are navigating, 
+    // it's harmless or we can just leave it as is or clear it earlier.
     setTimeout(() => setSubmitMsg(''), 5000);
   };
 

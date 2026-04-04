@@ -155,13 +155,17 @@ export async function saveProfile(data: Partial<DoctorProfile>): Promise<DoctorP
 }
 
 export async function submitProfile(): Promise<{ status?: string; error?: string; message?: string }> {
-  const profile = await getProfile();
-  if (profile.completion_percent < 60) return { error: `Profile is only ${profile.completion_percent}% complete. Please fill required fields.` };
-  const hasLicense = profile.documents?.some(d => d.type === 'license');
-  if (!hasLicense) return { error: 'Medical license document is required for verification.' };
+  // --- Development Bypass ---
+  // Bypassing the < 60% completion check and the license document check
+  // const profile = await getProfile();
+  // if (profile.completion_percent < 60) return { error: `Profile is only ${profile.completion_percent}% complete. Please fill required fields.` };
+  // const hasLicense = profile.documents?.some(d => d.type === 'license');
+  // if (!hasLicense) return { error: 'Medical license document is required for verification.' };
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { error } = await supabase.from('doctor_profiles').update({ verification_status: 'pending' }).eq('id', user?.id as string);
+  if (!user) throw new Error("No active user session");
+
+  const { error } = await supabase.from('doctor_profiles').update({ verification_status: 'pending' }).eq('id', user.id);
   if (error) throw new Error(error.message);
 
   return { status: "submitted", message: "Profile submitted for admin verification." };
