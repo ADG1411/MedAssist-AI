@@ -36,14 +36,14 @@ export function MacOSSidebar({
 
   return (
     <div
-      className={`flex relative w-full sm:min-w-[480px] overflow-hidden ${className}`}
+      className={`flex relative w-full overflow-hidden ${className}`}
     >
       <motion.div
         animate={{
           width: isOpen ? 250 : 70,
         }}
         transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
-        className={`shrink-0 flex flex-col items-start transition-colors duration-500 ease-out border-r border-slate-200 z-50 ${
+        className={`hidden md:flex shrink-0 flex-col items-start transition-colors duration-500 ease-out border-r border-slate-200 z-50 ${
           isOpen ? "bg-white" : "bg-white"
         }`}
       >

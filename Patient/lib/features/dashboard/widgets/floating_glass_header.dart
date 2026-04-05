@@ -3,14 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../profile/providers/profile_provider.dart';
 
 class FloatingGlassHeader extends ConsumerWidget {
   const FloatingGlassHeader({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider) ?? {};
-    final userName = user['name']?.toString().split(' ').first ?? 'Guest';
+    final asyncProfile = ref.watch(profileProvider);
+    final user = ref.watch(authProvider);
+
+    final profileName = asyncProfile.value?['name'] as String?;
+    final authName = user?['name'] as String?;
+    
+    String safeName = profileName ?? authName ?? 'Guest';
+    if (safeName.trim().isEmpty) safeName = 'Guest';
+    final userName = safeName.split(' ').first;
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final hour = DateTime.now().hour;

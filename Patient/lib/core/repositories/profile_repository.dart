@@ -6,7 +6,7 @@ import '../mock/user_mock.dart';
 final profileRepositoryProvider = Provider((ref) => ProfileRepository());
 
 class ProfileRepository {
-  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false; // dotenv.env['USE_MOCK'] == 'true';
 
   Future<Map<String, dynamic>> getProfile() async {
     if (useMock) {

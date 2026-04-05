@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -39,11 +40,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate after 2500ms
+    // Navigate after delay, check for existing session
     Future.delayed(const Duration(milliseconds: AppConstants.longMockDelayMs), () {
       if (mounted) {
-        // We'll mock that it's the first launch
-        context.go('/onboarding');
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null) {
+          context.go('/home');
+        } else {
+          context.go('/onboarding');
+        }
       }
     });
   }

@@ -7,6 +7,7 @@ import '../../shared/widgets/app_background.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/shimmer_box.dart';
 import '../auth/providers/auth_provider.dart';
+import '../profile/providers/profile_provider.dart';
 import 'providers/dashboard_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -57,7 +58,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dash = ref.watch(dashboardProvider);
     final authData = ref.watch(authProvider);
-    final userName = (authData?['full_name'] as String?) ?? 'Guest';
+    final asyncProfile = ref.watch(profileProvider);
+    
+    final profileName = asyncProfile.value?['name'] as String?;
+    final authName = authData?['name'] as String?;
+    String userName = profileName ?? authName ?? 'Guest';
+    if (userName.trim().isEmpty) userName = 'Guest';
 
     return Scaffold(
       backgroundColor: Colors.transparent,

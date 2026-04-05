@@ -48,7 +48,7 @@ class PremiumProfileHeroCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.50)
         : AppColors.textSecondary;
 
-    final name = profile['name']?.toString() ?? 'Guest';
+    final name = (profile['name'] ?? profile['full_name'])?.toString() ?? 'Guest';
     final email = profile['email']?.toString() ?? '';
     final phone = profile['phone']?.toString() ?? '';
     final id = profile['id']?.toString() ?? 'anon';

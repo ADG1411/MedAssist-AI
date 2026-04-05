@@ -37,6 +37,16 @@ class AuthNotifier extends Notifier<Map<String, dynamic>?> {
 
     ref.onDispose(() => _authStateSubscription?.cancel());
 
+    final session = SupabaseService.client.auth.currentSession;
+    if (session?.user != null) {
+      final u = session!.user;
+      return {
+        'id': u.id,
+        'email': u.email,
+        'name': u.userMetadata?['full_name'] ?? 'User',
+      };
+    }
+
     return null;
   }
 

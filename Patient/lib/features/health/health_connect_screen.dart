@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/services/health_sync_service.dart';
@@ -26,11 +28,32 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
   bool _isSyncing = false;
   bool _isAnalyzing = false;
   Map<String, dynamic>? _aiResult;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     _loadLatestInsight();
+    
+    // Fetch latest data on open and set up polling every 2 minutes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(healthDataProvider.notifier).refresh();
+      _startPolling();
+    });
+  }
+
+  void _startPolling() {
+    _pollingTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      if (mounted) {
+        ref.read(healthDataProvider.notifier).refresh();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadLatestInsight() async {
@@ -48,6 +71,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
 
   Future<void> _syncAndAnalyze() async {
     if (_isSyncing || _isAnalyzing) return;
+    HapticFeedback.mediumImpact();
 
     final metricsAsync = ref.read(healthDataProvider);
     var metrics = metricsAsync.whenOrNull(data: (m) => m);
@@ -258,12 +282,6 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-<<<<<<< HEAD
-          const Icon(
-            Icons.health_and_safety_rounded,
-            size: 48,
-            color: AppColors.primary,
-=======
           Container(
             width: 56,
             height: 56,
@@ -272,7 +290,6 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.health_and_safety_rounded, size: 28, color: AppColors.primary),
->>>>>>> 93734fd3f97e030281539a5b220720560048d38e
           ),
           const SizedBox(height: 12),
           Text(
@@ -289,14 +306,8 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-<<<<<<< HEAD
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.6)
-                  : AppColors.textSecondary,
-=======
               height: 1.5,
               color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.textSecondary,
->>>>>>> 93734fd3f97e030281539a5b220720560048d38e
             ),
           ),
           const SizedBox(height: 16),

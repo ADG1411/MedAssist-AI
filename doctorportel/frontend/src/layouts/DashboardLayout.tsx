@@ -265,7 +265,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* ── Mobile Bottom Nav ── */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-3 backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 z-50 flex justify-around items-center px-1 pt-2 pb-safe backdrop-blur-md shadow-[0_-2px_16px_-2px_rgba(0,0,0,0.08)]">
             {bottomNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -274,7 +274,7 @@ const DashboardLayout = () => {
                   key={item.name}
                   to={item.path}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 rounded-xl transition-all',
+                    'flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all tap-target',
                     isActive ? 'text-brand-blue' : 'text-slate-400'
                   )}
                 >

@@ -7,7 +7,7 @@ import '../mock/records_mock.dart';
 final recordsRepositoryProvider = Provider((ref) => RecordsRepository());
 
 class RecordsRepository {
-  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false; // dotenv.env['USE_MOCK'] == 'true';
 
   Future<List<Map<String, dynamic>>> getRecords() async {
     if (useMock) {

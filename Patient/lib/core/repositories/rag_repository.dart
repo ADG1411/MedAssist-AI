@@ -5,7 +5,7 @@ import '../services/edge_function_service.dart';
 final ragRepositoryProvider = Provider((ref) => RagRepository());
 
 class RagRepository {
-  bool get useMock => false // dotenv.env['USE_MOCK'] == 'true';
+  bool get useMock => false; // dotenv.env['USE_MOCK'] == 'true';
 
   Future<List<Map<String, dynamic>>> retrieveContext(String query) async {
     if (useMock) {

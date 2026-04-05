@@ -37,19 +37,6 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
       duration: const Duration(milliseconds: 1400),
     );
     _expandCtrl = AnimationController(
-<<<<<<< HEAD
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _ringAnim = Tween<double>(
-      begin: 0.0,
-      end: widget.healthScore / 100.0,
-    ).animate(CurvedAnimation(parent: _ringCtrl, curve: Curves.easeOutCubic));
-    _expandAnim = CurvedAnimation(
-      parent: _expandCtrl,
-      curve: Curves.easeInOutCubic,
-    );
-=======
         vsync: this, duration: const Duration(milliseconds: 300));
     _glowCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2200))
@@ -60,7 +47,6 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
         CurvedAnimation(parent: _expandCtrl, curve: Curves.easeInOutCubic);
     _glowAnim = Tween<double>(begin: 0.18, end: 0.45)
         .animate(CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
->>>>>>> 93734fd3f97e030281539a5b220720560048d38e
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _ringCtrl.forward();
     });
@@ -182,15 +168,6 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                 width: 122,
                 height: 122,
                 child: AnimatedBuilder(
-<<<<<<< HEAD
-                  animation: _ringAnim,
-                  builder: (context, child) => _NeumorphicDashboardRing(
-                    score: score,
-                    progress: _ringAnim.value,
-                    gradientColors: gradColors,
-                    accentColor: accent,
-                    isDark: isDark,
-=======
                   animation: Listenable.merge([_ringAnim, _glowAnim]),
                   builder: (context, child) => Stack(
                     alignment: Alignment.center,
@@ -218,7 +195,6 @@ class _PremiumHealthCommandCardState extends State<PremiumHealthCommandCard>
                         isDark: isDark,
                       ),
                     ],
->>>>>>> 93734fd3f97e030281539a5b220720560048d38e
                   ),
                 ),
               ),
@@ -714,45 +690,6 @@ class _PillarTile extends StatelessWidget {
   const _PillarTile({required this.pillar, required this.isDark});
 
   @override
-<<<<<<< HEAD
-  Widget build(BuildContext context) => Column(
-    children: [
-      Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: pillar.color.withValues(alpha: 0.14),
-        ),
-        child: Icon(pillar.icon, size: 16, color: pillar.color),
-      ),
-      const SizedBox(height: 5),
-      SizedBox(
-        height: 3,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: LinearProgressIndicator(
-            value: (pillar.value / 100).clamp(0.0, 1.0),
-            backgroundColor: isDark
-                ? Colors.white.withValues(alpha: 0.09)
-                : Colors.black.withValues(alpha: 0.07),
-            valueColor: AlwaysStoppedAnimation(pillar.color),
-          ),
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        pillar.label,
-        style: TextStyle(
-          fontSize: 9,
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.55)
-              : AppColors.textSecondary,
-        ),
-      ),
-    ],
-  );
-=======
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Column(
@@ -792,7 +729,6 @@ class _PillarTile extends StatelessWidget {
           ],
         ),
       );
->>>>>>> 93734fd3f97e030281539a5b220720560048d38e
 }
 
 class _Badge extends StatelessWidget {
