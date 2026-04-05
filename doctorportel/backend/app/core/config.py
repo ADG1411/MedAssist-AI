@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://redis:6379/0"
     
-    # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # CORS (Allows both local and Vercel deployed frontend)
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
     
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 

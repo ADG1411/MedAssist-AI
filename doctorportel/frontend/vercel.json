@@ -4,6 +4,8 @@
   "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/:match*", "destination": "https://YOUR-BACKEND-URL.onrender.com/api/:match*" },
+    { "source": "/nim-api/:match*", "destination": "https://integrate.api.nvidia.com/v1/:match*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
